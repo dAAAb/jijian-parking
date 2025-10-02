@@ -96,7 +96,7 @@ class WorldMiniKit {
             const { finalPayload } = await MiniKit.commandsAsync.verify({
                 action: this.actionId, // 你的驗證動作 ID
                 signal: this.generateNonce(), // 防重放攻擊的信號
-                verification_level: 'orb', // 'orb' 或 'device'
+                verification_level: 'device', // 'device' = 所有用戶, 'orb' = 僅 Orb 驗證用戶
             });
 
             if (finalPayload.status === 'success') {
