@@ -129,3 +129,7 @@ JIJIAN/
 
 **祝你遊戲愉快！🎉**
 
+---
+
+[![GitHub Actions Status](https://github.com/dAAAb/jijian-parking/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/dAAAb/jijian-parking/actions)
+
