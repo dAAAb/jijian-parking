@@ -4,7 +4,10 @@ class WorldMiniKit {
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
+        this.isVerified = false;
+        this.verificationLevel = null; // 'orb' 或 'device'
         this.appId = 'app_8759766ce92173ee6e1ce6568a9bc9e6'; // 替換成你的 App ID
+        this.actionId = 'verify-parking-game'; // 驗證動作 ID
         
         this.init();
     }
@@ -40,23 +43,27 @@ class WorldMiniKit {
         // 非 World App 環境的降級模式
         console.log('啟用降級模式');
         const startBtn = document.getElementById('start-btn');
-        const connectBtn = document.getElementById('connect-wallet-btn');
+        const verifyBtn = document.getElementById('verify-world-id-btn');
         
         if (startBtn) {
             startBtn.disabled = false;
             startBtn.textContent = '開始遊戲（開發模式）';
         }
         
-        if (connectBtn) {
-            connectBtn.style.display = 'none';
+        if (verifyBtn) {
+            verifyBtn.style.display = 'none';
         }
+        
+        // 在開發模式下自動標記為已驗證
+        this.isVerified = true;
+        this.verificationLevel = 'device';
     }
 
     setupWorldAppFeatures() {
-        // 設置連接錢包按鈕
-        const connectBtn = document.getElementById('connect-wallet-btn');
-        if (connectBtn) {
-            connectBtn.addEventListener('click', () => this.connectWallet());
+        // 設置 World ID 驗證按鈕
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        if (verifyBtn) {
+            verifyBtn.addEventListener('click', () => this.verifyWorldID());
         }
 
         // 設置分享按鈕
@@ -66,39 +73,129 @@ class WorldMiniKit {
         }
     }
 
-    async connectWallet() {
+    async verifyWorldID() {
         try {
-            console.log('連接 World 錢包...');
+            console.log('開始 World ID 驗證...');
             
-            // 使用 MiniKit 進行錢包認證
-            const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-                nonce: this.generateNonce(),
-                requestId: this.generateRequestId(),
-                expirationTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 天
-                notBefore: new Date(),
-                statement: '歡迎來到極簡停車！連接錢包開始遊戲。',
+            const verifyBtn = document.getElementById('verify-world-id-btn');
+            if (verifyBtn) {
+                verifyBtn.disabled = true;
+                verifyBtn.textContent = '驗證中...';
+            }
+            
+            if (!this.isWorldApp) {
+                // 開發模式：模擬驗證成功
+                console.log('開發模式：模擬驗證成功');
+                setTimeout(() => {
+                    this.onVerificationSuccess('device', '0x' + Math.random().toString(16).substr(2, 40));
+                }, 1000);
+                return;
+            }
+            
+            // 使用 MiniKit 進行 World ID 驗證
+            const { finalPayload } = await MiniKit.commandsAsync.verify({
+                action: this.actionId, // 你的驗證動作 ID
+                signal: this.generateNonce(), // 防重放攻擊的信號
+                verification_level: 'orb', // 'orb' 或 'device'
             });
 
             if (finalPayload.status === 'success') {
-                this.walletAddress = finalPayload.address;
-                this.onWalletConnected(finalPayload.address);
+                console.log('✅ World ID 驗證成功!', finalPayload);
                 
-                // 發送震動反饋
-                this.sendHapticFeedback('success');
+                this.isVerified = true;
+                this.verificationLevel = finalPayload.verification_level;
+                
+                // 需要向後端驗證 proof
+                const isValid = await this.verifyProofWithBackend(finalPayload);
+                
+                if (isValid) {
+                    this.onVerificationSuccess(
+                        finalPayload.verification_level,
+                        finalPayload.nullifier_hash
+                    );
+                    this.sendHapticFeedback('success');
+                } else {
+                    throw new Error('後端驗證失敗');
+                }
             } else {
-                console.error('錢包連接失敗:', finalPayload);
-                alert('連接錢包失敗，請重試');
+                console.error('❌ World ID 驗證失敗:', finalPayload);
+                this.onVerificationFailed('驗證失敗，請重試');
             }
         } catch (error) {
-            console.error('連接錢包錯誤:', error);
-            
-            // 開發模式：模擬連接成功
-            if (!this.isWorldApp) {
-                const mockAddress = '0x' + Math.random().toString(16).substr(2, 40);
-                this.walletAddress = mockAddress;
-                this.onWalletConnected(mockAddress);
-            }
+            console.error('World ID 驗證錯誤:', error);
+            this.onVerificationFailed(error.message || '驗證過程發生錯誤');
         }
+    }
+
+    async verifyProofWithBackend(payload) {
+        try {
+            // 在生產環境中，你需要將 proof 發送到後端進行驗證
+            // 這裡僅作為示例，實際需要後端 API
+            
+            console.log('📤 發送 proof 到後端驗證...');
+            
+            // 示例後端 API 調用
+            // const response = await fetch('YOUR_BACKEND_URL/api/verify', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({
+            //         proof: payload.proof,
+            //         merkle_root: payload.merkle_root,
+            //         nullifier_hash: payload.nullifier_hash,
+            //         verification_level: payload.verification_level,
+            //         action: this.actionId,
+            //         signal: payload.signal,
+            //     })
+            // });
+            // const data = await response.json();
+            // return data.success;
+            
+            // 開發模式：直接返回 true
+            console.log('⚠️ 開發模式：跳過後端驗證');
+            return true;
+            
+        } catch (error) {
+            console.error('後端驗證失敗:', error);
+            return false;
+        }
+    }
+
+    onVerificationSuccess(level, nullifierHash) {
+        console.log('✅ 驗證成功!', { level, nullifierHash });
+        
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        const verifyInfo = document.getElementById('verify-info');
+        const startBtn = document.getElementById('start-btn');
+        
+        if (verifyBtn) {
+            verifyBtn.style.display = 'none';
+        }
+        
+        if (verifyInfo) {
+            verifyInfo.classList.remove('hidden');
+            const levelText = level === 'orb' ? '🌐 Orb 驗證' : '📱 裝置驗證';
+            verifyInfo.innerHTML = `
+                <p>✅ 真人驗證成功</p>
+                <p class="verify-level">${levelText}</p>
+            `;
+        }
+        
+        if (startBtn) {
+            startBtn.disabled = false;
+        }
+    }
+
+    onVerificationFailed(message) {
+        console.error('❌ 驗證失敗:', message);
+        
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = '🌍 使用 World ID 驗證';
+        }
+        
+        alert(`驗證失敗：${message}\n\n請確保你已經設置了 World ID。`);
+        this.sendHapticFeedback('error');
     }
 
     onWalletConnected(address) {

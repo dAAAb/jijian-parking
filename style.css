@@ -121,28 +121,56 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
-#wallet-section {
+#verify-section {
     margin: 20px 0;
 }
 
-.wallet-info {
+.verify-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+}
+
+.verify-info {
     background: rgba(46, 204, 113, 0.2);
     border: 2px solid rgba(46, 204, 113, 0.5);
     border-radius: 15px;
     padding: 15px;
     margin-top: 15px;
+    animation: successPulse 0.5s ease;
 }
 
-.wallet-info p {
+@keyframes successPulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.verify-info p {
     color: #2ecc71;
     margin: 5px 0;
-    font-size: 1em;
+    font-size: 1.1em;
+    font-weight: bold;
 }
 
-.wallet-address {
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em !important;
-    color: #fff !important;
+.verify-level {
+    font-size: 0.95em !important;
+    opacity: 0.9;
+    font-weight: normal !important;
+}
+
+.verify-hint {
+    color: #aaa;
+    font-size: 0.9em;
+    margin-top: 10px;
+    font-style: italic;
 }
 
 /* 遊戲 UI */
