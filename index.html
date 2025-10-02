@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>極簡停車 - Minimal Parking</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 遊戲容器 -->
+    <div id="game-container">
+        <!-- Three.js 畫布會插入這裡 -->
+    </div>
+
+    <!-- 開始畫面 -->
+    <div id="start-screen" class="screen">
+        <div class="content">
+            <h1 class="game-title">極簡停車</h1>
+            <p class="subtitle">單手操作 · 輕鬆上手</p>
+            <button id="start-btn" class="main-btn">開始遊戲</button>
+            <div class="instructions">
+                <p>📱 單手拖動螢幕控制方向</p>
+                <p>🅿️ 將車停入發光的停車位</p>
+                <p>⚡ 越快完成，分數越高</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲 UI -->
+    <div id="game-ui" class="hidden">
+        <div class="top-bar">
+            <div class="stat">
+                <span class="label">關卡</span>
+                <span id="level-display" class="value">1</span>
+            </div>
+            <div class="stat">
+                <span class="label">分數</span>
+                <span id="score-display" class="value">0</span>
+            </div>
+            <div class="stat">
+                <span class="label">時間</span>
+                <span id="time-display" class="value">0.0s</span>
+            </div>
+        </div>
+        
+        <!-- 控制提示 -->
+        <div id="control-hint" class="hint">
+            拖動螢幕控制車輛
+        </div>
+    </div>
+
+    <!-- 關卡完成畫面 -->
+    <div id="level-complete-screen" class="screen hidden">
+        <div class="content">
+            <h2 class="success-title">🎉 完成！</h2>
+            <div class="stats-container">
+                <div class="stat-row">
+                    <span>完成時間</span>
+                    <span id="complete-time" class="highlight">0.0s</span>
+                </div>
+                <div class="stat-row">
+                    <span>時間獎勵</span>
+                    <span id="time-bonus" class="highlight">+0</span>
+                </div>
+                <div class="stat-row">
+                    <span>總分</span>
+                    <span id="total-score" class="highlight">0</span>
+                </div>
+            </div>
+            <button id="next-level-btn" class="main-btn">下一關</button>
+        </div>
+    </div>
+
+    <!-- 遊戲結束畫面 -->
+    <div id="game-over-screen" class="screen hidden">
+        <div class="content">
+            <h2 class="fail-title">💥 撞車了！</h2>
+            <p class="message">小心駕駛，別撞到障礙物</p>
+            <button id="retry-btn" class="main-btn">重新開始</button>
+        </div>
+    </div>
+
+    <!-- 載入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
+
