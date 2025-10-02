@@ -6,8 +6,8 @@ class WorldMiniKit {
         this.isWorldApp = false;
         this.isVerified = false;
         this.verificationLevel = null; // 'orb' 或 'device'
-        this.appId = 'app_8759766ce92173ee6e1ce6568a9bc9e6'; // 替換成你的 App ID
-        this.actionId = 'verify-parking-game'; // 驗證動作 ID
+        this.appId = 'app_8759766ce92173ee6e1ce6568a9bc9e6'; // 你的 App ID
+        this.actionId = 'verifyparkinggame'; // 你的驗證動作 ID
         
         this.init();
     }
