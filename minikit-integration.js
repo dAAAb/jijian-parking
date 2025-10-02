@@ -54,15 +54,16 @@ class WorldMiniKit {
         // 非 World App 環境的降級模式
         console.log('啟用降級模式');
         const startBtn = document.getElementById('start-btn');
-        const verifyBtn = document.getElementById('verify-world-id-btn');
+        const verifySection = document.getElementById('verify-section');
         
         if (startBtn) {
             startBtn.disabled = false;
             startBtn.textContent = '開始遊戲（開發模式）';
         }
         
-        if (verifyBtn) {
-            verifyBtn.style.display = 'none';
+        // 在開發模式下隱藏驗證區塊
+        if (verifySection) {
+            verifySection.style.display = 'none';
         }
         
         // 在開發模式下自動標記為已驗證
@@ -101,17 +102,31 @@ class WorldMiniKit {
     }
 
     showVerificationDialog() {
-        // 顯示驗證對話框
+        // 顯示驗證對話框並添加動畫
         const verifySection = document.getElementById('verify-section');
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        const skipBtn = document.getElementById('skip-verification-btn');
+        
+        console.log('👀 驗證區塊元素:', verifySection);
+        console.log('👀 驗證按鈕:', verifyBtn);
+        console.log('👀 跳過按鈕:', skipBtn);
+        
         if (verifySection) {
             verifySection.style.display = 'block';
-            
-            // 添加脈衝動畫提示用戶
-            const verifyBtn = document.getElementById('verify-world-id-btn');
-            if (verifyBtn) {
-                verifyBtn.style.animation = 'pulse 1.5s infinite';
-            }
+            verifySection.style.opacity = '1';
         }
+        
+        // 添加脈衝動畫提示用戶
+        if (verifyBtn) {
+            verifyBtn.style.display = 'block';
+            verifyBtn.style.animation = 'pulse 1.5s infinite';
+        }
+        
+        if (skipBtn) {
+            skipBtn.style.display = 'block';
+        }
+        
+        console.log('✅ 驗證選項已顯示');
     }
 
     skipVerification() {
@@ -121,11 +136,16 @@ class WorldMiniKit {
         this.verificationLevel = 'skipped';
         
         const verifyBtn = document.getElementById('verify-world-id-btn');
+        const skipBtn = document.getElementById('skip-verification-btn');
         const verifyInfo = document.getElementById('verify-info');
         const startBtn = document.getElementById('start-btn');
         
         if (verifyBtn) {
             verifyBtn.style.display = 'none';
+        }
+        
+        if (skipBtn) {
+            skipBtn.style.display = 'none';
         }
         
         // 顯示跳過狀態
