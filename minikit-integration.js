@@ -4,7 +4,7 @@ class WorldMiniKit {
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
-        this.appId = 'app_staging_your_app_id_here'; // 替換成你的 App ID
+        this.appId = 'app_8759766ce92173ee6e1ce6568a9bc9e6'; // 替換成你的 App ID
         
         this.init();
     }

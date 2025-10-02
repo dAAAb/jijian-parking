@@ -3,7 +3,7 @@
   "short_name": "Minimal Parking",
   "description": "3D Voxel 風格的單手停車遊戲，整合 World 錢包功能",
   "version": "1.0.0",
-  "app_id": "app_staging_your_app_id_here",
+  "app_id": "app_8759766ce92173ee6e1ce6568a9bc9e6",
   "icon": "https://daaab.github.io/jijian-parking/icon.png",
   "start_url": "/",
   "display": "standalone",
