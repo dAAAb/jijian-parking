@@ -2,6 +2,8 @@
 
 一個令人上癮的 3D Voxel 風格停車遊戲，專為單手操作設計！
 
+🌍 **現已支援 World Mini App！**整合 World 錢包、支付和通知功能！
+
 ## 🎮 遊戲特色
 
 - **🖐️ 單手操作**：簡單直覺的拖動控制，隨時隨地都能玩
@@ -12,6 +14,8 @@
 - **🎯 物理碰撞**：真實的碰撞檢測，小心障礙物
 - **🎊 視覺特效**：完成關卡時的慶祝粒子效果
 - **📱 響應式設計**：完美適配各種手機螢幕
+- **🌍 World Mini App**：整合 World 錢包、震動反饋、分享功能
+- **💰 WLD 獎勵**：完成關卡獲得 WLD 代幣獎勵
 
 ## 🎯 遊戲玩法
 
@@ -69,6 +73,17 @@ npx http-server
 - **原生 JavaScript**：遊戲邏輯
 - **HTML5 Canvas**：渲染畫布
 - **CSS3**：UI 介面和動畫
+- **World MiniKit SDK**：Web3 功能整合
+
+## 🌍 World Mini App 功能
+
+- **錢包連接**：使用 World ID 驗證登入
+- **震動反饋**：完成關卡和碰撞時的觸覺反饋
+- **分享功能**：分享你的遊戲成績
+- **WLD 獎勵**：每關卡可獲得 WLD 代幣
+- **降級模式**：在普通瀏覽器中也能正常遊玩
+
+詳細的 World Mini App 整合說明請參考 [WORLD_MINIAPP_GUIDE.md](WORLD_MINIAPP_GUIDE.md)
 
 ## 🎯 難度系統
 
@@ -87,10 +102,13 @@ npx http-server
 
 ```
 JIJIAN/
-├── index.html      # 主 HTML 文件
-├── style.css       # 樣式表
-├── game.js         # 遊戲邏輯
-└── README.md       # 說明文件
+├── index.html              # 主 HTML 文件
+├── style.css               # 樣式表
+├── game.js                 # 遊戲邏輯
+├── minikit-integration.js  # World MiniKit 整合
+├── miniapp.json            # Mini App 配置文件
+├── README.md               # 說明文件
+└── WORLD_MINIAPP_GUIDE.md  # World Mini App 整合指南
 ```
 
 ## 🎮 未來改進方向

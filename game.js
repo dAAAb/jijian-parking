@@ -478,14 +478,23 @@ class MinimalParking {
         const timeBonus = Math.max(0, Math.floor((30 - elapsedTime) * 10));
         this.score += 100 + timeBonus;
 
+        // 計算 WLD 獎勵
+        const wldReward = (0.05 + (this.level * 0.01)).toFixed(2);
+
         // 顯示完成畫面
         document.getElementById('complete-time').textContent = elapsedTime + 's';
         document.getElementById('time-bonus').textContent = '+' + timeBonus;
         document.getElementById('total-score').textContent = this.score;
+        document.getElementById('wld-reward').textContent = '+' + wldReward + ' WLD';
         document.getElementById('level-complete-screen').classList.remove('hidden');
 
         // 添加完成特效
         this.addCompleteEffect();
+        
+        // 發送震動反饋
+        if (window.worldMiniKit) {
+            window.worldMiniKit.sendHapticFeedback('success');
+        }
     }
 
     addCompleteEffect() {
@@ -538,6 +547,11 @@ class MinimalParking {
                     child.material.color.setHex(0x000000);
                 }
             });
+        }
+        
+        // 發送震動反饋
+        if (window.worldMiniKit) {
+            window.worldMiniKit.sendHapticFeedback('error');
         }
     }
 

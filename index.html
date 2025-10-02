@@ -7,6 +7,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>極簡停車 - Minimal Parking</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- World MiniKit SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@0.0.68/dist/minikit.js"></script>
 </head>
 <body>
     <!-- 遊戲容器 -->
@@ -19,11 +22,23 @@
         <div class="content">
             <h1 class="game-title">極簡停車</h1>
             <p class="subtitle">單手操作 · 輕鬆上手</p>
-            <button id="start-btn" class="main-btn">開始遊戲</button>
+            
+            <!-- World 錢包連接 -->
+            <div id="wallet-section">
+                <button id="connect-wallet-btn" class="main-btn">🌍 連接 World 錢包</button>
+                <div id="wallet-info" class="wallet-info hidden">
+                    <p>✅ 已連接</p>
+                    <p id="wallet-address" class="wallet-address"></p>
+                </div>
+            </div>
+            
+            <button id="start-btn" class="main-btn" disabled>開始遊戲</button>
+            
             <div class="instructions">
                 <p>📱 單手拖動螢幕控制方向</p>
                 <p>🅿️ 將車停入發光的停車位</p>
                 <p>⚡ 越快完成，分數越高</p>
+                <p>💰 完成關卡賺取 WLD 獎勵</p>
             </div>
         </div>
     </div>
@@ -68,8 +83,13 @@
                     <span>總分</span>
                     <span id="total-score" class="highlight">0</span>
                 </div>
+                <div class="stat-row">
+                    <span>💰 WLD 獎勵</span>
+                    <span id="wld-reward" class="highlight">+0.1 WLD</span>
+                </div>
             </div>
             <button id="next-level-btn" class="main-btn">下一關</button>
+            <button id="share-btn" class="secondary-btn">📤 分享成績</button>
         </div>
     </div>
 
@@ -84,6 +104,7 @@
 
     <!-- 載入 Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="minikit-integration.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
