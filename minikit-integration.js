@@ -6,8 +6,13 @@ class WorldMiniKit {
         this.isWorldApp = false;
         this.isVerified = false;
         this.verificationLevel = null; // 'orb' 或 'device'
-        this.appId = 'app_8759766ce92173ee6e1ce6568a9bc9e6'; // 你的 App ID
-        this.actionId = 'verifyparkinggame'; // 你的驗證動作 ID
+        
+        // 從本地配置讀取（如果有），否則使用默認值
+        const config = window.LOCAL_CONFIG || {};
+        this.appId = config.APP_ID || 'app_8759766ce92173ee6e1ce6568a9bc9e6';
+        this.actionId = config.ACTION_ID || 'verifyparkinggame';
+        this.apiKey = config.WORLD_API_KEY || null; // API Key（僅用於後端驗證）
+        this.backendUrl = config.BACKEND_URL || null;
         
         this.init();
     }
@@ -129,33 +134,57 @@ class WorldMiniKit {
 
     async verifyProofWithBackend(payload) {
         try {
-            // 在生產環境中，你需要將 proof 發送到後端進行驗證
-            // 這裡僅作為示例，實際需要後端 API
+            console.log('📤 準備驗證 proof...');
             
-            console.log('📤 發送 proof 到後端驗證...');
+            // 如果有配置後端 URL，使用後端驗證
+            if (this.backendUrl) {
+                console.log('使用後端驗證:', this.backendUrl);
+                const response = await fetch(`${this.backendUrl}/api/verify-world-id`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        proof: payload.proof,
+                        merkle_root: payload.merkle_root,
+                        nullifier_hash: payload.nullifier_hash,
+                        verification_level: payload.verification_level,
+                        action: this.actionId,
+                        signal: payload.signal,
+                    })
+                });
+                const data = await response.json();
+                return data.success;
+            }
             
-            // 示例後端 API 調用
-            // const response = await fetch('YOUR_BACKEND_URL/api/verify', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({
-            //         proof: payload.proof,
-            //         merkle_root: payload.merkle_root,
-            //         nullifier_hash: payload.nullifier_hash,
-            //         verification_level: payload.verification_level,
-            //         action: this.actionId,
-            //         signal: payload.signal,
-            //     })
-            // });
-            // const data = await response.json();
-            // return data.success;
+            // 如果在瀏覽器環境且有 API Key，直接調用 World API
+            // ⚠️ 注意：這樣做會暴露 API Key，僅用於開發測試！
+            if (this.apiKey && !this.backendUrl) {
+                console.log('⚠️ 直接調用 World API（僅用於開發測試）');
+                const response = await fetch('https://developer.worldcoin.org/api/v2/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        proof: payload.proof,
+                        merkle_root: payload.merkle_root,
+                        nullifier_hash: payload.nullifier_hash,
+                        verification_level: payload.verification_level,
+                        action: this.actionId,
+                        signal: payload.signal,
+                    })
+                });
+                const data = await response.json();
+                console.log('World API 驗證結果:', data);
+                return data.success;
+            }
             
-            // 開發模式：直接返回 true
+            // 開發模式：跳過驗證
             console.log('⚠️ 開發模式：跳過後端驗證');
             return true;
             
         } catch (error) {
-            console.error('後端驗證失敗:', error);
+            console.error('驗證失敗:', error);
             return false;
         }
     }

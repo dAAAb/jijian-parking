@@ -1,0 +1,7 @@
+# 複製這個文件為 .env
+# World API 配置
+WORLD_API_KEY=your_api_key_here
+
+# 伺服器配置
+PORT=3000
+
