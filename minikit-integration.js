@@ -47,30 +47,32 @@ class WorldMiniKit {
     fallbackMode() {
         // 非 World App 環境的降級模式
         console.log('啟用降級模式：普通瀏覽器環境');
-        const verifyBtn = document.getElementById('verify-world-id-btn');
-        
-        // 在開發模式下隱藏驗證按鈕（因為無法在普通瀏覽器中驗證）
-        if (verifyBtn) {
-            verifyBtn.style.display = 'none';
-        }
         
         // 保持未驗證狀態，顯示「⚠️ 未驗證」
         // 但仍然允許玩遊戲（不強制驗證）
         this.isVerified = false;
         this.verificationLevel = null;
+        
+        // 仍然設置驗證按鈕的點擊事件，但會顯示提示訊息
+        this.setupVerificationButton();
     }
 
     setupWorldAppFeatures() {
-        // 設置 World ID 驗證按鈕
-        const verifyBtn = document.getElementById('verify-world-id-btn');
-        if (verifyBtn) {
-            verifyBtn.addEventListener('click', () => this.verifyWorldID());
-        }
+        // 設置驗證按鈕
+        this.setupVerificationButton();
 
         // 設置分享按鈕
         const shareBtn = document.getElementById('share-btn');
         if (shareBtn) {
             shareBtn.addEventListener('click', () => this.shareScore());
+        }
+    }
+
+    setupVerificationButton() {
+        // 設置 World ID 驗證按鈕（在所有環境中都顯示）
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        if (verifyBtn) {
+            verifyBtn.addEventListener('click', () => this.verifyWorldID());
         }
     }
 
@@ -92,20 +94,18 @@ class WorldMiniKit {
             console.log('開始 World ID 驗證...');
             
             const verifyBtn = document.getElementById('verify-world-id-btn');
-            const originalText = verifyBtn?.textContent || '';
             
+            // 如果不在 World App 環境中，顯示提示訊息
+            if (!this.isWorldApp) {
+                console.warn('嘗試在非 World App 環境中進行驗證');
+                alert('⚠️ 無法驗證\n\n此功能僅支援在 World App 中使用。\n請在 World App 中打開此 Mini App 以進行真人驗證。');
+                return;
+            }
+            
+            // 在 World App 中才繼續驗證流程
             if (verifyBtn) {
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = '驗證中...';
-            }
-            
-            if (!this.isWorldApp) {
-                // 開發模式：模擬驗證成功
-                console.log('開發模式：模擬驗證成功');
-                setTimeout(() => {
-                    this.onVerificationSuccess('device', '0x' + Math.random().toString(16).substr(2, 40));
-                }, 1000);
-                return;
             }
             
             // 使用 MiniKit 進行 World ID 驗證
