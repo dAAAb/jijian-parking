@@ -1,9 +1,10 @@
 // World MiniKit 整合
-// 版本: v1.0.2
+// 版本: v1.1.0
 // 參考文檔: https://docs.world.org/mini-apps/commands/verify
+// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit)
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.0.2';
+        this.version = 'v1.1.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -114,69 +115,124 @@ class WorldMiniKit {
             console.log('環境檢查:', {
                 isWorldApp: this.isWorldApp,
                 hasMiniKit: typeof MiniKit !== 'undefined',
+                hasIDKit: typeof IDKit !== 'undefined',
                 backendUrl: this.backendUrl
             });
             
             const verifyBtn = document.getElementById('verify-world-id-btn');
             
-            // 如果不在 World App 環境中，顯示提示訊息
-            if (!this.isWorldApp) {
-                console.warn('⚠️ 嘗試在非 World App 環境中進行驗證');
-                alert('⚠️ 無法驗證\n\n此功能僅支援在 World App 中使用。\n請在 World App 中打開此 Mini App 以進行真人驗證。');
-                return;
-            }
-            
-            // 在 World App 中才繼續驗證流程
             if (verifyBtn) {
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = '驗證中...';
             }
             
-            console.log('📱 調用 MiniKit.commandsAsync.verify...');
-            
-            // 準備驗證參數（參考：https://docs.world.org/mini-apps/commands/verify）
-            const verifyPayload = {
-                action: this.actionId,
-                signal: this.generateNonce(),
-                verification_level: 'orb' // 使用 Orb 級別驗證
-            };
-            
-            console.log('📋 驗證參數:', verifyPayload);
-            
-            // 使用 MiniKit 進行 World ID 驗證
-            const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
-
-            console.log('📦 收到回應:', finalPayload);
-            
-            if (finalPayload.status === 'success') {
-                console.log('✅ World ID 驗證成功!', finalPayload);
-                
-                this.isVerified = true;
-                this.verificationLevel = finalPayload.verification_level;
-                
-                // 需要向後端驗證 proof
-                const isValid = await this.verifyProofWithBackend(finalPayload);
-                
-                if (isValid) {
-                    this.onVerificationSuccess(
-                        finalPayload.verification_level,
-                        finalPayload.nullifier_hash
-                    );
-                    this.sendHapticFeedback('success');
-                } else {
-                    throw new Error('後端驗證失敗');
-                }
-            } else if (finalPayload.status === 'error') {
-                console.error('❌ World ID 驗證失敗:', finalPayload);
-                this.onVerificationFailed(finalPayload.error_code || '驗證失敗，請重試');
+            // 根據環境選擇驗證方式
+            if (this.isWorldApp) {
+                // World App 環境：使用 MiniKit
+                await this.verifyWithMiniKit();
             } else {
-                console.warn('⚠️ 未知狀態:', finalPayload);
-                this.onVerificationFailed('驗證過程發生錯誤');
+                // 普通瀏覽器：使用 IDKit
+                await this.verifyWithIDKit();
             }
         } catch (error) {
             console.error('World ID 驗證錯誤:', error);
             this.onVerificationFailed(error.message || '驗證過程發生錯誤');
         }
+    }
+
+    async verifyWithMiniKit() {
+        console.log('📱 使用 MiniKit 驗證（World App）');
+        
+        // 準備驗證參數
+        const verifyPayload = {
+            action: this.actionId,
+            signal: this.generateNonce(),
+            verification_level: 'orb'
+        };
+        
+        console.log('📋 驗證參數:', verifyPayload);
+        
+        // 使用 MiniKit 進行 World ID 驗證
+        const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+
+        console.log('📦 收到回應:', finalPayload);
+        
+        if (finalPayload.status === 'success') {
+            console.log('✅ World ID 驗證成功!', finalPayload);
+            
+            this.isVerified = true;
+            this.verificationLevel = finalPayload.verification_level;
+            
+            // 需要向後端驗證 proof
+            const isValid = await this.verifyProofWithBackend(finalPayload);
+            
+            if (isValid) {
+                this.onVerificationSuccess(
+                    finalPayload.verification_level,
+                    finalPayload.nullifier_hash
+                );
+                this.sendHapticFeedback('success');
+            } else {
+                throw new Error('後端驗證失敗');
+            }
+        } else if (finalPayload.status === 'error') {
+            console.error('❌ World ID 驗證失敗:', finalPayload);
+            this.onVerificationFailed(finalPayload.error_code || '驗證失敗，請重試');
+        } else {
+            console.warn('⚠️ 未知狀態:', finalPayload);
+            this.onVerificationFailed('驗證過程發生錯誤');
+        }
+    }
+
+    async verifyWithIDKit() {
+        console.log('🌐 使用 IDKit 驗證（網頁瀏覽器）');
+        
+        if (typeof IDKit === 'undefined') {
+            throw new Error('IDKit 未加載');
+        }
+        
+        const signal = this.generateNonce();
+        
+        // 使用 IDKit 打開驗證視窗
+        IDKit.init({
+            app_id: this.appId,
+            action: this.actionId,
+            signal: signal,
+            verification_level: 'orb',
+            onSuccess: async (result) => {
+                console.log('✅ IDKit 驗證成功!', result);
+                
+                this.isVerified = true;
+                this.verificationLevel = result.verification_level;
+                
+                // 構造與 MiniKit 相同格式的 payload
+                const payload = {
+                    proof: result.proof,
+                    merkle_root: result.merkle_root,
+                    nullifier_hash: result.nullifier_hash,
+                    verification_level: result.verification_level,
+                    signal: signal
+                };
+                
+                // 向後端驗證 proof
+                const isValid = await this.verifyProofWithBackend(payload);
+                
+                if (isValid) {
+                    this.onVerificationSuccess(
+                        result.verification_level,
+                        result.nullifier_hash
+                    );
+                } else {
+                    throw new Error('後端驗證失敗');
+                }
+            },
+            onError: (error) => {
+                console.error('❌ IDKit 驗證失敗:', error);
+                this.onVerificationFailed(error.message || '驗證失敗');
+            }
+        });
+        
+        IDKit.open();
     }
 
     async verifyProofWithBackend(payload) {
