@@ -1,10 +1,10 @@
 // World MiniKit 整合
-// 版本: v1.1.1
+// 版本: v1.1.2
 // 參考文檔: https://docs.world.org/mini-apps/commands/verify
 // 支援：World App (MiniKit) + 網頁瀏覽器 (IDKitWidget)
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.1.1';
+        this.version = 'v1.1.2';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -200,9 +200,10 @@ class WorldMiniKit {
             throw new Error('IDKit 未加載，請重新整理頁面');
         }
         
-        console.log('✅ IDKitWidget 已加載');
+        console.log('✅ IDKitWidget 已加載', window.IDKitWidget);
         
         const signal = this.generateNonce();
+        const self = this;
         
         // 創建 IDKit Widget 容器
         const container = document.createElement('div');
@@ -210,8 +211,10 @@ class WorldMiniKit {
         document.body.appendChild(container);
         
         try {
-            // 使用 IDKitWidget 打開驗證視窗
-            const widget = window.IDKitWidget.create({
+            // 使用 IDKitWidget (直接調用，不是 create)
+            console.log('📱 初始化 IDKit Widget...');
+            
+            const widget = new window.IDKitWidget({
                 app_id: this.appId,
                 action: this.actionId,
                 signal: signal,
@@ -219,8 +222,8 @@ class WorldMiniKit {
                 onSuccess: async (result) => {
                     console.log('✅ IDKit 驗證成功!', result);
                     
-                    this.isVerified = true;
-                    this.verificationLevel = result.verification_level;
+                    self.isVerified = true;
+                    self.verificationLevel = result.verification_level;
                     
                     // 構造與 MiniKit 相同格式的 payload
                     const payload = {
@@ -232,10 +235,10 @@ class WorldMiniKit {
                     };
                     
                     // 向後端驗證 proof
-                    const isValid = await this.verifyProofWithBackend(payload);
+                    const isValid = await self.verifyProofWithBackend(payload);
                     
                     if (isValid) {
-                        this.onVerificationSuccess(
+                        self.onVerificationSuccess(
                             result.verification_level,
                             result.nullifier_hash
                         );
@@ -250,17 +253,16 @@ class WorldMiniKit {
                 },
                 onError: (error) => {
                     console.error('❌ IDKit 驗證失敗:', error);
-                    this.onVerificationFailed(error?.message || '驗證失敗');
+                    self.onVerificationFailed(error?.message || '驗證失敗');
                     
                     // 清理容器
                     if (container && container.parentNode) {
                         container.parentNode.removeChild(container);
                     }
                 }
-            });
+            }, container);
             
             console.log('📱 打開 IDKit 驗證視窗...');
-            widget.open();
             
         } catch (error) {
             console.error('創建 IDKit Widget 失敗:', error);

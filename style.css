@@ -286,13 +286,15 @@ body {
 /* 版本號 */
 .version {
     position: fixed;
-    bottom: 5px;
-    right: 10px;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 0.7em;
     color: rgba(255, 255, 255, 0.3);
     font-family: monospace;
     z-index: 9999;
     pointer-events: none;
+    text-align: center;
 }
 
 /* 響應式設計 */
