@@ -1,8 +1,9 @@
 // World MiniKit 整合
-// 版本: v1.0.1
+// 版本: v1.0.2
+// 參考文檔: https://docs.world.org/mini-apps/commands/verify
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.0.1';
+        this.version = 'v1.0.2';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -33,24 +34,31 @@ class WorldMiniKit {
             // 檢測是否在 World App 中運行
             this.isWorldApp = typeof MiniKit !== 'undefined';
             
+            console.log('🔍 環境檢測:', {
+                isWorldApp: this.isWorldApp,
+                hasMiniKit: typeof MiniKit !== 'undefined',
+                isInstalled: this.isWorldApp ? MiniKit.isInstalled() : false
+            });
+            
             if (this.isWorldApp) {
                 console.log('🌍 在 World App 中運行');
                 
                 // 初始化 MiniKit
                 if (!MiniKit.isInstalled()) {
-                    console.warn('MiniKit 未安裝');
+                    console.warn('⚠️ MiniKit 未安裝');
                     this.fallbackMode();
                     return;
                 }
                 
                 this.isInitialized = true;
                 this.setupWorldAppFeatures();
+                console.log('✅ World App 功能已設置');
             } else {
                 console.log('🌐 在普通瀏覽器中運行（開發模式）');
                 this.fallbackMode();
             }
         } catch (error) {
-            console.error('初始化 MiniKit 失敗:', error);
+            console.error('❌ 初始化 MiniKit 失敗:', error);
             this.fallbackMode();
         }
     }
@@ -126,13 +134,20 @@ class WorldMiniKit {
             
             console.log('📱 調用 MiniKit.commandsAsync.verify...');
             
+            // 準備驗證參數（參考：https://docs.world.org/mini-apps/commands/verify）
+            const verifyPayload = {
+                action: this.actionId,
+                signal: this.generateNonce(),
+                verification_level: 'orb' // 使用 Orb 級別驗證
+            };
+            
+            console.log('📋 驗證參數:', verifyPayload);
+            
             // 使用 MiniKit 進行 World ID 驗證
-            const { finalPayload } = await MiniKit.commandsAsync.verify({
-                action: this.actionId, // 你的驗證動作 ID
-                signal: this.generateNonce(), // 防重放攻擊的信號
-                verification_level: 'orb', // 'orb' = 僅 Orb 驗證用戶（最高安全）
-            });
+            const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
 
+            console.log('📦 收到回應:', finalPayload);
+            
             if (finalPayload.status === 'success') {
                 console.log('✅ World ID 驗證成功!', finalPayload);
                 
@@ -151,9 +166,12 @@ class WorldMiniKit {
                 } else {
                     throw new Error('後端驗證失敗');
                 }
-            } else {
+            } else if (finalPayload.status === 'error') {
                 console.error('❌ World ID 驗證失敗:', finalPayload);
-                this.onVerificationFailed('驗證失敗，請重試');
+                this.onVerificationFailed(finalPayload.error_code || '驗證失敗，請重試');
+            } else {
+                console.warn('⚠️ 未知狀態:', finalPayload);
+                this.onVerificationFailed('驗證過程發生錯誤');
             }
         } catch (error) {
             console.error('World ID 驗證錯誤:', error);
