@@ -1,10 +1,10 @@
 // World MiniKit 整合
-// 版本: v1.1.0
+// 版本: v1.1.1
 // 參考文檔: https://docs.world.org/mini-apps/commands/verify
-// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit)
+// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKitWidget)
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.1.0';
+        this.version = 'v1.1.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -187,52 +187,89 @@ class WorldMiniKit {
     async verifyWithIDKit() {
         console.log('🌐 使用 IDKit 驗證（網頁瀏覽器）');
         
-        if (typeof IDKit === 'undefined') {
-            throw new Error('IDKit 未加載');
+        // 等待 IDKitWidget 加載
+        let retries = 0;
+        while (typeof window.IDKitWidget === 'undefined' && retries < 10) {
+            console.log('等待 IDKitWidget 加載...', retries);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            retries++;
         }
+        
+        if (typeof window.IDKitWidget === 'undefined') {
+            console.error('IDKitWidget 未找到');
+            throw new Error('IDKit 未加載，請重新整理頁面');
+        }
+        
+        console.log('✅ IDKitWidget 已加載');
         
         const signal = this.generateNonce();
         
-        // 使用 IDKit 打開驗證視窗
-        IDKit.init({
-            app_id: this.appId,
-            action: this.actionId,
-            signal: signal,
-            verification_level: 'orb',
-            onSuccess: async (result) => {
-                console.log('✅ IDKit 驗證成功!', result);
-                
-                this.isVerified = true;
-                this.verificationLevel = result.verification_level;
-                
-                // 構造與 MiniKit 相同格式的 payload
-                const payload = {
-                    proof: result.proof,
-                    merkle_root: result.merkle_root,
-                    nullifier_hash: result.nullifier_hash,
-                    verification_level: result.verification_level,
-                    signal: signal
-                };
-                
-                // 向後端驗證 proof
-                const isValid = await this.verifyProofWithBackend(payload);
-                
-                if (isValid) {
-                    this.onVerificationSuccess(
-                        result.verification_level,
-                        result.nullifier_hash
-                    );
-                } else {
-                    throw new Error('後端驗證失敗');
-                }
-            },
-            onError: (error) => {
-                console.error('❌ IDKit 驗證失敗:', error);
-                this.onVerificationFailed(error.message || '驗證失敗');
-            }
-        });
+        // 創建 IDKit Widget 容器
+        const container = document.createElement('div');
+        container.id = 'idkit-container';
+        document.body.appendChild(container);
         
-        IDKit.open();
+        try {
+            // 使用 IDKitWidget 打開驗證視窗
+            const widget = window.IDKitWidget.create({
+                app_id: this.appId,
+                action: this.actionId,
+                signal: signal,
+                verification_level: 'orb',
+                onSuccess: async (result) => {
+                    console.log('✅ IDKit 驗證成功!', result);
+                    
+                    this.isVerified = true;
+                    this.verificationLevel = result.verification_level;
+                    
+                    // 構造與 MiniKit 相同格式的 payload
+                    const payload = {
+                        proof: result.proof,
+                        merkle_root: result.merkle_root,
+                        nullifier_hash: result.nullifier_hash,
+                        verification_level: result.verification_level,
+                        signal: signal
+                    };
+                    
+                    // 向後端驗證 proof
+                    const isValid = await this.verifyProofWithBackend(payload);
+                    
+                    if (isValid) {
+                        this.onVerificationSuccess(
+                            result.verification_level,
+                            result.nullifier_hash
+                        );
+                    } else {
+                        throw new Error('後端驗證失敗');
+                    }
+                    
+                    // 清理容器
+                    if (container && container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
+                },
+                onError: (error) => {
+                    console.error('❌ IDKit 驗證失敗:', error);
+                    this.onVerificationFailed(error?.message || '驗證失敗');
+                    
+                    // 清理容器
+                    if (container && container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
+                }
+            });
+            
+            console.log('📱 打開 IDKit 驗證視窗...');
+            widget.open();
+            
+        } catch (error) {
+            console.error('創建 IDKit Widget 失敗:', error);
+            // 清理容器
+            if (container && container.parentNode) {
+                container.parentNode.removeChild(container);
+            }
+            throw error;
+        }
     }
 
     async verifyProofWithBackend(payload) {
