@@ -1,10 +1,12 @@
 // World MiniKit 整合
-// 版本: v1.2.1
-// 參考文檔: https://docs.world.org/mini-apps/commands/verify
-// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone UMD)
+// 版本: v1.2.2
+// 參考文檔: 
+// - MiniKit: https://docs.world.org/mini-apps/commands/verify
+// - IDKit: https://docs.world.org/world-id/reference/idkit
+// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone)
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.2.1';
+        this.version = 'v1.2.2';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -263,24 +265,18 @@ class WorldMiniKit {
                 verification_level: 'orb'
             });
             
-            // 使用 IDKit.init() 和 IDKit.open() - 參考官方示例
+            // 使用 IDKit.init() 和 IDKit.open() - 參考官方文檔
+            // https://docs.world.org/world-id/reference/idkit#idkit-standalone
             window.IDKit.init({
                 app_id: this.appId,
                 action: this.actionId,
                 signal: signal,
                 verification_level: 'orb',
+                // handleVerify 用於後端驗證（在用戶看到成功畫面前）
                 handleVerify: async (result) => {
                     console.log('🔄 handleVerify 被調用:', result);
-                    // 這裡可以做前端驗證，返回 Promise
-                    return true;
-                },
-                onSuccess: async (result) => {
-                    console.log('✅ IDKit 驗證成功!', result);
                     
-                    self.isVerified = true;
-                    self.verificationLevel = result.verification_level;
-                    
-                    // 構造與 MiniKit 相同格式的 payload
+                    // 構造 payload
                     const payload = {
                         proof: result.proof,
                         merkle_root: result.merkle_root,
@@ -289,21 +285,33 @@ class WorldMiniKit {
                         signal: signal
                     };
                     
-                    // 向後端驗證 proof
+                    console.log('📤 向後端驗證 proof...');
+                    
+                    // 向後端驗證，如果驗證失敗會拋出錯誤
                     const isValid = await self.verifyProofWithBackend(payload);
                     
-                    if (isValid) {
-                        self.onVerificationSuccess(
-                            result.verification_level,
-                            result.nullifier_hash
-                        );
-                    } else {
+                    if (!isValid) {
                         throw new Error('後端驗證失敗');
                     }
+                    
+                    console.log('✅ 後端驗證成功');
                 },
+                // onSuccess 只在 handleVerify 成功後調用
+                onSuccess: (result) => {
+                    console.log('✅ IDKit 驗證完全成功!', result);
+                    
+                    self.isVerified = true;
+                    self.verificationLevel = result.verification_level;
+                    
+                    self.onVerificationSuccess(
+                        result.verification_level,
+                        result.nullifier_hash
+                    );
+                },
+                // onError 處理所有錯誤
                 onError: (error) => {
                     console.error('❌ IDKit 驗證失敗:', error);
-                    self.onVerificationFailed(error?.message || '驗證失敗');
+                    self.onVerificationFailed(error?.detail || error?.message || '驗證失敗');
                 }
             });
             
