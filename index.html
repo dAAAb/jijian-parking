@@ -26,24 +26,18 @@
             <h1 class="game-title">極簡停車</h1>
             <p class="subtitle">單手操作 · 輕鬆上手</p>
             
-            <!-- World ID 真人驗證 -->
-            <div id="verify-section">
-                <button id="verify-world-id-btn" class="main-btn verify-btn">
-                    🌍 使用 World ID 驗證
-                </button>
-                <button id="skip-verification-btn" class="secondary-btn skip-btn">
-                    ⏳ 跳過驗證（測試模式）
-                </button>
-                <div id="verify-info" class="verify-info hidden">
-                    <p>✅ 真人驗證成功</p>
-                    <p class="verify-level">📱 裝置驗證</p>
-                </div>
-                <p class="verify-hint">
-                    驗證真人身份以獲得完整體驗
-                </p>
+            <!-- World ID 驗證按鈕 -->
+            <button id="verify-world-id-btn" class="secondary-btn verify-btn">
+                🌍 World ID 驗證
+            </button>
+            
+            <!-- 驗證狀態顯示 -->
+            <div id="verification-status" class="verification-status">
+                <span class="status-unverified">⚠️ 未驗證</span>
             </div>
             
-            <button id="start-btn" class="main-btn" disabled>開始遊戲</button>
+            <!-- 開始遊戲按鈕 -->
+            <button id="start-btn" class="main-btn">開始遊戲</button>
             
             <div class="instructions">
                 <p>📱 單手拖動螢幕控制方向</p>

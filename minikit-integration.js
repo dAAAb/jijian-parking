@@ -34,12 +34,6 @@ class WorldMiniKit {
                 
                 this.isInitialized = true;
                 this.setupWorldAppFeatures();
-                
-                // 自動觸發驗證流程（延遲 1 秒讓 UI 載入完成）
-                setTimeout(() => {
-                    console.log('🚀 自動觸發 World ID 驗證...');
-                    this.autoTriggerVerification();
-                }, 1000);
             } else {
                 console.log('🌐 在普通瀏覽器中運行（開發模式）');
                 this.fallbackMode();
@@ -53,22 +47,17 @@ class WorldMiniKit {
     fallbackMode() {
         // 非 World App 環境的降級模式
         console.log('啟用降級模式');
-        const startBtn = document.getElementById('start-btn');
-        const verifySection = document.getElementById('verify-section');
+        const verifyBtn = document.getElementById('verify-world-id-btn');
         
-        if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.textContent = '開始遊戲（開發模式）';
-        }
-        
-        // 在開發模式下隱藏驗證區塊
-        if (verifySection) {
-            verifySection.style.display = 'none';
+        // 在開發模式下隱藏驗證按鈕
+        if (verifyBtn) {
+            verifyBtn.style.display = 'none';
         }
         
         // 在開發模式下自動標記為已驗證
         this.isVerified = true;
         this.verificationLevel = 'device';
+        this.updateVerificationStatus(true, 'device');
     }
 
     setupWorldAppFeatures() {
@@ -78,12 +67,6 @@ class WorldMiniKit {
             verifyBtn.addEventListener('click', () => this.verifyWorldID());
         }
 
-        // 設置跳過驗證按鈕
-        const skipBtn = document.getElementById('skip-verification-btn');
-        if (skipBtn) {
-            skipBtn.addEventListener('click', () => this.skipVerification());
-        }
-
         // 設置分享按鈕
         const shareBtn = document.getElementById('share-btn');
         if (shareBtn) {
@@ -91,81 +74,17 @@ class WorldMiniKit {
         }
     }
 
-    autoTriggerVerification() {
-        // 自動觸發驗證（在 World App 中）
-        const verifyBtn = document.getElementById('verify-world-id-btn');
-        if (verifyBtn && !this.isVerified) {
-            // 顯示驗證提示
-            console.log('顯示驗證選項...');
-            this.showVerificationDialog();
+    updateVerificationStatus(isVerified, level = null) {
+        const statusDiv = document.getElementById('verification-status');
+        
+        if (!statusDiv) return;
+        
+        if (isVerified) {
+            const levelText = level === 'orb' ? '🌐 Orb' : '📱 裝置';
+            statusDiv.innerHTML = `<span class="status-verified">✅ 已通過真人驗證 (${levelText})</span>`;
+        } else {
+            statusDiv.innerHTML = `<span class="status-unverified">⚠️ 未驗證</span>`;
         }
-    }
-
-    showVerificationDialog() {
-        // 顯示驗證對話框並添加動畫
-        const verifySection = document.getElementById('verify-section');
-        const verifyBtn = document.getElementById('verify-world-id-btn');
-        const skipBtn = document.getElementById('skip-verification-btn');
-        
-        console.log('👀 驗證區塊元素:', verifySection);
-        console.log('👀 驗證按鈕:', verifyBtn);
-        console.log('👀 跳過按鈕:', skipBtn);
-        
-        if (verifySection) {
-            verifySection.style.display = 'block';
-            verifySection.style.opacity = '1';
-        }
-        
-        // 添加脈衝動畫提示用戶
-        if (verifyBtn) {
-            verifyBtn.style.display = 'block';
-            verifyBtn.style.animation = 'pulse 1.5s infinite';
-        }
-        
-        if (skipBtn) {
-            skipBtn.style.display = 'block';
-        }
-        
-        console.log('✅ 驗證選項已顯示');
-    }
-
-    skipVerification() {
-        console.log('⏳ 用戶選擇跳過驗證（測試模式）');
-        
-        this.isVerified = false; // 標記為未驗證
-        this.verificationLevel = 'skipped';
-        
-        const verifyBtn = document.getElementById('verify-world-id-btn');
-        const skipBtn = document.getElementById('skip-verification-btn');
-        const verifyInfo = document.getElementById('verify-info');
-        const startBtn = document.getElementById('start-btn');
-        
-        if (verifyBtn) {
-            verifyBtn.style.display = 'none';
-        }
-        
-        if (skipBtn) {
-            skipBtn.style.display = 'none';
-        }
-        
-        // 顯示跳過狀態
-        if (verifyInfo) {
-            verifyInfo.classList.remove('hidden');
-            verifyInfo.innerHTML = `
-                <p class="skip-status">⏳ 測試模式</p>
-                <p class="verify-level">未完成真人驗證</p>
-            `;
-            verifyInfo.style.background = 'rgba(255, 193, 7, 0.2)';
-            verifyInfo.style.borderColor = 'rgba(255, 193, 7, 0.5)';
-        }
-        
-        // 更新開始按鈕（沙漏圖示）
-        if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.innerHTML = '⏳ 開始遊戲（測試）';
-        }
-        
-        this.sendHapticFeedback('medium');
     }
 
     async verifyWorldID() {
@@ -173,6 +92,8 @@ class WorldMiniKit {
             console.log('開始 World ID 驗證...');
             
             const verifyBtn = document.getElementById('verify-world-id-btn');
+            const originalText = verifyBtn?.textContent || '';
+            
             if (verifyBtn) {
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = '驗證中...';
@@ -286,34 +207,13 @@ class WorldMiniKit {
         this.verificationLevel = level;
         this.nullifierHash = nullifierHash;
         
-        const verifyBtn = document.getElementById('verify-world-id-btn');
-        const skipBtn = document.getElementById('skip-verification-btn');
-        const verifyInfo = document.getElementById('verify-info');
-        const startBtn = document.getElementById('start-btn');
+        // 更新驗證狀態顯示
+        this.updateVerificationStatus(true, level);
         
+        // 隱藏驗證按鈕
+        const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
             verifyBtn.style.display = 'none';
-        }
-        
-        if (skipBtn) {
-            skipBtn.style.display = 'none';
-        }
-        
-        if (verifyInfo) {
-            verifyInfo.classList.remove('hidden');
-            const levelText = level === 'orb' ? '🌐 Orb 驗證' : '📱 裝置驗證';
-            verifyInfo.innerHTML = `
-                <p>✅ 真人驗證成功</p>
-                <p class="verify-level">${levelText}</p>
-            `;
-            verifyInfo.style.background = 'rgba(46, 204, 113, 0.2)';
-            verifyInfo.style.borderColor = 'rgba(46, 204, 113, 0.5)';
-        }
-        
-        // 更新開始按鈕（打勾圖示）
-        if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.innerHTML = '✅ 開始遊戲（已驗證）';
         }
     }
 
@@ -323,7 +223,7 @@ class WorldMiniKit {
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
             verifyBtn.disabled = false;
-            verifyBtn.textContent = '🌍 使用 World ID 驗證';
+            verifyBtn.textContent = '🌍 World ID 驗證';
         }
         
         alert(`驗證失敗：${message}\n\n請確保你已經設置了 World ID。`);

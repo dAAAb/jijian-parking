@@ -121,39 +121,28 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
-#verify-section {
-    margin: 20px 0;
-}
-
 .verify-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
-    margin-bottom: 10px;
+    margin: 20px 0 15px 0;
 }
 
-.skip-btn {
-    background: rgba(255, 193, 7, 0.2);
-    border-color: rgba(255, 193, 7, 0.5);
+.verification-status {
+    margin: 15px 0 25px 0;
+    padding: 12px 20px;
+    border-radius: 25px;
+    text-align: center;
+}
+
+.status-unverified {
     color: #ffc107;
     font-size: 0.9em;
-    padding: 12px 30px;
-    margin-top: 10px;
+    font-weight: normal;
 }
 
-.skip-btn:active {
-    background: rgba(255, 193, 7, 0.3);
-}
-
-.skip-status {
-    color: #ffc107 !important;
-}
-
-.verify-info {
-    background: rgba(46, 204, 113, 0.2);
-    border: 2px solid rgba(46, 204, 113, 0.5);
-    border-radius: 15px;
-    padding: 15px;
-    margin-top: 15px;
+.status-verified {
+    color: #2ecc71;
+    font-size: 1em;
+    font-weight: bold;
+    display: inline-block;
     animation: successPulse 0.5s ease;
 }
 
@@ -169,26 +158,6 @@ body {
         transform: scale(1);
         opacity: 1;
     }
-}
-
-.verify-info p {
-    color: #2ecc71;
-    margin: 5px 0;
-    font-size: 1.1em;
-    font-weight: bold;
-}
-
-.verify-level {
-    font-size: 0.95em !important;
-    opacity: 0.9;
-    font-weight: normal !important;
-}
-
-.verify-hint {
-    color: #aaa;
-    font-size: 0.9em;
-    margin-top: 10px;
-    font-style: italic;
 }
 
 /* 遊戲 UI */
