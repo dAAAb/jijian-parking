@@ -22,3 +22,7 @@ config.local.js
 *-secret.js
 api-keys.txt
 
+
+# 服務器日誌
+server.log
+ngrok.log
