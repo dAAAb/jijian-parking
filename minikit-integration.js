@@ -1,10 +1,10 @@
 // World MiniKit 整合
-// 版本: v1.1.3
+// 版本: v1.2.0
 // 參考文檔: https://docs.world.org/mini-apps/commands/verify
-// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKitWidget)
+// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone)
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.1.3';
+        this.version = 'v1.2.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -227,38 +227,38 @@ class WorldMiniKit {
     async verifyWithIDKit() {
         console.log('🌐 使用 IDKit 驗證（網頁瀏覽器）');
         
-        // 等待 IDKitWidget 加載
+        // 等待 IDKit 加載
         let retries = 0;
-        while (typeof window.IDKitWidget === 'undefined' && retries < 10) {
-            console.log('等待 IDKitWidget 加載...', retries);
+        while (typeof window.IDKit === 'undefined' && retries < 10) {
+            console.log('等待 IDKit 加載...', retries);
             await new Promise(resolve => setTimeout(resolve, 500));
             retries++;
         }
         
-        if (typeof window.IDKitWidget === 'undefined') {
-            console.error('IDKitWidget 未找到');
+        if (typeof window.IDKit === 'undefined') {
+            console.error('IDKit 未找到');
             throw new Error('IDKit 未加載，請重新整理頁面');
         }
         
-        console.log('✅ IDKitWidget 已加載', window.IDKitWidget);
+        console.log('✅ IDKit 已加載', window.IDKit);
         
         const signal = this.generateNonce();
         const self = this;
         
-        // 創建 IDKit Widget 容器
-        const container = document.createElement('div');
-        container.id = 'idkit-container';
-        document.body.appendChild(container);
-        
         try {
-            // 使用 IDKitWidget (直接調用，不是 create)
-            console.log('📱 初始化 IDKit Widget...');
+            console.log('📱 初始化 IDKit...');
             
-            const widget = new window.IDKitWidget({
+            // 使用 IDKit.init() 和 IDKit.open() - 參考官方示例
+            window.IDKit.init({
                 app_id: this.appId,
                 action: this.actionId,
                 signal: signal,
                 verification_level: 'orb',
+                handleVerify: async (result) => {
+                    console.log('🔄 handleVerify 被調用:', result);
+                    // 這裡可以做前端驗證，返回 Promise
+                    return true;
+                },
                 onSuccess: async (result) => {
                     console.log('✅ IDKit 驗證成功!', result);
                     
@@ -285,31 +285,18 @@ class WorldMiniKit {
                     } else {
                         throw new Error('後端驗證失敗');
                     }
-                    
-                    // 清理容器
-                    if (container && container.parentNode) {
-                        container.parentNode.removeChild(container);
-                    }
                 },
                 onError: (error) => {
                     console.error('❌ IDKit 驗證失敗:', error);
                     self.onVerificationFailed(error?.message || '驗證失敗');
-                    
-                    // 清理容器
-                    if (container && container.parentNode) {
-                        container.parentNode.removeChild(container);
-                    }
                 }
-            }, container);
+            });
             
             console.log('📱 打開 IDKit 驗證視窗...');
+            await window.IDKit.open();
             
         } catch (error) {
-            console.error('創建 IDKit Widget 失敗:', error);
-            // 清理容器
-            if (container && container.parentNode) {
-                container.parentNode.removeChild(container);
-            }
+            console.error('IDKit 錯誤:', error);
             throw error;
         }
     }
