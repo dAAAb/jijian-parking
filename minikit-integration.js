@@ -46,18 +46,18 @@ class WorldMiniKit {
 
     fallbackMode() {
         // 非 World App 環境的降級模式
-        console.log('啟用降級模式');
+        console.log('啟用降級模式：普通瀏覽器環境');
         const verifyBtn = document.getElementById('verify-world-id-btn');
         
-        // 在開發模式下隱藏驗證按鈕
+        // 在開發模式下隱藏驗證按鈕（因為無法在普通瀏覽器中驗證）
         if (verifyBtn) {
             verifyBtn.style.display = 'none';
         }
         
-        // 在開發模式下自動標記為已驗證
-        this.isVerified = true;
-        this.verificationLevel = 'device';
-        this.updateVerificationStatus(true, 'device');
+        // 保持未驗證狀態，顯示「⚠️ 未驗證」
+        // 但仍然允許玩遊戲（不強制驗證）
+        this.isVerified = false;
+        this.verificationLevel = null;
     }
 
     setupWorldAppFeatures() {
