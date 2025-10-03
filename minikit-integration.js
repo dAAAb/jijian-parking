@@ -1,10 +1,10 @@
 // World MiniKit 整合
-// 版本: v1.2.0
+// 版本: v1.2.1
 // 參考文檔: https://docs.world.org/mini-apps/commands/verify
-// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone)
+// 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone UMD)
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.2.0';
+        this.version = 'v1.2.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -116,16 +116,16 @@ class WorldMiniKit {
     }
 
     async verifyWorldID() {
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        
         try {
             console.log('🔐 開始 World ID 驗證...');
             console.log('環境檢查:', {
                 isWorldApp: this.isWorldApp,
                 hasMiniKit: typeof MiniKit !== 'undefined',
-                hasIDKit: typeof IDKit !== 'undefined',
+                hasIDKit: typeof window.IDKit !== 'undefined',
                 backendUrl: this.backendUrl
             });
-            
-            const verifyBtn = document.getElementById('verify-world-id-btn');
             
             if (verifyBtn) {
                 verifyBtn.disabled = true;
@@ -141,8 +141,15 @@ class WorldMiniKit {
                 await this.verifyWithIDKit();
             }
         } catch (error) {
-            console.error('World ID 驗證錯誤:', error);
+            console.error('❌ World ID 驗證錯誤:', error);
+            console.error('錯誤堆疊:', error.stack);
             this.onVerificationFailed(error.message || '驗證過程發生錯誤');
+            
+            // 恢復按鈕狀態
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '🌍 World ID 驗證';
+            }
         }
     }
 
@@ -229,24 +236,32 @@ class WorldMiniKit {
         
         // 等待 IDKit 加載
         let retries = 0;
-        while (typeof window.IDKit === 'undefined' && retries < 10) {
-            console.log('等待 IDKit 加載...', retries);
-            await new Promise(resolve => setTimeout(resolve, 500));
+        while (typeof window.IDKit === 'undefined' && retries < 20) {
+            console.log(`等待 IDKit 加載... (${retries}/20)`);
+            await new Promise(resolve => setTimeout(resolve, 300));
             retries++;
         }
         
         if (typeof window.IDKit === 'undefined') {
-            console.error('IDKit 未找到');
+            console.error('❌ IDKit 未找到，請檢查 CDN 是否加載');
+            console.log('當前 window 對象中的 World 相關屬性:', Object.keys(window).filter(k => k.includes('ID') || k.includes('World')));
             throw new Error('IDKit 未加載，請重新整理頁面');
         }
         
-        console.log('✅ IDKit 已加載', window.IDKit);
+        console.log('✅ IDKit 已加載', typeof window.IDKit);
+        console.log('IDKit 方法:', Object.keys(window.IDKit));
         
         const signal = this.generateNonce();
         const self = this;
         
         try {
             console.log('📱 初始化 IDKit...');
+            console.log('配置參數:', {
+                app_id: this.appId,
+                action: this.actionId,
+                signal: signal,
+                verification_level: 'orb'
+            });
             
             // 使用 IDKit.init() 和 IDKit.open() - 參考官方示例
             window.IDKit.init({
@@ -292,11 +307,15 @@ class WorldMiniKit {
                 }
             });
             
+            console.log('✅ IDKit 初始化完成');
             console.log('📱 打開 IDKit 驗證視窗...');
+            
             await window.IDKit.open();
+            console.log('✅ IDKit.open() 調用完成');
             
         } catch (error) {
-            console.error('IDKit 錯誤:', error);
+            console.error('💥 IDKit 錯誤:', error);
+            console.error('錯誤詳情:', error.message, error.stack);
             throw error;
         }
     }
@@ -384,7 +403,11 @@ class WorldMiniKit {
             verifyBtn.textContent = '🌍 World ID 驗證';
         }
         
-        alert(`驗證失敗：${message}\n\n請確保你已經設置了 World ID。`);
+        // 顯示更詳細的錯誤訊息
+        const errorMsg = `驗證失敗：${message}\n\n請確保你已經設置了 World ID。`;
+        console.error('完整錯誤訊息:', errorMsg);
+        alert(errorMsg);
+        
         this.sendHapticFeedback('error');
     }
 
