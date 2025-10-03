@@ -11,8 +11,9 @@
     <!-- World MiniKit SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@0.0.68/dist/minikit.js"></script>
     
-    <!-- 本地配置（包含 API Key，不會提交到 Git） -->
-    <script src="config.local.js"></script>
+    <!-- 配置文件 -->
+    <script src="config.js"></script> <!-- 公開配置（GitHub Pages）-->
+    <script src="config.local.js" onerror="console.log('本地配置未找到，使用默認配置')"></script> <!-- 本地覆蓋（開發用）-->
 </head>
 <body>
     <!-- 遊戲容器 -->

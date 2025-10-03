@@ -14,6 +14,13 @@ class WorldMiniKit {
         this.apiKey = config.WORLD_API_KEY || null; // API Key（僅用於後端驗證）
         this.backendUrl = config.BACKEND_URL || null;
         
+        console.log('🔧 WorldMiniKit 配置:', {
+            appId: this.appId,
+            actionId: this.actionId,
+            backendUrl: this.backendUrl,
+            hasApiKey: !!this.apiKey
+        });
+        
         this.init();
     }
 
@@ -91,13 +98,18 @@ class WorldMiniKit {
 
     async verifyWorldID() {
         try {
-            console.log('開始 World ID 驗證...');
+            console.log('🔐 開始 World ID 驗證...');
+            console.log('環境檢查:', {
+                isWorldApp: this.isWorldApp,
+                hasMiniKit: typeof MiniKit !== 'undefined',
+                backendUrl: this.backendUrl
+            });
             
             const verifyBtn = document.getElementById('verify-world-id-btn');
             
             // 如果不在 World App 環境中，顯示提示訊息
             if (!this.isWorldApp) {
-                console.warn('嘗試在非 World App 環境中進行驗證');
+                console.warn('⚠️ 嘗試在非 World App 環境中進行驗證');
                 alert('⚠️ 無法驗證\n\n此功能僅支援在 World App 中使用。\n請在 World App 中打開此 Mini App 以進行真人驗證。');
                 return;
             }
@@ -107,6 +119,8 @@ class WorldMiniKit {
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = '驗證中...';
             }
+            
+            console.log('📱 調用 MiniKit.commandsAsync.verify...');
             
             // 使用 MiniKit 進行 World ID 驗證
             const { finalPayload } = await MiniKit.commandsAsync.verify({
