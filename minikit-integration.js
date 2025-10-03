@@ -1,6 +1,8 @@
 // World MiniKit 整合
+// 版本: v1.0.1
 class WorldMiniKit {
     constructor() {
+        this.version = 'v1.0.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -14,7 +16,9 @@ class WorldMiniKit {
         this.apiKey = config.WORLD_API_KEY || null; // API Key（僅用於後端驗證）
         this.backendUrl = config.BACKEND_URL || null;
         
+        console.log(`🎮 極簡停車 ${this.version}`);
         console.log('🔧 WorldMiniKit 配置:', {
+            version: this.version,
             appId: this.appId,
             actionId: this.actionId,
             backendUrl: this.backendUrl,
