@@ -1,0 +1,8 @@
+# 不上傳這些文件到 Vercel
+node_modules
+.git
+*.log
+config.local.js
+.env
+.env.local
+
