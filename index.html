@@ -19,6 +19,12 @@
     <script src="config.local.js" onerror="console.log('本地配置未找到，使用默認配置')"></script> <!-- 本地覆蓋（開發用）-->
 </head>
 <body>
+    <!-- 驗證徽章（藍勾勾）- 遊戲中持續顯示 -->
+    <div id="verification-badge" class="verification-badge hidden">
+        <div class="badge-icon">✓</div>
+        <div class="badge-tooltip">已驗證真人</div>
+    </div>
+
     <!-- 遊戲容器 -->
     <div id="game-container">
         <!-- Three.js 畫布會插入這裡 -->
@@ -113,7 +119,7 @@
     </div>
 
     <!-- 版本號 -->
-    <div class="version">v1.2.2</div>
+    <div class="version">v1.3.0</div>
 
     <!-- 載入 Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

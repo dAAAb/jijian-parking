@@ -1,12 +1,13 @@
 // World MiniKit 整合
-// 版本: v1.2.2
-// 參考文檔: 
+// 版本: v1.3.0
+// 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
 // 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone)
+// 新增：藍勾勾驗證徽章 + 測試模式
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.2.2';
+        this.version = 'v1.3.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -19,16 +20,22 @@ class WorldMiniKit {
         this.actionId = config.ACTION_ID || 'verifyparkinggame';
         this.apiKey = config.WORLD_API_KEY || null; // API Key（僅用於後端驗證）
         this.backendUrl = config.BACKEND_URL || null;
-        
+
+        // 測試模式：允許在普通瀏覽器中模擬驗證
+        // 可以通過 URL 參數 ?test=1 或 config.TEST_MODE 啟用
+        const urlParams = new URLSearchParams(window.location.search);
+        this.testMode = urlParams.get('test') === '1' || config.TEST_MODE === true;
+
         console.log(`🎮 極簡停車 ${this.version}`);
         console.log('🔧 WorldMiniKit 配置:', {
             version: this.version,
             appId: this.appId,
             actionId: this.actionId,
             backendUrl: this.backendUrl,
-            hasApiKey: !!this.apiKey
+            hasApiKey: !!this.apiKey,
+            testMode: this.testMode
         });
-        
+
         this.init();
     }
 
@@ -104,36 +111,71 @@ class WorldMiniKit {
         }
     }
 
-    updateVerificationStatus(isVerified, level = null) {
+    updateVerificationStatus(isVerified, level = null, isTestMode = false) {
         const statusDiv = document.getElementById('verification-status');
-        
-        if (!statusDiv) return;
-        
-        if (isVerified) {
-            const levelText = level === 'orb' ? '🌐 Orb' : '📱 裝置';
-            statusDiv.innerHTML = `<span class="status-verified">✅ 已通過真人驗證 (${levelText})</span>`;
-        } else {
-            statusDiv.innerHTML = `<span class="status-unverified">⚠️ 未驗證</span>`;
+        const badge = document.getElementById('verification-badge');
+
+        if (statusDiv) {
+            if (isVerified) {
+                const levelText = level === 'orb' ? '🌐 Orb' : '📱 裝置';
+                const testLabel = isTestMode ? ' (測試)' : '';
+                statusDiv.innerHTML = `<span class="status-verified">✅ 已通過真人驗證 (${levelText})${testLabel}</span>`;
+            } else {
+                statusDiv.innerHTML = `<span class="status-unverified">⚠️ 未驗證</span>`;
+            }
+        }
+
+        // 顯示/隱藏藍勾勾徽章
+        if (badge) {
+            if (isVerified) {
+                badge.classList.remove('hidden');
+
+                // 根據驗證等級添加特殊樣式
+                if (level === 'orb') {
+                    badge.classList.add('orb-verified');
+                }
+
+                // 測試模式特殊樣式
+                if (isTestMode) {
+                    badge.classList.add('test-mode');
+                    badge.querySelector('.badge-tooltip').textContent = '測試驗證';
+                } else {
+                    badge.querySelector('.badge-tooltip').textContent = level === 'orb' ? 'Orb 驗證' : '已驗證真人';
+                }
+
+                console.log('🔵 藍勾勾徽章已顯示');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('orb-verified', 'test-mode');
+            }
         }
     }
 
     async verifyWorldID() {
         const verifyBtn = document.getElementById('verify-world-id-btn');
-        
+
         try {
             console.log('🔐 開始 World ID 驗證...');
             console.log('環境檢查:', {
                 isWorldApp: this.isWorldApp,
                 hasMiniKit: typeof MiniKit !== 'undefined',
                 hasIDKit: typeof window.IDKit !== 'undefined',
-                backendUrl: this.backendUrl
+                backendUrl: this.backendUrl,
+                testMode: this.testMode
             });
-            
+
             if (verifyBtn) {
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = '驗證中...';
             }
-            
+
+            // 測試模式：模擬驗證成功
+            if (this.testMode && !this.isWorldApp) {
+                console.log('🧪 測試模式：模擬驗證');
+                await this.simulateVerification();
+                return;
+            }
+
             // 根據環境選擇驗證方式
             if (this.isWorldApp) {
                 // World App 環境：使用 MiniKit
@@ -146,13 +188,29 @@ class WorldMiniKit {
             console.error('❌ World ID 驗證錯誤:', error);
             console.error('錯誤堆疊:', error.stack);
             this.onVerificationFailed(error.message || '驗證過程發生錯誤');
-            
+
             // 恢復按鈕狀態
             if (verifyBtn) {
                 verifyBtn.disabled = false;
                 verifyBtn.textContent = '🌍 World ID 驗證';
             }
         }
+    }
+
+    // 測試模式：模擬驗證成功
+    async simulateVerification() {
+        console.log('🧪 模擬驗證流程...');
+
+        // 模擬 1.5 秒的驗證延遲
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // 模擬成功
+        this.isVerified = true;
+        this.verificationLevel = 'orb'; // 模擬 Orb 驗證
+
+        this.onVerificationSuccess('orb', 'test_nullifier_' + Date.now(), true);
+
+        console.log('✅ 測試驗證完成');
     }
 
     async verifyWithMiniKit() {
@@ -213,9 +271,9 @@ class WorldMiniKit {
                 if (isValid) {
                     this.onVerificationSuccess(
                         finalPayload.verification_level,
-                        finalPayload.nullifier_hash
+                        finalPayload.nullifier_hash,
+                        false // 不是測試模式
                     );
-                    this.sendHapticFeedback('success');
                 } else {
                     throw new Error('後端驗證失敗');
                 }
@@ -385,20 +443,25 @@ class WorldMiniKit {
         }
     }
 
-    onVerificationSuccess(level, nullifierHash) {
-        console.log('✅ 驗證成功!', { level, nullifierHash });
-        
+    onVerificationSuccess(level, nullifierHash, isTestMode = false) {
+        console.log('✅ 驗證成功!', { level, nullifierHash, isTestMode });
+
         this.isVerified = true;
         this.verificationLevel = level;
         this.nullifierHash = nullifierHash;
-        
-        // 更新驗證狀態顯示
-        this.updateVerificationStatus(true, level);
-        
+
+        // 更新驗證狀態顯示（包含藍勾勾徽章）
+        this.updateVerificationStatus(true, level, isTestMode);
+
         // 隱藏驗證按鈕
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
             verifyBtn.style.display = 'none';
+        }
+
+        // 如果不是測試模式，發送成功震動
+        if (!isTestMode) {
+            this.sendHapticFeedback('success');
         }
     }
 
