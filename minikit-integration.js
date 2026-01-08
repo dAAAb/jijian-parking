@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.3
+// 版本: v1.5.2
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -10,10 +10,9 @@
 // v1.5.0: 手機瀏覽器使用 IDKitSession API + polling 機制
 // v1.5.1: MiniKit 驗證也移除 signal 參數（與 API v2 一致）
 // v1.5.2: 修復 race condition - 防止 polling 和 visibilitychange 重複驗證
-// v1.5.3: 處理 already_verified 為成功 + 顯示用戶 ID
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.3';
+        this.version = 'v1.5.2';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -161,7 +160,7 @@ class WorldMiniKit {
         }
     }
 
-    updateVerificationStatus(isVerified, level = null, isTestMode = false, nullifierHash = null) {
+    updateVerificationStatus(isVerified, level = null, isTestMode = false) {
         const statusDiv = document.getElementById('verification-status');
         const badge = document.getElementById('verification-badge');
 
@@ -169,9 +168,7 @@ class WorldMiniKit {
             if (isVerified) {
                 const levelText = level === 'orb' ? '🌐 Orb' : '📱 裝置';
                 const testLabel = isTestMode ? ' (測試)' : '';
-                // 顯示 nullifier_hash 前 10 字元作為用戶標識
-                const userIdDisplay = nullifierHash ? `<br><small style="color: #888; font-size: 0.75em;">ID: ${nullifierHash.substring(0, 10)}...</small>` : '';
-                statusDiv.innerHTML = `<span class="status-verified">✅ 已通過真人驗證 (${levelText})${testLabel}</span>${userIdDisplay}`;
+                statusDiv.innerHTML = `<span class="status-verified">✅ 已通過真人驗證 (${levelText})${testLabel}</span>`;
             } else {
                 statusDiv.innerHTML = `<span class="status-unverified">⚠️ 未驗證</span>`;
             }
@@ -948,8 +945,8 @@ class WorldMiniKit {
         this.verificationLevel = level;
         this.nullifierHash = nullifierHash;
 
-        // 更新驗證狀態顯示（包含藍勾勾徽章和用戶 ID）
-        this.updateVerificationStatus(true, level, isTestMode, nullifierHash);
+        // 更新驗證狀態顯示（包含藍勾勾徽章）
+        this.updateVerificationStatus(true, level, isTestMode);
 
         // 隱藏驗證按鈕
         const verifyBtn = document.getElementById('verify-world-id-btn');
