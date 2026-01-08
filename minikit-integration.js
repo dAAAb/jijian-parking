@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.1
+// 版本: v1.5.2
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -9,9 +9,10 @@
 // v1.4.1: 等待 MiniKit 初始化 + 改進錯誤訊息
 // v1.5.0: 手機瀏覽器使用 IDKitSession API + polling 機制
 // v1.5.1: MiniKit 驗證也移除 signal 參數（與 API v2 一致）
+// v1.5.2: 修復 race condition - 防止 polling 和 visibilitychange 重複驗證
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.1';
+        this.version = 'v1.5.2';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -389,6 +390,7 @@ class WorldMiniKit {
 
             let pollingInterval = null;
             let isCompleted = false;
+            let isVerifying = false; // 防止重複調用後端驗證
 
             // 開始 Polling
             const startPolling = () => {
@@ -410,6 +412,9 @@ class WorldMiniKit {
                         console.log('📊 Polling 狀態:', status);
 
                         if (status.state === 'confirmed' && status.result) {
+                            // 立即設置標記防止重複處理
+                            if (isCompleted || isVerifying) return;
+                            isVerifying = true;
                             isCompleted = true;
                             clearInterval(pollingInterval);
 
@@ -532,8 +537,9 @@ class WorldMiniKit {
                             const status = await window.IDKitSession.pollStatus();
                             console.log('📱 回來後的狀態:', JSON.stringify(status, null, 2));
 
-                            // 手動處理狀態
-                            if (status.state === 'confirmed' && status.result && !isCompleted) {
+                            // 手動處理狀態（檢查 isVerifying 防止重複調用後端）
+                            if (status.state === 'confirmed' && status.result && !isCompleted && !isVerifying) {
+                                isVerifying = true;
                                 isCompleted = true;
                                 if (pollingInterval) clearInterval(pollingInterval);
 
