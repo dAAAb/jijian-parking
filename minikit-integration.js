@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.7.5
+// 版本: v1.7.6
 // 重要：MiniKit 現在用 dynamic import 在這裡加載
 // v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
@@ -104,9 +104,10 @@
 // v1.7.3: 等待 window.WorldApp 注入後再調用 install()
 // v1.7.4: 移除調試信息，改用隱晦的進度條顯示載入狀態
 // v1.7.5: 改善 UI 文字 + 預載入 IDKit 加速桌面/手機瀏覽器響應
+// v1.7.6: 新增支援頁面、根目錄重定向
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.5';
+        this.version = 'v1.7.6';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -442,15 +443,14 @@ class WorldMiniKit {
 
         if (statusDiv) {
             if (isVerified) {
-                const levelText = level === 'orb' ? '🌐 Orb' : '📱 裝置';
-                const testLabel = isTestMode ? ' (測試)' : '';
-                // 顯示用戶 ID（nullifier_hash 前 10 字元）
+                const levelText = level === 'orb' ? '🌐 Orb' : '📱 Device';
+                const testLabel = isTestMode ? ' (Test)' : '';
                 const userIdDisplay = nullifierHash
                     ? `<br><small style="color: #888; font-size: 0.75em;">ID: ${nullifierHash.substring(0, 10)}...</small>`
                     : '';
-                statusDiv.innerHTML = `<span class="status-verified">✅ 已通過真人驗證 (${levelText})${testLabel}</span>${userIdDisplay}`;
+                statusDiv.innerHTML = `<span class="status-verified">✅ Verified (${levelText})${testLabel}</span>${userIdDisplay}`;
             } else {
-                statusDiv.innerHTML = `<span class="status-unverified">⚠️ 未驗證</span>`;
+                statusDiv.innerHTML = `<span class="status-unverified">⚠️ Not Verified</span>`;
             }
         }
 
@@ -467,9 +467,9 @@ class WorldMiniKit {
                 // 測試模式特殊樣式
                 if (isTestMode) {
                     badge.classList.add('test-mode');
-                    badge.querySelector('.badge-tooltip').textContent = '測試驗證';
+                    badge.querySelector('.badge-tooltip').textContent = 'Test Mode';
                 } else {
-                    badge.querySelector('.badge-tooltip').textContent = level === 'orb' ? 'Orb 驗證' : '已驗證真人';
+                    badge.querySelector('.badge-tooltip').textContent = level === 'orb' ? 'Orb Verified' : 'Verified Human';
                 }
 
                 console.log('🔵 藍勾勾徽章已顯示');
@@ -500,7 +500,7 @@ class WorldMiniKit {
 
             if (verifyBtn) {
                 verifyBtn.disabled = true;
-                verifyBtn.textContent = '驗證中...';
+                verifyBtn.textContent = 'Verifying...';
             }
 
             // 測試模式：模擬驗證成功
@@ -526,7 +526,7 @@ class WorldMiniKit {
             if (mkInstalled) {
                 console.log('🌍 MiniKit.isInstalled() = true，使用 MiniKit 驗證');
                 if (verifyBtn) {
-                    verifyBtn.textContent = 'Mini App 驗證中...';
+                    verifyBtn.textContent = 'Verifying...';
                 }
                 await this.verifyWithMiniKit();
                 return;
@@ -550,7 +550,7 @@ class WorldMiniKit {
             // 恢復按鈕狀態
             if (verifyBtn) {
                 verifyBtn.disabled = false;
-                verifyBtn.textContent = '🌍 World ID 驗證';
+                verifyBtn.textContent = '🌍 Verify with World ID';
             }
         }
     }
@@ -641,8 +641,8 @@ class WorldMiniKit {
             dialog.innerHTML = `
                 <div style="margin-bottom: 20px;">
                     <div style="width: 60px; height: 60px; margin: 0 auto 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">🌍</div>
-                    <h3 style="margin: 0 0 10px; font-size: 1.3em;">World ID 驗證</h3>
-                    <p id="session-status" style="color: #aaa; margin: 0; font-size: 0.9em;">點擊下方按鈕開啟 World App 完成驗證</p>
+                    <h3 style="margin: 0 0 10px; font-size: 1.3em;">World ID Verification</h3>
+                    <p id="session-status" style="color: #aaa; margin: 0; font-size: 0.9em;">Tap the button below to open World App</p>
                 </div>
 
                 <a id="btn-open-worldapp-session" href="${sessionURI}" style="
@@ -659,12 +659,12 @@ class WorldMiniKit {
                     text-decoration: none;
                     text-align: center;
                     box-sizing: border-box;
-                ">🚀 開啟 World App</a>
+                ">🚀 Open World App</a>
 
                 <div id="polling-indicator" style="display: none; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: #667eea;">
                         <div class="spinner" style="width: 20px; height: 20px; border: 2px solid rgba(102, 126, 234, 0.3); border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                        <span>等待驗證完成...</span>
+                        <span>Waiting for verification...</span>
                     </div>
                 </div>
 
@@ -677,7 +677,7 @@ class WorldMiniKit {
                     color: #888;
                     font-size: 0.9em;
                     cursor: pointer;
-                ">取消</button>
+                ">Cancel</button>
 
                 <style>
                     @keyframes spin {
@@ -774,7 +774,7 @@ class WorldMiniKit {
                                     const verifyBtn = document.getElementById('verify-world-id-btn');
                                     if (verifyBtn) {
                                         verifyBtn.disabled = false;
-                                        verifyBtn.textContent = '🌍 World ID 驗證';
+                                        verifyBtn.textContent = '🌍 Verify with World ID';
                                     }
                                     resolve(); // 用 resolve 而不是 reject，避免觸發降級
                                 }, 3000);
@@ -821,7 +821,7 @@ class WorldMiniKit {
 
                 if (verifyBtn) {
                     verifyBtn.disabled = false;
-                    verifyBtn.textContent = '🌍 World ID 驗證';
+                    verifyBtn.textContent = '🌍 Verify with World ID';
                 }
                 resolve();
             };

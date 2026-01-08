@@ -1,130 +1,129 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>極簡停車 - Minimal Parking</title>
+    <title>Minimal Parking</title>
     <link rel="stylesheet" href="style.css">
-    
+
     <!-- World MiniKit SDK (for World App) -->
-    <!-- 注意：不在這裡加載 MiniKit，改到 body 底部用 dynamic import -->
-    
+    <!-- Note: MiniKit is loaded via dynamic import in minikit-integration.js -->
+
     <!-- World IDKit Standalone (for Web browsers) -->
     <script src="https://unpkg.com/@worldcoin/idkit-standalone@latest/build/index.global.js"></script>
-    
-    <!-- 配置文件 -->
-    <script src="config.js"></script> <!-- 公開配置（GitHub Pages）-->
-    <script src="config.local.js" onerror="console.log('本地配置未找到，使用默認配置')"></script> <!-- 本地覆蓋（開發用）-->
+
+    <!-- Config -->
+    <script src="config.js"></script>
+    <script src="config.local.js" onerror="console.log('Local config not found, using defaults')"></script>
 </head>
 <body>
-    <!-- 驗證徽章（藍勾勾）- 遊戲中持續顯示 -->
+    <!-- Verification Badge -->
     <div id="verification-badge" class="verification-badge hidden">
         <div class="badge-icon">✓</div>
-        <div class="badge-tooltip">已驗證真人</div>
+        <div class="badge-tooltip">Verified Human</div>
     </div>
 
-    <!-- 遊戲容器 -->
+    <!-- Game Container -->
     <div id="game-container">
-        <!-- Three.js 畫布會插入這裡 -->
+        <!-- Three.js canvas will be inserted here -->
     </div>
 
-    <!-- 開始畫面 -->
+    <!-- Start Screen -->
     <div id="start-screen" class="screen">
         <div class="content">
-            <h1 class="game-title">極簡停車</h1>
-            <p class="subtitle">單手操作 · 輕鬆上手</p>
-            
-            <!-- World ID 驗證按鈕 -->
+            <h1 class="game-title">Minimal Parking</h1>
+            <p class="subtitle">One-hand control · Easy to play</p>
+
+            <!-- World ID Verify Button -->
             <button id="verify-world-id-btn" class="secondary-btn verify-btn">
-                🌍 World ID 驗證
+                🌍 Verify with World ID
             </button>
-            
-            <!-- 驗證狀態顯示 -->
+
+            <!-- Verification Status -->
             <div id="verification-status" class="verification-status">
-                <span class="status-unverified">⚠️ 未驗證</span>
+                <span class="status-unverified">⚠️ Not Verified</span>
             </div>
-            
-            <!-- 開始遊戲按鈕 -->
-            <button id="start-btn" class="main-btn">開始遊戲</button>
-            
+
+            <!-- Start Game Button -->
+            <button id="start-btn" class="main-btn">Start Game</button>
+
             <div class="instructions">
-                <p>📱 單手拖動螢幕控制方向</p>
-                <p>🅿️ 將車停入發光的停車位</p>
-                <p>⚡ 越快完成，分數越高</p>
-                <p>💰 完成關卡賺取 WLD 獎勵</p>
-                <p>🔐 真人驗證，公平遊戲</p>
+                <p>📱 Drag screen to steer</p>
+                <p>🅿️ Park in the glowing spot</p>
+                <p>⚡ Faster = Higher score</p>
+                <p>💰 Earn WLD rewards</p>
+                <p>🔐 Verified humans only</p>
             </div>
         </div>
     </div>
 
-    <!-- 遊戲 UI -->
+    <!-- Game UI -->
     <div id="game-ui" class="hidden">
         <div class="top-bar">
             <div class="stat">
-                <span class="label">關卡</span>
+                <span class="label">Level</span>
                 <span id="level-display" class="value">1</span>
             </div>
             <div class="stat">
-                <span class="label">分數</span>
+                <span class="label">Score</span>
                 <span id="score-display" class="value">0</span>
             </div>
             <div class="stat">
-                <span class="label">時間</span>
+                <span class="label">Time</span>
                 <span id="time-display" class="value">0.0s</span>
             </div>
         </div>
-        
-        <!-- 控制提示 -->
+
+        <!-- Control Hint -->
         <div id="control-hint" class="hint">
-            拖動螢幕控制車輛
+            Drag to control
         </div>
     </div>
 
-    <!-- 關卡完成畫面 -->
+    <!-- Level Complete Screen -->
     <div id="level-complete-screen" class="screen hidden">
         <div class="content">
-            <h2 class="success-title">🎉 完成！</h2>
+            <h2 class="success-title">🎉 Complete!</h2>
             <div class="stats-container">
                 <div class="stat-row">
-                    <span>完成時間</span>
+                    <span>Time</span>
                     <span id="complete-time" class="highlight">0.0s</span>
                 </div>
                 <div class="stat-row">
-                    <span>時間獎勵</span>
+                    <span>Time Bonus</span>
                     <span id="time-bonus" class="highlight">+0</span>
                 </div>
                 <div class="stat-row">
-                    <span>總分</span>
+                    <span>Total Score</span>
                     <span id="total-score" class="highlight">0</span>
                 </div>
                 <div class="stat-row">
-                    <span>💰 WLD 獎勵</span>
+                    <span>💰 WLD Reward</span>
                     <span id="wld-reward" class="highlight">+0.1 WLD</span>
                 </div>
             </div>
-            <button id="next-level-btn" class="main-btn">下一關</button>
-            <button id="share-btn" class="secondary-btn">📤 分享成績</button>
+            <button id="next-level-btn" class="main-btn">Next Level</button>
+            <button id="share-btn" class="secondary-btn">📤 Share</button>
         </div>
     </div>
 
-    <!-- 遊戲結束畫面 -->
+    <!-- Game Over Screen -->
     <div id="game-over-screen" class="screen hidden">
         <div class="content">
-            <h2 class="fail-title">💥 撞車了！</h2>
-            <p class="message">小心駕駛，別撞到障礙物</p>
-            <button id="retry-btn" class="main-btn">重新開始</button>
+            <h2 class="fail-title">💥 Crashed!</h2>
+            <p class="message">Drive carefully, avoid obstacles</p>
+            <button id="retry-btn" class="main-btn">Try Again</button>
         </div>
     </div>
 
-    <!-- 版本號 -->
-    <div class="version">v1.7.5</div>
+    <!-- Version -->
+    <div class="version">v1.7.6</div>
 
-    <!-- 載入 Three.js -->
+    <!-- Load Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="minikit-integration.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
-
