@@ -24,9 +24,10 @@
 // v1.6.4: 添加更多調試信息到按鈕上，追蹤 verify() 調用狀態
 // v1.6.5: 顯示 isInstalled 狀態 + 為 verify() 添加 timeout 防止無限等待
 // v1.6.6: 關鍵修正！只有 isInstalled()=true 才用 MiniKit，否則用 IDKit
+// v1.6.7: 徹底簡化判斷邏輯，移除 window.WorldApp 干擾，只看 isInstalled()
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.6';
+        this.version = 'v1.6.7';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -248,13 +249,8 @@ class WorldMiniKit {
         if (verifyBtn) {
             console.log('🔘 設置驗證按鈕事件監聯');
 
-            // 🔥 調試：在按鈕上顯示環境狀態
-            const mkStatus = typeof MiniKit !== 'undefined';
-            const mkInstalled = mkStatus && MiniKit.isInstalled?.();
-            const mkVerify = mkStatus && !!MiniKit.commandsAsync?.verify;
-            const waStatus = typeof window.WorldApp !== 'undefined';
-            // I = isInstalled, V = hasVerify, W = WorldApp
-            verifyBtn.textContent = `🌍 驗證 [I:${mkInstalled?'Y':'N'} V:${mkVerify?'Y':'N'} W:${waStatus?'Y':'N'}]`;
+            // 保持正常按鈕文字（調試信息只在 console）
+            verifyBtn.textContent = '🌍 World ID 驗證';
 
             verifyBtn.addEventListener('click', () => {
                 console.log('🖱️ 驗證按鈕被點擊！');
@@ -329,8 +325,7 @@ class WorldMiniKit {
 
             if (verifyBtn) {
                 verifyBtn.disabled = true;
-                // 顯示調試信息在按鈕上（臨時）
-                verifyBtn.textContent = `檢測中... MK:${debugInfo.hasMiniKit}`;
+                verifyBtn.textContent = '驗證中...';
             }
 
             // 測試模式：模擬驗證成功
@@ -340,63 +335,30 @@ class WorldMiniKit {
                 return;
             }
 
-            // 🔥 關鍵修正：必須檢查 isInstalled() 而不只是 verify 方法存在
-            // MiniKit CDN 加載後 verify 方法會存在，但只有真正以 Mini App 開啟時 isInstalled() 才會返回 true
+            // 🔥 v1.6.7 關鍵修正：只用 isInstalled() 判斷是否在 Mini App 環境
+            // window.WorldApp 存在不代表是 Mini App（可能只是在 World App 瀏覽器中）
             const hasMiniKit = typeof MiniKit !== 'undefined';
             const mkInstalled = hasMiniKit && MiniKit.isInstalled?.();
-            const hasMiniKitVerify = hasMiniKit && !!MiniKit.commandsAsync?.verify;
 
-            if (verifyBtn) {
-                verifyBtn.textContent = `I:${mkInstalled?'Y':'N'} V:${hasMiniKitVerify?'Y':'N'}`;
-            }
+            console.log('🔍 環境判斷:', {
+                hasMiniKit,
+                mkInstalled,
+                isMobileBrowser: this.isMobileBrowser,
+                isDesktopBrowser: this.isDesktopBrowser
+            });
 
-            // 只有當 isInstalled() 為 true 時才使用 MiniKit 驗證
-            if (mkInstalled && hasMiniKitVerify) {
-                console.log('🌍 MiniKit.isInstalled() = true，確認在 Mini App 環境！');
-                console.log('🚀 使用 MiniKit 驗證');
-
+            // 只有當 isInstalled() = true 時才使用 MiniKit（真正的 Mini App 環境）
+            if (mkInstalled) {
+                console.log('🌍 MiniKit.isInstalled() = true，使用 MiniKit 驗證');
                 if (verifyBtn) {
-                    verifyBtn.textContent = '🌍 MiniKit 驗證中...';
+                    verifyBtn.textContent = 'Mini App 驗證中...';
                 }
-
-                // 確保 MiniKit 已初始化
-                if (typeof MiniKit.install === 'function') {
-                    try {
-                        MiniKit.install();
-                        console.log('✅ MiniKit.install() 調用成功');
-                    } catch (e) {
-                        console.log('ℹ️ MiniKit.install() 已調用過或不需要:', e.message);
-                    }
-                }
-
                 await this.verifyWithMiniKit();
                 return;
             }
 
-            // 以下是桌機/手機瀏覽器的邏輯（保持不變）
-            const miniKitNow = typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.();
-            const hasWorldApp = typeof window.WorldApp !== 'undefined';
-            console.log('🔄 驗證時環境狀態:', {
-                isWorldApp: this.isWorldApp,
-                miniKitNow,
-                hasWorldApp,
-                hasMiniKit: typeof MiniKit !== 'undefined',
-                hasMiniKitVerify
-            });
-
-            // 如果現在檢測到 World App 環境但初始化時沒檢測到，更新狀態
-            if ((miniKitNow || hasWorldApp) && !this.isWorldApp) {
-                console.log('🔄 更新：現在檢測到 World App 環境');
-                this.isWorldApp = true;
-                this.isMobileBrowser = false;
-            }
-
-            // 根據環境選擇驗證方式
-            if (this.isWorldApp) {
-                // World App Mini App 內部：使用 MiniKit
-                console.log('🌍 使用 MiniKit 驗證（World App 內部）');
-                await this.verifyWithMiniKit();
-            } else if (this.isMobileBrowser) {
+            // 不是 Mini App 環境，根據設備類型選擇 IDKit 或 IDKitSession
+            if (this.isMobileBrowser) {
                 // 手機瀏覽器：顯示提示，建議使用 World App
                 console.log('📱 手機瀏覽器環境 - 使用 IDKitSession');
                 await this.verifyOnMobileBrowser();
