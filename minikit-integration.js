@@ -10,10 +10,18 @@
         window.MiniKit = MiniKit;
         console.log('✅ MiniKit ESM 加載成功');
 
-        // 立即調用 install
-        MiniKit.install();
-        console.log('🔧 MiniKit.install() 已調用');
+        // 調用 install 並檢查返回值
+        const installResult = MiniKit.install();
+        console.log('🔧 MiniKit.install() 返回值:', installResult);
         console.log('📊 isInstalled:', MiniKit.isInstalled());
+
+        // 檢查 MiniKit 內部狀態
+        console.log('📋 MiniKit 狀態:', {
+            isReady: MiniKit.isReady,
+            walletAddress: MiniKit.walletAddress,
+            user: MiniKit.user,
+            commandsValid: typeof MiniKit.commandsValid === 'function' ? MiniKit.commandsValid() : 'N/A'
+        });
     } catch (e) {
         console.error('❌ MiniKit 加載失敗:', e);
     }
@@ -48,9 +56,10 @@
 // v1.6.8: 加回按鈕調試信息 + 延長 waitForMiniKit 超時
 // v1.7.0: 穩定版 - 按鈕倒計時 + 三平台分流正確
 // v1.7.1: 改用 dynamic import 加載 MiniKit，確保在 World App init payload 之前就緒
+// v1.7.2: 加入更多調試信息 - install 返回值、isReady 狀態
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.1';
+        this.version = 'v1.7.2';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -276,9 +285,11 @@ class WorldMiniKit {
             const updateButtonDebug = () => {
                 const hasMK = typeof MiniKit !== 'undefined';
                 const isInst = hasMK && MiniKit.isInstalled?.();
+                const isReady = hasMK && MiniKit.isReady;
                 const hasV = hasMK && !!MiniKit.commandsAsync?.verify;
                 const hasWA = typeof window.WorldApp !== 'undefined';
-                verifyBtn.textContent = `🌍 驗證 [I:${isInst?'Y':'N'} V:${hasV?'Y':'N'} W:${hasWA?'Y':'N'}]`;
+                // R = isReady, I = isInstalled, V = verify, W = WorldApp
+                verifyBtn.textContent = `🌍 [R:${isReady?'Y':'N'} I:${isInst?'Y':'N'} V:${hasV?'Y':'N'} W:${hasWA?'Y':'N'}]`;
             };
 
             // 每秒更新一次，持續 5 秒（等 MiniKit 初始化）

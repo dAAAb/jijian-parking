@@ -106,7 +106,22 @@
    - 在 waitForMiniKit 中也調用了 install()
    - 可能需要特定條件或參數
 
-### 待研究
-- [ ] 檢查 MiniKit.install() 的正確調用時機和參數
-- [ ] 研究為什麼 W:Y 但 I:N（WorldApp 存在但 isInstalled 返回 false）
-- [ ] 考慮使用 dynamic import 確保正確加載順序
+### 重要發現（v1.7.2）
+- 之前看到的 `MK:Y V:Y WA:Y` 中的 **MK:Y 不是 isInstalled()**
+- MK:Y 只是 `typeof MiniKit !== 'undefined'`
+- I:Y 才是 `MiniKit.isInstalled()` 返回 true
+- **isInstalled() 可能從未在 Mini App 環境返回過 true！**
+
+### isInstalled() 返回 true 的條件
+根據 MiniKit 源碼：
+1. `MiniKit.isReady` 必須是 `true`
+2. `window.MiniKit` 必須存在
+3. 需要收到來自 World App 的 **init payload**
+
+### 調試方向
+- 按鈕現在顯示 `[R:? I:? V:? W:?]`
+  - R = isReady
+  - I = isInstalled
+  - V = verify 存在
+  - W = WorldApp 存在
+- Console 會顯示 install() 的返回值
