@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.7.3
+// 版本: v1.7.4
 // 重要：MiniKit 現在用 dynamic import 在這裡加載
 // v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
@@ -102,9 +102,10 @@
 // v1.7.1: 改用 dynamic import 加載 MiniKit，確保在 World App init payload 之前就緒
 // v1.7.2: 加入更多調試信息 - install 返回值、isReady 狀態
 // v1.7.3: 等待 window.WorldApp 注入後再調用 install()
+// v1.7.4: 移除調試信息，改用隱晦的進度條顯示載入狀態
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.3';
+        this.version = 'v1.7.4';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -326,32 +327,56 @@ class WorldMiniKit {
         if (verifyBtn) {
             console.log('🔘 設置驗證按鈕事件監聯');
 
-            // 調試信息顯示在按鈕上，方便診斷環境狀態
-            const updateButtonDebug = () => {
-                const hasMK = typeof MiniKit !== 'undefined';
-                const isInst = hasMK && MiniKit.isInstalled?.();
-                const isReady = hasMK && MiniKit.isReady;
-                const hasV = hasMK && !!MiniKit.commandsAsync?.verify;
-                const hasWA = typeof window.WorldApp !== 'undefined';
-                // R = isReady, I = isInstalled, V = verify, W = WorldApp
-                verifyBtn.textContent = `🌍 [R:${isReady?'Y':'N'} I:${isInst?'Y':'N'} V:${hasV?'Y':'N'} W:${hasWA?'Y':'N'}]`;
-            };
+            // 創建進度條元素（隱晦的載入指示）
+            let progressBar = document.getElementById('verify-progress-bar');
+            if (!progressBar) {
+                progressBar = document.createElement('div');
+                progressBar.id = 'verify-progress-bar';
+                progressBar.style.cssText = `
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #667eea, #764ba2);
+                    border-radius: 0 0 8px 8px;
+                    width: 0%;
+                    transition: width 0.3s ease;
+                `;
+                verifyBtn.style.position = 'relative';
+                verifyBtn.style.overflow = 'hidden';
+                verifyBtn.appendChild(progressBar);
+            }
 
-            // 每秒更新一次，持續 5 秒（等 MiniKit 初始化）
-            let countdown = 5;
-            const showLoading = () => {
-                verifyBtn.textContent = `⏳ 載入中... ${countdown}s`;
-                countdown--;
-            };
-            showLoading();
-            const interval = setInterval(() => {
-                if (countdown > 0) {
-                    showLoading();
+            // 等待 MiniKit 初始化（最多 3 秒），用進度條顯示
+            const waitTime = 3000;
+            const startTime = Date.now();
+
+            const updateProgress = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min((elapsed / waitTime) * 100, 100);
+                progressBar.style.width = `${progress}%`;
+
+                if (elapsed < waitTime) {
+                    requestAnimationFrame(updateProgress);
                 } else {
-                    clearInterval(interval);
-                    updateButtonDebug();
+                    // 載入完成，隱藏進度條
+                    progressBar.style.opacity = '0';
+                    setTimeout(() => {
+                        progressBar.style.display = 'none';
+                    }, 300);
+
+                    // Console 輸出調試信息（不顯示在 UI 上）
+                    const hasMK = typeof MiniKit !== 'undefined';
+                    const isInst = hasMK && MiniKit.isInstalled?.();
+                    console.log('📊 MiniKit 狀態:', {
+                        isInstalled: isInst,
+                        isReady: hasMK && MiniKit.isReady,
+                        hasVerify: hasMK && !!MiniKit.commandsAsync?.verify,
+                        hasWorldApp: typeof window.WorldApp !== 'undefined'
+                    });
                 }
-            }, 1000);
+            };
+            requestAnimationFrame(updateProgress);
 
             verifyBtn.addEventListener('click', () => {
                 console.log('🖱️ 驗證按鈕被點擊！');
