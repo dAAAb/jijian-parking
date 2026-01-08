@@ -9,14 +9,7 @@
     <link rel="stylesheet" href="style.css">
     
     <!-- World MiniKit SDK (for World App) -->
-    <!-- 使用 ESM 格式導入 MiniKit，並掛載到 window 上供後續使用 -->
-    <script type="module">
-        import { MiniKit } from "https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@1.9.9/+esm";
-        window.MiniKit = MiniKit;
-        // 立即調用 install
-        MiniKit.install();
-        console.log('🔧 MiniKit ESM 已加載並安裝, isInstalled:', MiniKit.isInstalled());
-    </script>
+    <!-- 注意：不在這裡加載 MiniKit，改到 body 底部用 dynamic import -->
     
     <!-- World IDKit Standalone (for Web browsers) -->
     <script src="https://unpkg.com/@worldcoin/idkit-standalone@latest/build/index.global.js"></script>
@@ -126,7 +119,7 @@
     </div>
 
     <!-- 版本號 -->
-    <div class="version">v1.7.0</div>
+    <div class="version">v1.7.1</div>
 
     <!-- 載入 Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

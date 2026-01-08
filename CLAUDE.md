@@ -79,3 +79,34 @@
 - 可用 **WebFetch** 抓取文檔
 - 可查看 Vercel 日誌：`https://vercel.com/daaabs-projects/jijian/logs`
 - **不要重複問用戶已經討論過的配置！**
+
+## 目前的挑戰：Mini App 環境 isInstalled() 返回 false
+
+### 測試結果（v1.7.0）
+| 平台 | 狀態 | 結果 |
+|------|------|------|
+| 桌面瀏覽器 | ✅ 正常 | IDKit QR Code 彈窗 |
+| 手機瀏覽器 | ✅ 正常 | IDKitSession + polling |
+| Mini App | ❌ 異常 | 顯示 `I:N V:Y W:Y` |
+
+### Mini App 問題分析
+- 用戶透過 Developer Portal QR Code 掃描開啟（正確方式）
+- `window.WorldApp` 存在 (W:Y) - 確實在 World App 中
+- `MiniKit.commandsAsync.verify` 存在 (V:Y) - SDK 已加載
+- **但 `MiniKit.isInstalled()` 返回 false (I:N)** - 這是問題！
+
+### 可能原因
+1. **ESM 加載時機問題**：
+   - `<script type="module">` 是 deferred（延遲執行）
+   - `minikit-integration.js` 同步執行，可能在 MiniKit ESM 之前
+   - 雖然 waitForMiniKit 等待 5 秒，但 install() 可能時機不對
+
+2. **MiniKit.install() 調用問題**：
+   - 在 index.html ESM 中調用了 install()
+   - 在 waitForMiniKit 中也調用了 install()
+   - 可能需要特定條件或參數
+
+### 待研究
+- [ ] 檢查 MiniKit.install() 的正確調用時機和參數
+- [ ] 研究為什麼 W:Y 但 I:N（WorldApp 存在但 isInstalled 返回 false）
+- [ ] 考慮使用 dynamic import 確保正確加載順序

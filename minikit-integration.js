@@ -1,5 +1,25 @@
 // World MiniKit 整合
-// 版本: v1.5.8
+// 版本: v1.7.1
+// 重要：MiniKit 現在用 dynamic import 在這裡加載，確保正確的執行順序
+
+// 立即加載 MiniKit（在任何其他代碼之前）
+(async function loadMiniKit() {
+    try {
+        console.log('🔄 開始加載 MiniKit ESM...');
+        const { MiniKit } = await import('https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@1.9.9/+esm');
+        window.MiniKit = MiniKit;
+        console.log('✅ MiniKit ESM 加載成功');
+
+        // 立即調用 install
+        MiniKit.install();
+        console.log('🔧 MiniKit.install() 已調用');
+        console.log('📊 isInstalled:', MiniKit.isInstalled());
+    } catch (e) {
+        console.error('❌ MiniKit 加載失敗:', e);
+    }
+})();
+
+// 原始版本記錄
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -27,9 +47,10 @@
 // v1.6.7: 徹底簡化判斷邏輯，移除 window.WorldApp 干擾，只看 isInstalled()
 // v1.6.8: 加回按鈕調試信息 + 延長 waitForMiniKit 超時
 // v1.7.0: 穩定版 - 按鈕倒計時 + 三平台分流正確
+// v1.7.1: 改用 dynamic import 加載 MiniKit，確保在 World App init payload 之前就緒
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.0';
+        this.version = 'v1.7.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
