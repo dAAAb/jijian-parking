@@ -1,27 +1,71 @@
 // World MiniKit 整合
-// 版本: v1.7.1
-// 重要：MiniKit 現在用 dynamic import 在這裡加載，確保正確的執行順序
+// 版本: v1.7.3
+// 重要：MiniKit 現在用 dynamic import 在這裡加載
+// v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
 // 立即加載 MiniKit（在任何其他代碼之前）
 (async function loadMiniKit() {
     try {
         console.log('🔄 開始加載 MiniKit ESM...');
         const { MiniKit } = await import('https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@1.9.9/+esm');
-        window.MiniKit = MiniKit;
         console.log('✅ MiniKit ESM 加載成功');
 
-        // 調用 install 並檢查返回值
+        // 🔥 v1.7.3 關鍵修正：install() 需要 window.WorldApp 在調用時已經存在
+        // 如果 window.WorldApp 不存在，install() 不會設置 isReady = true
+        // 所以我們需要先等待 window.WorldApp 出現
+        console.log('🔍 檢查 window.WorldApp...');
+        console.log('📋 當前狀態:', {
+            hasWorldApp: typeof window.WorldApp !== 'undefined',
+            hasWindowMiniKit: typeof window.MiniKit !== 'undefined'
+        });
+
+        // 等待 window.WorldApp 出現（最多 3 秒）
+        let worldAppWaitTime = 0;
+        const maxWait = 3000;
+        while (typeof window.WorldApp === 'undefined' && worldAppWaitTime < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            worldAppWaitTime += 100;
+            if (worldAppWaitTime % 500 === 0) {
+                console.log(`⏳ 等待 window.WorldApp... (${worldAppWaitTime}ms)`);
+            }
+        }
+
+        if (typeof window.WorldApp !== 'undefined') {
+            console.log('✅ window.WorldApp 已存在，調用 install()');
+            console.log('📋 WorldApp 內容:', Object.keys(window.WorldApp));
+        } else {
+            console.log('ℹ️ window.WorldApp 不存在（非 World App 環境）');
+        }
+
+        // 調用 install()
         const installResult = MiniKit.install();
         console.log('🔧 MiniKit.install() 返回值:', installResult);
-        console.log('📊 isInstalled:', MiniKit.isInstalled());
 
-        // 檢查 MiniKit 內部狀態
-        console.log('📋 MiniKit 狀態:', {
+        // install() 成功後會自動設置 window.MiniKit
+        // 如果 install() 失敗（例如不在 World App 中），我們手動設置以供其他功能使用
+        if (!window.MiniKit) {
+            window.MiniKit = MiniKit;
+            console.log('ℹ️ 手動設置 window.MiniKit（install 未在 World App 中）');
+        }
+
+        // 檢查最終狀態
+        console.log('📊 isInstalled:', MiniKit.isInstalled());
+        console.log('📋 MiniKit 最終狀態:', {
             isReady: MiniKit.isReady,
             walletAddress: MiniKit.walletAddress,
-            user: MiniKit.user,
-            commandsValid: typeof MiniKit.commandsValid === 'function' ? MiniKit.commandsValid() : 'N/A'
+            user: MiniKit.user
         });
+
+        // 如果在 World App 中但 isReady 還是 false，輸出警告
+        if (typeof window.WorldApp !== 'undefined' && !MiniKit.isReady) {
+            console.warn('⚠️ window.WorldApp 存在但 isReady 為 false');
+            console.warn('⚠️ 這可能是因為 install() 時 window.MiniKit 已經存在');
+            console.warn('📋 調試信息:', {
+                installResult,
+                windowMiniKit: typeof window.MiniKit,
+                miniKitIsReady: MiniKit.isReady
+            });
+        }
     } catch (e) {
         console.error('❌ MiniKit 加載失敗:', e);
     }
@@ -57,9 +101,10 @@
 // v1.7.0: 穩定版 - 按鈕倒計時 + 三平台分流正確
 // v1.7.1: 改用 dynamic import 加載 MiniKit，確保在 World App init payload 之前就緒
 // v1.7.2: 加入更多調試信息 - install 返回值、isReady 狀態
+// v1.7.3: 等待 window.WorldApp 注入後再調用 install()
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.2';
+        this.version = 'v1.7.3';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
