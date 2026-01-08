@@ -7,12 +7,14 @@
 
 ### Git 操作
 - 用戶說「commit」或「幫我 commit」→ 直接執行 git add + commit，不需再確認
+- 用戶說「推」→ 嘗試 git push，如果失敗讓用戶自己推
 - Commit 訊息風格：使用 emoji 開頭，例如 `🔧 修復...` `📱 新增...` `🐛 修復 bug...`
 - 每次修改後主動更新版本號（minikit-integration.js 和 index.html）
 
 ### 部署
 - 專案部署在 Vercel
 - 推送到 main 分支後自動部署
+- 用 Playwright MCP 可以直接查看 Vercel 日誌：`https://vercel.com/daaabs-projects/jijian/logs`
 
 ## 專案架構
 
