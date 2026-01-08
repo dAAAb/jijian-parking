@@ -20,9 +20,10 @@
 // v1.6.0: 添加可見的調試信息到按鈕上，方便在 World App 中診斷問題
 // v1.6.1: 頁面加載後直接在按鈕上顯示環境狀態（不需要點擊）
 // v1.6.2: 更新 MiniKit CDN 到 1.9.9 版本（UMD build）
+// v1.6.3: 使用正確的 ESM 格式導入 MiniKit (+esm)，並在 HTML 中掛載到 window
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.2';
+        this.version = 'v1.6.3';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
