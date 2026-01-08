@@ -21,9 +21,10 @@
 // v1.6.1: 頁面加載後直接在按鈕上顯示環境狀態（不需要點擊）
 // v1.6.2: 更新 MiniKit CDN 到 1.9.9 版本（UMD build）
 // v1.6.3: 使用正確的 ESM 格式導入 MiniKit (+esm)，並在 HTML 中掛載到 window
+// v1.6.4: 添加更多調試信息到按鈕上，追蹤 verify() 調用狀態
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.3';
+        this.version = 'v1.6.4';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -911,12 +912,26 @@ class WorldMiniKit {
         console.log('🚀 調用 MiniKit.commandsAsync.verify...');
         console.log('🎯 這應該會在 World App 內滑出 Approve 驗證抽屜');
 
+        // 更新按鈕狀態
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+        if (verifyBtn) {
+            verifyBtn.textContent = '🚀 調用 verify()...';
+        }
+
         try {
             // 使用 MiniKit 進行 World ID 驗證
             // 這個調用會觸發 World App 顯示原生的 Approve 驗證抽屜
+            console.log('⏳ 正在等待 MiniKit.commandsAsync.verify() 返回...');
+
             const result = await MiniKit.commandsAsync.verify(verifyPayload);
-            
+
+            if (verifyBtn) {
+                verifyBtn.textContent = '📦 收到回應...';
+            }
+
             console.log('📦 收到完整回應:', result);
+            console.log('📦 result 類型:', typeof result);
+            console.log('📦 result keys:', result ? Object.keys(result) : 'null');
             
             const { finalPayload } = result;
             
@@ -955,6 +970,13 @@ class WorldMiniKit {
         } catch (error) {
             console.error('💥 MiniKit.commandsAsync.verify 調用失敗:', error);
             console.error('錯誤詳情:', error.message, error.stack);
+
+            // 在按鈕上顯示錯誤
+            const verifyBtn = document.getElementById('verify-world-id-btn');
+            if (verifyBtn) {
+                verifyBtn.textContent = `❌ 錯誤: ${error.message?.substring(0, 20) || 'unknown'}`;
+            }
+
             throw error;
         }
     }
