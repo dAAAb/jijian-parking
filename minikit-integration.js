@@ -1,19 +1,25 @@
 // World MiniKit 整合
-// 版本: v1.3.0
+// 版本: v1.4.0
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
 // 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone)
-// 新增：藍勾勾驗證徽章 + 測試模式
+// v1.3.0: 藍勾勾驗證徽章 + 測試模式
+// v1.4.0: 修正平台偵測 + 手機瀏覽器處理
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.3.0';
+        this.version = 'v1.4.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
+        this.isMobileBrowser = false;
+        this.isDesktopBrowser = false;
         this.isVerified = false;
         this.verificationLevel = null; // 'orb' 或 'device'
-        
+
+        // 平台偵測
+        this.detectPlatform();
+
         // 從本地配置讀取（如果有），否則使用默認值
         const config = window.LOCAL_CONFIG || {};
         this.appId = config.APP_ID || 'app_8759766ce92173ee6e1ce6568a9bc9e6';
@@ -39,36 +45,60 @@ class WorldMiniKit {
         this.init();
     }
 
+    // 平台偵測
+    detectPlatform() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+        // 檢測是否為手機/平板
+        const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        const isMobile = mobileRegex.test(userAgent);
+
+        // 檢測是否在 World App 內部（MiniKit.isInstalled() 才是正確的判斷）
+        const hasMiniKit = typeof MiniKit !== 'undefined';
+        const miniKitInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function' && MiniKit.isInstalled();
+
+        this.isWorldApp = miniKitInstalled;
+        this.isMobileBrowser = isMobile && !miniKitInstalled;
+        this.isDesktopBrowser = !isMobile && !miniKitInstalled;
+
+        console.log('📱 平台偵測結果:', {
+            userAgent: userAgent.substring(0, 50) + '...',
+            isMobile,
+            hasMiniKit,
+            miniKitInstalled,
+            isWorldApp: this.isWorldApp,
+            isMobileBrowser: this.isMobileBrowser,
+            isDesktopBrowser: this.isDesktopBrowser
+        });
+    }
+
     async init() {
         try {
-            // 檢測是否在 World App 中運行
-            this.isWorldApp = typeof MiniKit !== 'undefined';
-            
             console.log('🔍 環境檢測:', {
                 isWorldApp: this.isWorldApp,
+                isMobileBrowser: this.isMobileBrowser,
+                isDesktopBrowser: this.isDesktopBrowser,
                 hasMiniKit: typeof MiniKit !== 'undefined',
-                isInstalled: this.isWorldApp ? MiniKit.isInstalled() : false
+                hasIDKit: typeof window.IDKit !== 'undefined'
             });
-            
+
             if (this.isWorldApp) {
-                console.log('🌍 在 World App 中運行');
-                
-                // 初始化 MiniKit
-                if (!MiniKit.isInstalled()) {
-                    console.warn('⚠️ MiniKit 未安裝');
-                    this.fallbackMode();
-                    return;
-                }
-                
+                // 在 World App Mini App 內部
+                console.log('🌍 在 World App Mini App 中運行');
                 this.isInitialized = true;
                 this.setupWorldAppFeatures();
                 console.log('✅ World App 功能已設置');
+            } else if (this.isMobileBrowser) {
+                // 手機瀏覽器（非 World App）
+                console.log('📱 在手機瀏覽器中運行');
+                this.fallbackMode();
             } else {
-                console.log('🌐 在普通瀏覽器中運行（開發模式）');
+                // 桌面瀏覽器
+                console.log('🖥️ 在桌面瀏覽器中運行');
                 this.fallbackMode();
             }
         } catch (error) {
-            console.error('❌ 初始化 MiniKit 失敗:', error);
+            console.error('❌ 初始化失敗:', error);
             this.fallbackMode();
         }
     }
@@ -158,6 +188,8 @@ class WorldMiniKit {
             console.log('🔐 開始 World ID 驗證...');
             console.log('環境檢查:', {
                 isWorldApp: this.isWorldApp,
+                isMobileBrowser: this.isMobileBrowser,
+                isDesktopBrowser: this.isDesktopBrowser,
                 hasMiniKit: typeof MiniKit !== 'undefined',
                 hasIDKit: typeof window.IDKit !== 'undefined',
                 backendUrl: this.backendUrl,
@@ -170,7 +202,7 @@ class WorldMiniKit {
             }
 
             // 測試模式：模擬驗證成功
-            if (this.testMode && !this.isWorldApp) {
+            if (this.testMode) {
                 console.log('🧪 測試模式：模擬驗證');
                 await this.simulateVerification();
                 return;
@@ -178,10 +210,16 @@ class WorldMiniKit {
 
             // 根據環境選擇驗證方式
             if (this.isWorldApp) {
-                // World App 環境：使用 MiniKit
+                // World App Mini App 內部：使用 MiniKit
+                console.log('🌍 使用 MiniKit 驗證（World App 內部）');
                 await this.verifyWithMiniKit();
+            } else if (this.isMobileBrowser) {
+                // 手機瀏覽器：顯示提示，建議使用 World App
+                console.log('📱 手機瀏覽器環境');
+                await this.verifyOnMobileBrowser();
             } else {
-                // 普通瀏覽器：使用 IDKit
+                // 桌面瀏覽器：使用 IDKit（QR Code）
+                console.log('🖥️ 使用 IDKit 驗證（桌面瀏覽器）');
                 await this.verifyWithIDKit();
             }
         } catch (error) {
@@ -195,6 +233,126 @@ class WorldMiniKit {
                 verifyBtn.textContent = '🌍 World ID 驗證';
             }
         }
+    }
+
+    // 手機瀏覽器驗證處理
+    async verifyOnMobileBrowser() {
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+
+        // 顯示選項對話框
+        const choice = await this.showMobileVerificationOptions();
+
+        if (choice === 'worldapp') {
+            // 嘗試打開 World App
+            const worldAppUrl = `https://worldcoin.org/verify?action_id=${this.actionId}&app_id=${this.appId}`;
+            window.location.href = worldAppUrl;
+
+            // 恢復按鈕（因為可能沒有成功跳轉）
+            setTimeout(() => {
+                if (verifyBtn) {
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = '🌍 World ID 驗證';
+                }
+            }, 3000);
+        } else if (choice === 'idkit') {
+            // 嘗試使用 IDKit（可能會有回調問題）
+            console.log('⚠️ 嘗試在手機瀏覽器使用 IDKit（可能不穩定）');
+            await this.verifyWithIDKit();
+        } else {
+            // 取消
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '🌍 World ID 驗證';
+            }
+        }
+    }
+
+    // 顯示手機驗證選項
+    showMobileVerificationOptions() {
+        return new Promise((resolve) => {
+            // 創建對話框
+            const overlay = document.createElement('div');
+            overlay.id = 'mobile-verify-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: #1a1a2e;
+                border-radius: 20px;
+                padding: 30px;
+                max-width: 350px;
+                text-align: center;
+                color: white;
+            `;
+
+            dialog.innerHTML = `
+                <h3 style="margin-bottom: 15px; font-size: 1.3em;">📱 手機驗證</h3>
+                <p style="color: #aaa; margin-bottom: 25px; font-size: 0.95em;">
+                    建議使用 World App 進行驗證，以獲得最佳體驗。
+                </p>
+                <button id="btn-open-worldapp" style="
+                    width: 100%;
+                    padding: 15px;
+                    margin-bottom: 12px;
+                    border: none;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    font-size: 1em;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">🌍 開啟 World App 驗證</button>
+                <button id="btn-try-idkit" style="
+                    width: 100%;
+                    padding: 12px;
+                    margin-bottom: 12px;
+                    border: 2px solid rgba(255,255,255,0.3);
+                    border-radius: 12px;
+                    background: transparent;
+                    color: white;
+                    font-size: 0.9em;
+                    cursor: pointer;
+                ">嘗試瀏覽器驗證（可能不穩定）</button>
+                <button id="btn-cancel" style="
+                    width: 100%;
+                    padding: 10px;
+                    border: none;
+                    border-radius: 12px;
+                    background: transparent;
+                    color: #888;
+                    font-size: 0.85em;
+                    cursor: pointer;
+                ">取消</button>
+            `;
+
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            // 綁定事件
+            document.getElementById('btn-open-worldapp').onclick = () => {
+                overlay.remove();
+                resolve('worldapp');
+            };
+            document.getElementById('btn-try-idkit').onclick = () => {
+                overlay.remove();
+                resolve('idkit');
+            };
+            document.getElementById('btn-cancel').onclick = () => {
+                overlay.remove();
+                resolve('cancel');
+            };
+        });
     }
 
     // 測試模式：模擬驗證成功
