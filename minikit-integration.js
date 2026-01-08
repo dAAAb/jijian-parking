@@ -25,9 +25,10 @@
 // v1.6.5: 顯示 isInstalled 狀態 + 為 verify() 添加 timeout 防止無限等待
 // v1.6.6: 關鍵修正！只有 isInstalled()=true 才用 MiniKit，否則用 IDKit
 // v1.6.7: 徹底簡化判斷邏輯，移除 window.WorldApp 干擾，只看 isInstalled()
+// v1.6.8: 加回按鈕調試信息 + 延長 waitForMiniKit 超時
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.7';
+        this.version = 'v1.6.8';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -79,7 +80,7 @@ class WorldMiniKit {
     }
 
     // 等待並偵測 MiniKit / World App 環境
-    async waitForMiniKit(maxWait = 3000) {
+    async waitForMiniKit(maxWait = 5000) {
         const startTime = Date.now();
         let lastLog = 0;
         let hasCalledInstall = false;
@@ -249,8 +250,21 @@ class WorldMiniKit {
         if (verifyBtn) {
             console.log('🔘 設置驗證按鈕事件監聯');
 
-            // 保持正常按鈕文字（調試信息只在 console）
-            verifyBtn.textContent = '🌍 World ID 驗證';
+            // 調試信息顯示在按鈕上，方便診斷環境狀態
+            const updateButtonDebug = () => {
+                const hasMK = typeof MiniKit !== 'undefined';
+                const isInst = hasMK && MiniKit.isInstalled?.();
+                const hasV = hasMK && !!MiniKit.commandsAsync?.verify;
+                const hasWA = typeof window.WorldApp !== 'undefined';
+                verifyBtn.textContent = `🌍 驗證 [I:${isInst?'Y':'N'} V:${hasV?'Y':'N'} W:${hasWA?'Y':'N'}]`;
+            };
+
+            // 立即更新一次
+            updateButtonDebug();
+            // 1秒後再更新一次（等 ESM 加載完成）
+            setTimeout(updateButtonDebug, 1000);
+            // 3秒後再更新一次（確保 MiniKit 完全初始化）
+            setTimeout(updateButtonDebug, 3000);
 
             verifyBtn.addEventListener('click', () => {
                 console.log('🖱️ 驗證按鈕被點擊！');

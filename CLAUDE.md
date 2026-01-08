@@ -33,3 +33,36 @@
 - API v2 不傳 signal 參數（使用空字串 hash）
 - 後端驗證 URL: `/api/verify-world-id`
 - 版本號需同時更新：`minikit-integration.js` 頂部註解 + constructor + `index.html`
+
+## World ID 驗證 - 平台分流邏輯（重要！）
+
+### 三個平台的檢測與驗證方式
+
+| 平台 | 檢測條件 | 驗證方式 | 按鈕調試顯示 |
+|------|----------|----------|--------------|
+| Mini App | `MiniKit.isInstalled() === true` | `MiniKit.commandsAsync.verify()` | I:Y |
+| 手機瀏覽器 | `isMobile && !isInstalled` | IDKitSession + polling | I:N |
+| 桌面瀏覽器 | `!isMobile && !isInstalled` | IDKit QR Code 彈窗 | I:N |
+
+### 關鍵判斷指標
+- **`MiniKit.isInstalled()`** - 這是唯一可靠的 Mini App 環境判斷
+- **`window.WorldApp`** - 不可靠！在 World App 瀏覽器中也會存在，但不是 Mini App
+- **`MiniKit.commandsAsync?.verify`** - 只表示 SDK 加載了，不代表在 Mini App 環境
+
+### MiniKit 加載流程
+1. `index.html` 中用 ESM 格式加載：`<script type="module">import { MiniKit } from "...+esm"`
+2. 必須調用 `MiniKit.install()`
+3. 只有在 Mini App 環境中，`isInstalled()` 才會返回 `true`
+4. ESM 是異步加載，`minikit-integration.js` 需要等待（waitForMiniKit 函數）
+
+### 常見問題
+1. **verify() 卡住不返回**：檢查 Developer Portal 是否已建立對應的 action
+2. **isInstalled() 返回 false**：可能 MiniKit 還沒加載完，或不是真正的 Mini App 環境
+3. **桌面/手機瀏覽器壞掉**：確保只有 `isInstalled()===true` 時才用 MiniKit
+
+### 調試技巧
+- 在按鈕上顯示 `[I:Y/N V:Y/N W:Y/N]` 方便診斷
+  - I = isInstalled()
+  - V = verify 方法存在
+  - W = window.WorldApp 存在
+- Mini App 正確狀態應該是 `I:Y V:Y W:Y`
