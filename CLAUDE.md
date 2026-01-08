@@ -66,3 +66,16 @@
   - V = verify 方法存在
   - W = window.WorldApp 存在
 - Mini App 正確狀態應該是 `I:Y V:Y W:Y`
+
+## 已確認的配置（不要重複問用戶！）
+
+### Developer Portal 設定
+- **APP_ID**: `app_8759766ce92173ee6e1ce6568a9bc9e6`
+- **Incognito Actions**: 已建立 `verifyparkinggame`
+- **後端 URL**: `https://jijian-car-parking.vercel.app`
+
+### 自助確認方式
+- 可用 **MCP Playwright** 瀏覽網頁確認資訊
+- 可用 **WebFetch** 抓取文檔
+- 可查看 Vercel 日誌：`https://vercel.com/daaabs-projects/jijian/logs`
+- **不要重複問用戶已經討論過的配置！**
