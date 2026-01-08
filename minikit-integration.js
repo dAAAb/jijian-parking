@@ -16,9 +16,10 @@
 // v1.5.6: 增加 window.WorldApp 檢測，改進 World App 環境識別
 // v1.5.7: 修正 MiniKit 初始化 - 必須調用 MiniKit.install() 才能使 isInstalled() 返回 true
 // v1.5.8: 改進初始化邏輯 - 先調用 install()，再檢查 isInstalled()
+// v1.5.9: 優先檢測 MiniKit.commandsAsync.verify 存在就直接使用（最可靠的 World App 檢測）
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.8';
+        this.version = 'v1.5.9';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -319,14 +320,38 @@ class WorldMiniKit {
                 return;
             }
 
-            // 再次檢查 MiniKit / WorldApp 狀態（可能在初始化後變化）
+            // 🔥 優先檢測：如果 MiniKit 存在且有 verify 命令，直接使用（World App 環境）
+            // 這是最可靠的檢測方式，不依賴 isInstalled() 或 window.WorldApp
+            const hasMiniKitVerify = typeof MiniKit !== 'undefined' &&
+                                      MiniKit.commandsAsync?.verify;
+
+            if (hasMiniKitVerify) {
+                console.log('🌍 檢測到 MiniKit.commandsAsync.verify 可用！');
+                console.log('🚀 直接使用 MiniKit 驗證（World App 環境）');
+
+                // 確保 MiniKit 已初始化
+                if (typeof MiniKit.install === 'function') {
+                    try {
+                        MiniKit.install();
+                        console.log('✅ MiniKit.install() 調用成功');
+                    } catch (e) {
+                        console.log('ℹ️ MiniKit.install() 已調用過或不需要:', e.message);
+                    }
+                }
+
+                await this.verifyWithMiniKit();
+                return;
+            }
+
+            // 以下是桌機/手機瀏覽器的邏輯（保持不變）
             const miniKitNow = typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.();
             const hasWorldApp = typeof window.WorldApp !== 'undefined';
             console.log('🔄 驗證時環境狀態:', {
                 isWorldApp: this.isWorldApp,
                 miniKitNow,
                 hasWorldApp,
-                hasMiniKit: typeof MiniKit !== 'undefined'
+                hasMiniKit: typeof MiniKit !== 'undefined',
+                hasMiniKitVerify
             });
 
             // 如果現在檢測到 World App 環境但初始化時沒檢測到，更新狀態
