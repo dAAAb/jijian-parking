@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.7.4
+// 版本: v1.7.5
 // 重要：MiniKit 現在用 dynamic import 在這裡加載
 // v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
@@ -103,9 +103,10 @@
 // v1.7.2: 加入更多調試信息 - install 返回值、isReady 狀態
 // v1.7.3: 等待 window.WorldApp 注入後再調用 install()
 // v1.7.4: 移除調試信息，改用隱晦的進度條顯示載入狀態
+// v1.7.5: 改善 UI 文字 + 預載入 IDKit 加速桌面/手機瀏覽器響應
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.4';
+        this.version = 'v1.7.5';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -113,6 +114,7 @@ class WorldMiniKit {
         this.isDesktopBrowser = false;
         this.isVerified = false;
         this.verificationLevel = null; // 'orb' 或 'device'
+        this.idKitReady = false; // IDKit 預載入狀態
 
         // 平台偵測
         this.detectPlatform();
@@ -300,14 +302,38 @@ class WorldMiniKit {
     fallbackMode() {
         // 非 World App 環境的降級模式
         console.log('啟用降級模式：普通瀏覽器環境');
-        
+
         // 保持未驗證狀態，顯示「⚠️ 未驗證」
         // 但仍然允許玩遊戲（不強制驗證）
         this.isVerified = false;
         this.verificationLevel = null;
-        
-        // 仍然設置驗證按鈕的點擊事件，但會顯示提示訊息
+
+        // 預載入 IDKit（背景執行，不阻塞 UI）
+        this.preloadIDKit();
+
+        // 仍然設置驗證按鈕的點擊事件
         this.setupVerificationButton();
+    }
+
+    // 預載入 IDKit，讓用戶點擊時能即時響應
+    async preloadIDKit() {
+        console.log('🔄 預載入 IDKit...');
+        const startTime = Date.now();
+
+        // 等待 IDKit 載入（最多 5 秒）
+        let retries = 0;
+        while (typeof window.IDKit === 'undefined' && retries < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retries++;
+        }
+
+        if (typeof window.IDKit !== 'undefined') {
+            console.log(`✅ IDKit 預載入完成 (${Date.now() - startTime}ms)`);
+            this.idKitReady = true;
+        } else {
+            console.warn('⚠️ IDKit 預載入超時，將在點擊時重試');
+            this.idKitReady = false;
+        }
     }
 
     setupWorldAppFeatures() {
@@ -1032,7 +1058,7 @@ class WorldMiniKit {
         // 更新按鈕狀態
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
-            verifyBtn.textContent = '🚀 調用 verify()...';
+            verifyBtn.textContent = '⏳ 等待驗證中...';
         }
 
         try {
@@ -1053,7 +1079,7 @@ class WorldMiniKit {
             const result = await Promise.race([verifyPromise, timeoutPromise]);
 
             if (verifyBtn) {
-                verifyBtn.textContent = '📦 收到回應...';
+                verifyBtn.textContent = '✅ 驗證完成，處理中...';
             }
 
             console.log('📦 收到完整回應:', result);
@@ -1110,23 +1136,23 @@ class WorldMiniKit {
 
     async verifyWithIDKit() {
         console.log('🌐 使用 IDKit 驗證（網頁瀏覽器）');
-        
-        // 等待 IDKit 加載
-        let retries = 0;
-        while (typeof window.IDKit === 'undefined' && retries < 20) {
-            console.log(`等待 IDKit 加載... (${retries}/20)`);
-            await new Promise(resolve => setTimeout(resolve, 300));
-            retries++;
+
+        // 如果還沒預載入完成，快速等待一下
+        if (typeof window.IDKit === 'undefined') {
+            console.log('⏳ IDKit 尚未載入，等待中...');
+            let retries = 0;
+            while (typeof window.IDKit === 'undefined' && retries < 30) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                retries++;
+            }
         }
-        
+
         if (typeof window.IDKit === 'undefined') {
             console.error('❌ IDKit 未找到，請檢查 CDN 是否加載');
-            console.log('當前 window 對象中的 World 相關屬性:', Object.keys(window).filter(k => k.includes('ID') || k.includes('World')));
             throw new Error('IDKit 未加載，請重新整理頁面');
         }
-        
-        console.log('✅ IDKit 已加載', typeof window.IDKit);
-        console.log('IDKit 方法:', Object.keys(window.IDKit));
+
+        console.log('✅ IDKit 已就緒');
 
         // 不使用 signal，因為 API v2 需要 signal_hash 而非 signal
         // 不傳 signal 時，API 會使用空字串的 hash
