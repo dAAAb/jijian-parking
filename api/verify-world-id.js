@@ -70,20 +70,35 @@ export default async function handler(req, res) {
             console.error('World API error response:', worldResponse.status, errorText);
 
             // 嘗試解析錯誤詳情
+            let errorJson = null;
             let errorDetail = `World API error: ${worldResponse.status}`;
             try {
-                const errorJson = JSON.parse(errorText);
+                errorJson = JSON.parse(errorText);
                 errorDetail = errorJson.detail || errorJson.message || errorJson.code || errorText;
             } catch (e) {
                 errorDetail = errorText || errorDetail;
             }
 
+            // 特殊處理：max_verifications_reached 表示此人已驗證過此 action
+            // 這是 World ID 的 Sybil resistance 機制，代表用戶確實是真人
+            if (errorJson && errorJson.code === 'max_verifications_reached') {
+                console.log('User already verified for this action - treating as success');
+                return res.status(200).json({
+                    success: true,
+                    already_verified: true,
+                    verification_level: verification_level || 'orb',
+                    nullifier_hash: nullifier_hash
+                });
+            }
+
+            // 其他錯誤正常返回失敗
             return res.status(400).json({
                 success: false,
                 error: errorDetail
             });
         }
 
+        // World API 返回 200 成功（新用戶首次驗證）
         const result = await worldResponse.json();
 
         console.log('World API response:', result);
@@ -91,6 +106,7 @@ export default async function handler(req, res) {
         if (result.success) {
             return res.status(200).json({
                 success: true,
+                already_verified: false,
                 verification_level: result.verification_level,
                 nullifier_hash: result.nullifier_hash
             });
