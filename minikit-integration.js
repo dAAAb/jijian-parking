@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.5
+// 版本: v1.5.6
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -13,9 +13,10 @@
 // v1.5.3: 支援已驗證用戶 (max_verifications_reached) + 顯示用戶 ID
 // v1.5.4: 改進 World App 環境檢測 + 驗證時動態更新環境狀態
 // v1.5.5: 修復 World App 內 Approve 視窗被遮擋問題
+// v1.5.6: 增加 window.WorldApp 檢測，改進 World App 環境識別
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.5';
+        this.version = 'v1.5.6';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -66,7 +67,7 @@ class WorldMiniKit {
         });
     }
 
-    // 等待並偵測 MiniKit 環境
+    // 等待並偵測 MiniKit / World App 環境
     async waitForMiniKit(maxWait = 3000) {
         const startTime = Date.now();
         let lastLog = 0;
@@ -75,6 +76,8 @@ class WorldMiniKit {
             const hasMiniKit = typeof MiniKit !== 'undefined';
             const hasIsInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function';
             const isInstalled = hasIsInstalled && MiniKit.isInstalled();
+            // 備選檢測：window.WorldApp 存在也表示在 World App 環境中
+            const hasWorldApp = typeof window.WorldApp !== 'undefined';
 
             // 每 500ms 輸出一次調試日誌
             if (Date.now() - lastLog > 500) {
@@ -83,13 +86,15 @@ class WorldMiniKit {
                     hasMiniKit,
                     hasIsInstalled,
                     isInstalled,
+                    hasWorldApp,
                     miniKitKeys: hasMiniKit ? Object.keys(MiniKit).slice(0, 5) : []
                 });
                 lastLog = Date.now();
             }
 
-            if (isInstalled) {
-                console.log('✅ MiniKit 已安裝並準備好（World App 環境）');
+            // MiniKit.isInstalled() 或 window.WorldApp 存在都表示在 World App 內
+            if (isInstalled || hasWorldApp) {
+                console.log('✅ World App 環境確認', { isInstalled, hasWorldApp });
                 return true;
             }
 
@@ -97,9 +102,10 @@ class WorldMiniKit {
         }
 
         console.log('⏱️ MiniKit 等待超時 - 非 World App 環境');
-        console.log('📋 最終 MiniKit 狀態:', {
+        console.log('📋 最終狀態:', {
             hasMiniKit: typeof MiniKit !== 'undefined',
-            isInstalled: typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.()
+            isInstalled: typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.(),
+            hasWorldApp: typeof window.WorldApp !== 'undefined'
         });
         return false;
     }
@@ -252,16 +258,18 @@ class WorldMiniKit {
                 return;
             }
 
-            // 再次檢查 MiniKit 狀態（可能在初始化後變化）
+            // 再次檢查 MiniKit / WorldApp 狀態（可能在初始化後變化）
             const miniKitNow = typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.();
-            console.log('🔄 驗證時 MiniKit 狀態:', {
+            const hasWorldApp = typeof window.WorldApp !== 'undefined';
+            console.log('🔄 驗證時環境狀態:', {
                 isWorldApp: this.isWorldApp,
                 miniKitNow,
+                hasWorldApp,
                 hasMiniKit: typeof MiniKit !== 'undefined'
             });
 
-            // 如果現在 MiniKit 可用但初始化時沒檢測到，更新狀態
-            if (miniKitNow && !this.isWorldApp) {
+            // 如果現在檢測到 World App 環境但初始化時沒檢測到，更新狀態
+            if ((miniKitNow || hasWorldApp) && !this.isWorldApp) {
                 console.log('🔄 更新：現在檢測到 World App 環境');
                 this.isWorldApp = true;
                 this.isMobileBrowser = false;
