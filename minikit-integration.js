@@ -17,9 +17,10 @@
 // v1.5.7: 修正 MiniKit 初始化 - 必須調用 MiniKit.install() 才能使 isInstalled() 返回 true
 // v1.5.8: 改進初始化邏輯 - 先調用 install()，再檢查 isInstalled()
 // v1.5.9: 優先檢測 MiniKit.commandsAsync.verify 存在就直接使用（最可靠的 World App 檢測）
+// v1.6.0: 添加可見的調試信息到按鈕上，方便在 World App 中診斷問題
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.9';
+        this.version = 'v1.6.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -296,21 +297,25 @@ class WorldMiniKit {
     async verifyWorldID() {
         const verifyBtn = document.getElementById('verify-world-id-btn');
 
+        // 調試信息收集
+        const debugInfo = {
+            hasMiniKit: typeof MiniKit !== 'undefined',
+            miniKitKeys: typeof MiniKit !== 'undefined' ? Object.keys(MiniKit).join(',') : 'N/A',
+            hasCommandsAsync: typeof MiniKit !== 'undefined' && !!MiniKit.commandsAsync,
+            hasVerify: typeof MiniKit !== 'undefined' && !!MiniKit.commandsAsync?.verify,
+            hasWorldApp: typeof window.WorldApp !== 'undefined',
+            isWorldApp: this.isWorldApp,
+            isMobile: this.isMobile
+        };
+
         try {
             console.log('🔐 開始 World ID 驗證...');
-            console.log('環境檢查:', {
-                isWorldApp: this.isWorldApp,
-                isMobileBrowser: this.isMobileBrowser,
-                isDesktopBrowser: this.isDesktopBrowser,
-                hasMiniKit: typeof MiniKit !== 'undefined',
-                hasIDKit: typeof window.IDKit !== 'undefined',
-                backendUrl: this.backendUrl,
-                testMode: this.testMode
-            });
+            console.log('環境檢查:', debugInfo);
 
             if (verifyBtn) {
                 verifyBtn.disabled = true;
-                verifyBtn.textContent = '驗證中...';
+                // 顯示調試信息在按鈕上（臨時）
+                verifyBtn.textContent = `檢測中... MK:${debugInfo.hasMiniKit}`;
             }
 
             // 測試模式：模擬驗證成功
@@ -325,9 +330,17 @@ class WorldMiniKit {
             const hasMiniKitVerify = typeof MiniKit !== 'undefined' &&
                                       MiniKit.commandsAsync?.verify;
 
+            if (verifyBtn) {
+                verifyBtn.textContent = `MK:${debugInfo.hasMiniKit} V:${hasMiniKitVerify}`;
+            }
+
             if (hasMiniKitVerify) {
                 console.log('🌍 檢測到 MiniKit.commandsAsync.verify 可用！');
                 console.log('🚀 直接使用 MiniKit 驗證（World App 環境）');
+
+                if (verifyBtn) {
+                    verifyBtn.textContent = '🌍 MiniKit 驗證中...';
+                }
 
                 // 確保 MiniKit 已初始化
                 if (typeof MiniKit.install === 'function') {
