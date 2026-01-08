@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.4.1
+// 版本: v1.5.0
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -7,9 +7,10 @@
 // v1.3.0: 藍勾勾驗證徽章 + 測試模式
 // v1.4.0: 修正平台偵測 + 手機瀏覽器處理
 // v1.4.1: 等待 MiniKit 初始化 + 改進錯誤訊息
+// v1.5.0: 手機瀏覽器使用 IDKitSession API + polling 機制
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.4.1';
+        this.version = 'v1.5.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -251,36 +252,285 @@ class WorldMiniKit {
         }
     }
 
-    // 手機瀏覽器驗證處理
+    // 手機瀏覽器驗證處理 - 使用 IDKitSession API
     async verifyOnMobileBrowser() {
         const verifyBtn = document.getElementById('verify-world-id-btn');
+        const self = this;
 
-        // 顯示選項對話框
-        const choice = await this.showMobileVerificationOptions();
+        // 檢查 IDKitSession 是否可用
+        if (typeof window.IDKitSession === 'undefined') {
+            console.log('⚠️ IDKitSession 不可用，使用 IDKit widget');
+            await this.verifyWithIDKit();
+            return;
+        }
 
-        if (choice === 'worldapp') {
-            // 嘗試打開 World App
-            const worldAppUrl = `https://worldcoin.org/verify?action_id=${this.actionId}&app_id=${this.appId}`;
-            window.location.href = worldAppUrl;
+        console.log('📱 使用 IDKitSession API（手機瀏覽器優化）');
 
-            // 恢復按鈕（因為可能沒有成功跳轉）
-            setTimeout(() => {
+        try {
+            // 1. 創建 Session
+            console.log('🔄 創建驗證 Session...');
+            await window.IDKitSession.create({
+                app_id: this.appId,
+                action: this.actionId,
+                verification_level: 'orb'
+                // 不使用 signal，API v2 會使用預設的空字串 hash
+            });
+
+            console.log('✅ Session 創建成功');
+
+            // 2. 獲取 Session URI
+            const sessionURI = window.IDKitSession.getURI();
+            console.log('🔗 Session URI:', sessionURI);
+
+            // 3. 顯示手機驗證 UI（帶有打開 World App 按鈕）
+            await this.showMobileSessionUI(sessionURI);
+
+        } catch (error) {
+            console.error('❌ Session 創建失敗:', error);
+
+            // 嘗試銷毀可能存在的舊 session
+            try {
+                window.IDKitSession.destroy();
+            } catch (e) {}
+
+            // 降級到 IDKit widget
+            console.log('⚠️ 降級到 IDKit widget');
+            await this.verifyWithIDKit();
+        }
+    }
+
+    // 顯示手機 Session 驗證 UI
+    async showMobileSessionUI(sessionURI) {
+        const self = this;
+        const verifyBtn = document.getElementById('verify-world-id-btn');
+
+        return new Promise((resolve, reject) => {
+            // 創建 overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'mobile-session-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 20px;
+                box-sizing: border-box;
+            `;
+
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: #1a1a2e;
+                border-radius: 24px;
+                padding: 30px;
+                max-width: 350px;
+                width: 100%;
+                text-align: center;
+                color: white;
+            `;
+
+            dialog.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div style="width: 60px; height: 60px; margin: 0 auto 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">🌍</div>
+                    <h3 style="margin: 0 0 10px; font-size: 1.3em;">World ID 驗證</h3>
+                    <p id="session-status" style="color: #aaa; margin: 0; font-size: 0.9em;">點擊下方按鈕開啟 World App 完成驗證</p>
+                </div>
+
+                <a id="btn-open-worldapp-session" href="${sessionURI}" style="
+                    display: block;
+                    width: 100%;
+                    padding: 16px;
+                    margin-bottom: 15px;
+                    border: none;
+                    border-radius: 14px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    font-size: 1.05em;
+                    font-weight: bold;
+                    text-decoration: none;
+                    text-align: center;
+                    box-sizing: border-box;
+                ">🚀 開啟 World App</a>
+
+                <div id="polling-indicator" style="display: none; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: #667eea;">
+                        <div class="spinner" style="width: 20px; height: 20px; border: 2px solid rgba(102, 126, 234, 0.3); border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <span>等待驗證完成...</span>
+                    </div>
+                </div>
+
+                <button id="btn-cancel-session" style="
+                    width: 100%;
+                    padding: 12px;
+                    border: none;
+                    border-radius: 12px;
+                    background: rgba(255,255,255,0.1);
+                    color: #888;
+                    font-size: 0.9em;
+                    cursor: pointer;
+                ">取消</button>
+
+                <style>
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            let pollingInterval = null;
+            let isCompleted = false;
+
+            // 開始 Polling
+            const startPolling = () => {
+                const statusEl = document.getElementById('session-status');
+                const pollingIndicator = document.getElementById('polling-indicator');
+
+                if (pollingIndicator) {
+                    pollingIndicator.style.display = 'block';
+                }
+                if (statusEl) {
+                    statusEl.textContent = '請在 World App 中完成驗證...';
+                }
+
+                pollingInterval = setInterval(async () => {
+                    if (isCompleted) return;
+
+                    try {
+                        const status = await window.IDKitSession.pollStatus();
+                        console.log('📊 Polling 狀態:', status);
+
+                        if (status.state === 'confirmed' && status.result) {
+                            isCompleted = true;
+                            clearInterval(pollingInterval);
+
+                            console.log('✅ 驗證確認！結果:', status.result);
+
+                            if (statusEl) {
+                                statusEl.textContent = '驗證成功！正在處理...';
+                                statusEl.style.color = '#4ade80';
+                            }
+
+                            // 向後端驗證 proof
+                            const payload = {
+                                proof: status.result.proof,
+                                merkle_root: status.result.merkle_root,
+                                nullifier_hash: status.result.nullifier_hash,
+                                verification_level: status.result.verification_level
+                            };
+
+                            try {
+                                const isValid = await self.verifyProofWithBackend(payload);
+
+                                if (isValid) {
+                                    self.isVerified = true;
+                                    self.verificationLevel = status.result.verification_level;
+
+                                    // 清理
+                                    window.IDKitSession.destroy();
+                                    overlay.remove();
+
+                                    self.onVerificationSuccess(
+                                        status.result.verification_level,
+                                        status.result.nullifier_hash
+                                    );
+                                    resolve();
+                                } else {
+                                    throw new Error('後端驗證失敗');
+                                }
+                            } catch (backendError) {
+                                console.error('❌ 後端驗證失敗:', backendError);
+                                if (statusEl) {
+                                    statusEl.textContent = '驗證失敗，請重試';
+                                    statusEl.style.color = '#f87171';
+                                }
+                                window.IDKitSession.destroy();
+                                setTimeout(() => {
+                                    overlay.remove();
+                                    self.onVerificationFailed('後端驗證失敗');
+                                    reject(backendError);
+                                }, 2000);
+                            }
+                        } else if (status.state === 'failed') {
+                            isCompleted = true;
+                            clearInterval(pollingInterval);
+
+                            console.log('❌ 驗證失敗:', status.errorCode);
+                            if (statusEl) {
+                                statusEl.textContent = '驗證失敗：' + (status.errorCode || '未知錯誤');
+                                statusEl.style.color = '#f87171';
+                            }
+
+                            window.IDKitSession.destroy();
+                            setTimeout(() => {
+                                overlay.remove();
+                                self.onVerificationFailed(status.errorCode || '驗證失敗');
+                                reject(new Error(status.errorCode || '驗證失敗'));
+                            }, 2000);
+                        }
+                    } catch (pollError) {
+                        console.error('Polling 錯誤:', pollError);
+                    }
+                }, 2000); // 每 2 秒輪詢一次
+            };
+
+            // 點擊開啟 World App 時開始 polling
+            document.getElementById('btn-open-worldapp-session').addEventListener('click', () => {
+                console.log('🚀 開啟 World App，開始 polling...');
+                startPolling();
+            });
+
+            // 取消按鈕
+            document.getElementById('btn-cancel-session').onclick = () => {
+                isCompleted = true;
+                if (pollingInterval) clearInterval(pollingInterval);
+
+                try {
+                    window.IDKitSession.destroy();
+                } catch (e) {}
+
+                overlay.remove();
+
                 if (verifyBtn) {
                     verifyBtn.disabled = false;
                     verifyBtn.textContent = '🌍 World ID 驗證';
                 }
-            }, 3000);
-        } else if (choice === 'idkit') {
-            // 嘗試使用 IDKit（可能會有回調問題）
-            console.log('⚠️ 嘗試在手機瀏覽器使用 IDKit（可能不穩定）');
-            await this.verifyWithIDKit();
-        } else {
-            // 取消
-            if (verifyBtn) {
-                verifyBtn.disabled = false;
-                verifyBtn.textContent = '🌍 World ID 驗證';
-            }
-        }
+                resolve();
+            };
+
+            // 頁面可見性變化時重新啟動 polling（用戶從 World App 回來）
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'visible' && !isCompleted && window.IDKitSession.isActive) {
+                    console.log('📱 頁面重新可見，檢查驗證狀態...');
+                    // 如果 polling 還沒開始，開始它
+                    if (!pollingInterval) {
+                        startPolling();
+                    }
+                }
+            };
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // 清理監聽器（當 overlay 被移除時）
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.removedNodes.forEach((node) => {
+                        if (node === overlay) {
+                            document.removeEventListener('visibilitychange', handleVisibilityChange);
+                            observer.disconnect();
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true });
+        });
     }
 
     // 顯示手機驗證選項
