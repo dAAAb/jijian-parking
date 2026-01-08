@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.0
+// 版本: v1.5.1
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -8,9 +8,10 @@
 // v1.4.0: 修正平台偵測 + 手機瀏覽器處理
 // v1.4.1: 等待 MiniKit 初始化 + 改進錯誤訊息
 // v1.5.0: 手機瀏覽器使用 IDKitSession API + polling 機制
+// v1.5.1: MiniKit 驗證也移除 signal 參數（與 API v2 一致）
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.0';
+        this.version = 'v1.5.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -520,12 +521,60 @@ class WorldMiniKit {
             };
 
             // 頁面可見性變化時重新啟動 polling（用戶從 World App 回來）
-            const handleVisibilityChange = () => {
-                if (document.visibilityState === 'visible' && !isCompleted && window.IDKitSession.isActive) {
-                    console.log('📱 頁面重新可見，檢查驗證狀態...');
-                    // 如果 polling 還沒開始，開始它
-                    if (!pollingInterval) {
-                        startPolling();
+            const handleVisibilityChange = async () => {
+                if (document.visibilityState === 'visible' && !isCompleted) {
+                    console.log('📱 頁面重新可見，立即檢查驗證狀態...');
+                    console.log('📱 Session isActive:', window.IDKitSession.isActive);
+
+                    // 立即執行一次 pollStatus（不等待 interval）
+                    if (window.IDKitSession.isActive) {
+                        try {
+                            const status = await window.IDKitSession.pollStatus();
+                            console.log('📱 回來後的狀態:', JSON.stringify(status, null, 2));
+
+                            // 手動處理狀態
+                            if (status.state === 'confirmed' && status.result && !isCompleted) {
+                                isCompleted = true;
+                                if (pollingInterval) clearInterval(pollingInterval);
+
+                                console.log('✅ 回來後驗證確認！');
+                                const statusEl = document.getElementById('session-status');
+                                if (statusEl) {
+                                    statusEl.textContent = '驗證成功！正在處理...';
+                                    statusEl.style.color = '#4ade80';
+                                }
+
+                                const result = status.result;
+                                const payload = {
+                                    proof: result.proof,
+                                    merkle_root: result.merkle_root || result.merkleRoot,
+                                    nullifier_hash: result.nullifier_hash || result.nullifierHash,
+                                    verification_level: result.verification_level || result.verificationLevel || 'orb'
+                                };
+
+                                console.log('📤 payload:', JSON.stringify(payload, null, 2));
+
+                                const isValid = await self.verifyProofWithBackend(payload);
+                                if (isValid) {
+                                    self.isVerified = true;
+                                    self.verificationLevel = payload.verification_level;
+                                    window.IDKitSession.destroy();
+                                    overlay.remove();
+                                    self.onVerificationSuccess(payload.verification_level, payload.nullifier_hash);
+                                    resolve();
+                                } else {
+                                    const errorMsg = self.lastBackendError || '後端驗證失敗';
+                                    if (statusEl) {
+                                        statusEl.textContent = '錯誤: ' + errorMsg;
+                                        statusEl.style.color = '#f87171';
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('📱 回來後 poll 錯誤:', e);
+                        }
+                    } else {
+                        console.log('⚠️ Session 已不活躍');
                     }
                 }
             };
@@ -665,17 +714,14 @@ class WorldMiniKit {
             throw new Error('MiniKit.commandsAsync.verify 不可用');
         }
         
-        // 準備驗證參數
-        const signal = this.generateNonce();
+        // 準備驗證參數（不傳 signal，API v2 會使用空字串的 hash）
         const verifyPayload = {
             action: this.actionId,
-            signal: signal,
             verification_level: 'orb'
         };
-        
+
         console.log('📋 驗證參數:', {
             action: this.actionId,
-            signal: signal,
             verification_level: 'orb'
         });
         
