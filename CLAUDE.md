@@ -129,3 +129,42 @@ const installResult = MiniKit.install();
 - 按鈕顯示 `[R:Y I:Y V:Y W:Y]` = Mini App 環境正確
 - 按鈕顯示 `[R:N I:N V:Y W:N]` = 普通瀏覽器環境（正常）
 - 按鈕顯示 `[R:N I:N V:Y W:Y]` = World App 但 install() 時機錯誤
+
+---
+
+## 📋 Backlog（待觀察問題）
+
+### 1. 首次掃碼加入 Mini App 時 URL 錯誤
+**現象**：
+- 用 Developer Portal QR Code 掃碼加入 Mini App 時，自動打開一次
+- 這第一次顯示 `https://daaab.github.io/` 而不是設定的 `https://daaab.github.io/jijian-parking/`
+- Refresh 也還是錯誤的 URL
+- **關掉再打開就正常了**，之後每次都正常
+
+**推測原因**：
+- 可能是 World App 的設計行為，首次掃碼時先導航到 domain root
+- 不是代碼問題
+
+**解決方向**：
+- 未來 hosting 到其他地方（如 Vercel）可能可以解決
+- 或在 root 加重定向
+
+---
+
+### 2. Mini App 首次 APPROVE 失敗
+**現象**：
+- 按鈕顯示 `R:Y I:Y V:Y W:Y`（環境正確）
+- 第一次按驗證，抽屜滑出
+- 第一次 APPROVE 時顯示 error
+- **第二次按就成功了**
+- 目前無法復現
+
+**可能原因**：
+1. **Vercel cold start**：後端 serverless function 首次調用有冷啟動延遲，可能導致超時
+2. **MiniKit 內部狀態**：第一次 verify() 時某些內部狀態可能還沒完全準備好
+3. **World App session**：可能需要第一次調用來建立某種 session
+4. **Race condition**：某些資源在第一次調用時還沒完全就緒
+
+**觀察方向**：
+- 上線後觀察其他用戶是否有相同問題
+- 如果頻繁發生，考慮在 verify 前加「預熱」請求
