@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.7
+// 版本: v1.5.8
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -15,9 +15,10 @@
 // v1.5.5: 修復 World App 內 Approve 視窗被遮擋問題
 // v1.5.6: 增加 window.WorldApp 檢測，改進 World App 環境識別
 // v1.5.7: 修正 MiniKit 初始化 - 必須調用 MiniKit.install() 才能使 isInstalled() 返回 true
+// v1.5.8: 改進初始化邏輯 - 先調用 install()，再檢查 isInstalled()
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.7';
+        this.version = 'v1.5.8';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -74,28 +75,42 @@ class WorldMiniKit {
         let lastLog = 0;
         let hasCalledInstall = false;
 
+        // 首先等待 MiniKit 加載
         while (Date.now() - startTime < maxWait) {
             const hasMiniKit = typeof MiniKit !== 'undefined';
-            const hasInstallMethod = hasMiniKit && typeof MiniKit.install === 'function';
-            const hasIsInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function';
 
-            // 備選檢測：window.WorldApp 存在表示在 World App 環境中
-            const hasWorldApp = typeof window.WorldApp !== 'undefined';
+            if (!hasMiniKit) {
+                // MiniKit 還未加載，繼續等待
+                if (Date.now() - lastLog > 500) {
+                    console.log('⏳ 等待 MiniKit 加載...', { elapsed: Date.now() - startTime });
+                    lastLog = Date.now();
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                continue;
+            }
 
-            // 如果檢測到 World App 環境（通過 window.WorldApp）但還沒調用 install
-            // 必須先調用 MiniKit.install() 才能使 MiniKit.isInstalled() 返回 true
-            if (hasWorldApp && hasMiniKit && hasInstallMethod && !hasCalledInstall) {
-                console.log('🔧 檢測到 World App 環境，正在初始化 MiniKit.install()...');
+            // MiniKit 已加載，檢查並調用 install()
+            const hasInstallMethod = typeof MiniKit.install === 'function';
+            const hasIsInstalled = typeof MiniKit.isInstalled === 'function';
+
+            // 只要 MiniKit 存在且有 install 方法，就調用它（不管有沒有 window.WorldApp）
+            // 根據官方範例：先 install()，然後 isInstalled() 才能正確返回
+            if (hasInstallMethod && !hasCalledInstall) {
+                console.log('🔧 MiniKit 已加載，調用 MiniKit.install()...');
                 try {
                     MiniKit.install();
                     hasCalledInstall = true;
                     console.log('✅ MiniKit.install() 調用成功');
+                    // 給一點時間讓 World App 注入狀態
+                    await new Promise(resolve => setTimeout(resolve, 300));
                 } catch (e) {
                     console.error('❌ MiniKit.install() 失敗:', e);
+                    hasCalledInstall = true; // 避免重複調用
                 }
             }
 
             const isInstalled = hasIsInstalled && MiniKit.isInstalled();
+            const hasWorldApp = typeof window.WorldApp !== 'undefined';
 
             // 每 500ms 輸出一次調試日誌
             if (Date.now() - lastLog > 500) {
@@ -107,30 +122,36 @@ class WorldMiniKit {
                     isInstalled,
                     hasWorldApp,
                     hasCalledInstall,
-                    miniKitKeys: hasMiniKit ? Object.keys(MiniKit).slice(0, 8) : []
+                    miniKitKeys: Object.keys(MiniKit).slice(0, 10)
                 });
                 lastLog = Date.now();
             }
 
-            // MiniKit.isInstalled() 返回 true 表示在 World App 內且已初始化
+            // MiniKit.isInstalled() 返回 true 表示在 World App 內
             if (isInstalled) {
-                console.log('✅ World App 環境確認（MiniKit 已初始化）', { isInstalled, hasWorldApp });
+                console.log('✅ World App 環境確認！', { isInstalled, hasWorldApp });
                 return true;
             }
 
-            // 如果有 window.WorldApp 但 isInstalled 還是 false，可能需要等待
-            // 繼續等待一下讓 World App 完成初始化
-            if (hasWorldApp && !isInstalled) {
-                console.log('⏳ 等待 World App 完成初始化...', { hasWorldApp, isInstalled });
+            // 如果已經調用過 install() 但 isInstalled 還是 false，可能不在 World App 內
+            if (hasCalledInstall && !isInstalled) {
+                // 再等一下看看
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 再檢查一次
+                if (MiniKit.isInstalled?.()) {
+                    console.log('✅ World App 環境確認（延遲檢測）');
+                    return true;
+                }
             }
 
             await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        // 最後再嘗試一次：如果有 window.WorldApp 但沒成功初始化 MiniKit
-        const finalHasWorldApp = typeof window.WorldApp !== 'undefined';
+        // 超時後最後檢查一次
         const finalHasMiniKit = typeof MiniKit !== 'undefined';
         const finalIsInstalled = finalHasMiniKit && MiniKit.isInstalled?.();
+        const finalHasWorldApp = typeof window.WorldApp !== 'undefined';
 
         console.log('⏱️ MiniKit 等待超時');
         console.log('📋 最終狀態:', {
@@ -140,13 +161,13 @@ class WorldMiniKit {
             hasCalledInstall
         });
 
-        // 如果有 window.WorldApp，即使 isInstalled 是 false，也視為 World App 環境
-        // 這樣可以嘗試使用 MiniKit 功能
-        if (finalHasWorldApp) {
-            console.log('⚠️ 雖然 isInstalled 為 false，但檢測到 window.WorldApp，視為 World App 環境');
+        // 如果 isInstalled 為 true（可能是延遲生效），視為 World App 環境
+        if (finalIsInstalled) {
+            console.log('✅ 最終確認：World App 環境');
             return true;
         }
 
+        console.log('ℹ️ 非 World App 環境，將使用瀏覽器驗證流程');
         return false;
     }
 
