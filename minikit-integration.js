@@ -1,14 +1,15 @@
 // World MiniKit 整合
-// 版本: v1.4.0
+// 版本: v1.4.1
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
 // 支援：World App (MiniKit) + 網頁瀏覽器 (IDKit Standalone)
 // v1.3.0: 藍勾勾驗證徽章 + 測試模式
 // v1.4.0: 修正平台偵測 + 手機瀏覽器處理
+// v1.4.1: 等待 MiniKit 初始化 + 改進錯誤訊息
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.4.0';
+        this.version = 'v1.4.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -45,36 +46,51 @@ class WorldMiniKit {
         this.init();
     }
 
-    // 平台偵測
+    // 平台偵測（基本偵測，不依賴 MiniKit）
     detectPlatform() {
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
         // 檢測是否為手機/平板
         const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-        const isMobile = mobileRegex.test(userAgent);
+        this.isMobile = mobileRegex.test(userAgent);
 
-        // 檢測是否在 World App 內部（MiniKit.isInstalled() 才是正確的判斷）
-        const hasMiniKit = typeof MiniKit !== 'undefined';
-        const miniKitInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function' && MiniKit.isInstalled();
-
-        this.isWorldApp = miniKitInstalled;
-        this.isMobileBrowser = isMobile && !miniKitInstalled;
-        this.isDesktopBrowser = !isMobile && !miniKitInstalled;
-
-        console.log('📱 平台偵測結果:', {
+        console.log('📱 基本平台偵測:', {
             userAgent: userAgent.substring(0, 50) + '...',
-            isMobile,
-            hasMiniKit,
-            miniKitInstalled,
-            isWorldApp: this.isWorldApp,
-            isMobileBrowser: this.isMobileBrowser,
-            isDesktopBrowser: this.isDesktopBrowser
+            isMobile: this.isMobile
         });
+    }
+
+    // 等待並偵測 MiniKit 環境
+    async waitForMiniKit(maxWait = 2000) {
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < maxWait) {
+            const hasMiniKit = typeof MiniKit !== 'undefined';
+            const isInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function' && MiniKit.isInstalled();
+
+            if (isInstalled) {
+                console.log('✅ MiniKit 已安裝並準備好');
+                return true;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        console.log('⏱️ MiniKit 等待超時');
+        return false;
     }
 
     async init() {
         try {
-            console.log('🔍 環境檢測:', {
+            // 等待 MiniKit 初始化（World App 內部需要一點時間）
+            const miniKitReady = await this.waitForMiniKit();
+
+            // 更新環境狀態
+            this.isWorldApp = miniKitReady;
+            this.isMobileBrowser = this.isMobile && !miniKitReady;
+            this.isDesktopBrowser = !this.isMobile && !miniKitReady;
+
+            console.log('🔍 環境檢測結果:', {
                 isWorldApp: this.isWorldApp,
                 isMobileBrowser: this.isMobileBrowser,
                 isDesktopBrowser: this.isDesktopBrowser,
@@ -547,7 +563,7 @@ class WorldMiniKit {
     async verifyProofWithBackend(payload) {
         try {
             console.log('📤 準備驗證 proof...');
-            
+
             // 如果有配置後端 URL，使用後端驗證
             if (this.backendUrl) {
                 console.log('使用後端驗證:', this.backendUrl);
@@ -564,6 +580,14 @@ class WorldMiniKit {
                     })
                 });
                 const data = await response.json();
+                console.log('後端驗證回應:', data);
+
+                if (!data.success) {
+                    console.error('後端驗證失敗原因:', data.error);
+                    // 保存錯誤訊息供後續顯示
+                    this.lastBackendError = data.error || '未知錯誤';
+                }
+
                 return data.success;
             }
             
