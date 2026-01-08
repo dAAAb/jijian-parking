@@ -26,9 +26,10 @@
 // v1.6.6: 關鍵修正！只有 isInstalled()=true 才用 MiniKit，否則用 IDKit
 // v1.6.7: 徹底簡化判斷邏輯，移除 window.WorldApp 干擾，只看 isInstalled()
 // v1.6.8: 加回按鈕調試信息 + 延長 waitForMiniKit 超時
+// v1.6.9: 按鈕顯示倒計時，讓用戶知道系統在運作
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.8';
+        this.version = 'v1.6.9';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -259,12 +260,21 @@ class WorldMiniKit {
                 verifyBtn.textContent = `🌍 驗證 [I:${isInst?'Y':'N'} V:${hasV?'Y':'N'} W:${hasWA?'Y':'N'}]`;
             };
 
-            // 立即更新一次
-            updateButtonDebug();
-            // 1秒後再更新一次（等 ESM 加載完成）
-            setTimeout(updateButtonDebug, 1000);
-            // 3秒後再更新一次（確保 MiniKit 完全初始化）
-            setTimeout(updateButtonDebug, 3000);
+            // 每秒更新一次，持續 5 秒（等 MiniKit 初始化）
+            let countdown = 5;
+            const showLoading = () => {
+                verifyBtn.textContent = `⏳ 載入中... ${countdown}s`;
+                countdown--;
+            };
+            showLoading();
+            const interval = setInterval(() => {
+                if (countdown > 0) {
+                    showLoading();
+                } else {
+                    clearInterval(interval);
+                    updateButtonDebug();
+                }
+            }, 1000);
 
             verifyBtn.addEventListener('click', () => {
                 console.log('🖱️ 驗證按鈕被點擊！');
