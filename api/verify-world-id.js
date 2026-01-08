@@ -45,13 +45,13 @@ export default async function handler(req, res) {
         const appId = process.env.WORLD_APP_ID || 'app_8759766ce92173ee6e1ce6568a9bc9e6';
 
         // 調用 World API 驗證 proof
-        // API v2 端點需要在 URL 中包含 app_id
+        // API v2 端點不需要 Authorization header，只需要在 URL 中包含 app_id
         console.log('Verifying World ID proof for app:', appId);
+        console.log('Request payload:', { action, verification_level, signal: signal ? 'present' : 'empty' });
         const worldResponse = await fetch(`https://developer.worldcoin.org/api/v2/verify/${appId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 proof,
