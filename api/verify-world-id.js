@@ -41,9 +41,13 @@ export default async function handler(req, res) {
             });
         }
 
+        // App ID（必須與 Developer Portal 中的設定一致）
+        const appId = process.env.WORLD_APP_ID || 'app_8759766ce92173ee6e1ce6568a9bc9e6';
+
         // 調用 World API 驗證 proof
-        console.log('Verifying World ID proof...');
-        const worldResponse = await fetch('https://developer.worldcoin.org/api/v2/verify', {
+        // API v2 端點需要在 URL 中包含 app_id
+        console.log('Verifying World ID proof for app:', appId);
+        const worldResponse = await fetch(`https://developer.worldcoin.org/api/v2/verify/${appId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -59,8 +63,18 @@ export default async function handler(req, res) {
             })
         });
 
+        // 檢查回應狀態
+        if (!worldResponse.ok) {
+            const errorText = await worldResponse.text();
+            console.error('World API error response:', worldResponse.status, errorText);
+            return res.status(400).json({
+                success: false,
+                error: `World API error: ${worldResponse.status}`
+            });
+        }
+
         const result = await worldResponse.json();
-        
+
         console.log('World API response:', result);
 
         if (result.success) {
