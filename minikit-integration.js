@@ -26,10 +26,10 @@
 // v1.6.6: 關鍵修正！只有 isInstalled()=true 才用 MiniKit，否則用 IDKit
 // v1.6.7: 徹底簡化判斷邏輯，移除 window.WorldApp 干擾，只看 isInstalled()
 // v1.6.8: 加回按鈕調試信息 + 延長 waitForMiniKit 超時
-// v1.6.9: 按鈕顯示倒計時，讓用戶知道系統在運作
+// v1.7.0: 穩定版 - 按鈕倒計時 + 三平台分流正確
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.9';
+        this.version = 'v1.7.0';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
