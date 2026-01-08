@@ -22,9 +22,10 @@
 // v1.6.2: 更新 MiniKit CDN 到 1.9.9 版本（UMD build）
 // v1.6.3: 使用正確的 ESM 格式導入 MiniKit (+esm)，並在 HTML 中掛載到 window
 // v1.6.4: 添加更多調試信息到按鈕上，追蹤 verify() 調用狀態
+// v1.6.5: 顯示 isInstalled 狀態 + 為 verify() 添加 timeout 防止無限等待
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.4';
+        this.version = 'v1.6.5';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -248,9 +249,11 @@ class WorldMiniKit {
 
             // 🔥 調試：在按鈕上顯示環境狀態
             const mkStatus = typeof MiniKit !== 'undefined';
+            const mkInstalled = mkStatus && MiniKit.isInstalled?.();
             const mkVerify = mkStatus && !!MiniKit.commandsAsync?.verify;
             const waStatus = typeof window.WorldApp !== 'undefined';
-            verifyBtn.textContent = `🌍 驗證 [MK:${mkStatus?'Y':'N'} V:${mkVerify?'Y':'N'} WA:${waStatus?'Y':'N'}]`;
+            // I = isInstalled, V = hasVerify, W = WorldApp
+            verifyBtn.textContent = `🌍 驗證 [I:${mkInstalled?'Y':'N'} V:${mkVerify?'Y':'N'} W:${waStatus?'Y':'N'}]`;
 
             verifyBtn.addEventListener('click', () => {
                 console.log('🖱️ 驗證按鈕被點擊！');
@@ -341,8 +344,9 @@ class WorldMiniKit {
             const hasMiniKitVerify = typeof MiniKit !== 'undefined' &&
                                       MiniKit.commandsAsync?.verify;
 
+            const mkInstalled = typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.();
             if (verifyBtn) {
-                verifyBtn.textContent = `MK:${debugInfo.hasMiniKit} V:${hasMiniKitVerify}`;
+                verifyBtn.textContent = `I:${mkInstalled?'Y':'N'} V:${hasMiniKitVerify?'Y':'N'}`;
             }
 
             if (hasMiniKitVerify) {
@@ -922,8 +926,18 @@ class WorldMiniKit {
             // 使用 MiniKit 進行 World ID 驗證
             // 這個調用會觸發 World App 顯示原生的 Approve 驗證抽屜
             console.log('⏳ 正在等待 MiniKit.commandsAsync.verify() 返回...');
+            console.log('📊 verify 前狀態:', {
+                isInstalled: MiniKit.isInstalled?.(),
+                hasWorldApp: typeof window.WorldApp !== 'undefined'
+            });
 
-            const result = await MiniKit.commandsAsync.verify(verifyPayload);
+            // 添加 timeout 防止無限等待（30 秒）
+            const verifyPromise = MiniKit.commandsAsync.verify(verifyPayload);
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('verify() 超時 - 30秒內沒有回應。可能原因：1) 請確保透過 QR Code 或深度連結開啟 Mini App 2) 檢查 Developer Portal 設定')), 30000);
+            });
+
+            const result = await Promise.race([verifyPromise, timeoutPromise]);
 
             if (verifyBtn) {
                 verifyBtn.textContent = '📦 收到回應...';
