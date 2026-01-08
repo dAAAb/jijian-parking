@@ -18,9 +18,10 @@
 // v1.5.8: 改進初始化邏輯 - 先調用 install()，再檢查 isInstalled()
 // v1.5.9: 優先檢測 MiniKit.commandsAsync.verify 存在就直接使用（最可靠的 World App 檢測）
 // v1.6.0: 添加可見的調試信息到按鈕上，方便在 World App 中診斷問題
+// v1.6.1: 頁面加載後直接在按鈕上顯示環境狀態（不需要點擊）
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.0';
+        this.version = 'v1.6.1';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -240,7 +241,14 @@ class WorldMiniKit {
         // 設置 World ID 驗證按鈕（在所有環境中都顯示）
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
-            console.log('🔘 設置驗證按鈕事件監聽');
+            console.log('🔘 設置驗證按鈕事件監聯');
+
+            // 🔥 調試：在按鈕上顯示環境狀態
+            const mkStatus = typeof MiniKit !== 'undefined';
+            const mkVerify = mkStatus && !!MiniKit.commandsAsync?.verify;
+            const waStatus = typeof window.WorldApp !== 'undefined';
+            verifyBtn.textContent = `🌍 驗證 [MK:${mkStatus?'Y':'N'} V:${mkVerify?'Y':'N'} WA:${waStatus?'Y':'N'}]`;
+
             verifyBtn.addEventListener('click', () => {
                 console.log('🖱️ 驗證按鈕被點擊！');
                 this.verifyWorldID();
