@@ -19,9 +19,9 @@
             hasWindowMiniKit: typeof window.MiniKit !== 'undefined'
         });
 
-        // 等待 window.WorldApp 出現（最多 3 秒）
+        // 等待 window.WorldApp 出現（最多 2 秒，通常幾百毫秒內就會注入）
         let worldAppWaitTime = 0;
-        const maxWait = 3000;
+        const maxWait = 2000;
         while (typeof window.WorldApp === 'undefined' && worldAppWaitTime < maxWait) {
             await new Promise(resolve => setTimeout(resolve, 100));
             worldAppWaitTime += 100;
@@ -340,42 +340,65 @@ class WorldMiniKit {
                     background: linear-gradient(90deg, #667eea, #764ba2);
                     border-radius: 0 0 8px 8px;
                     width: 0%;
-                    transition: width 0.3s ease;
+                    transition: width 0.2s ease;
                 `;
                 verifyBtn.style.position = 'relative';
                 verifyBtn.style.overflow = 'hidden';
                 verifyBtn.appendChild(progressBar);
             }
 
-            // 等待 MiniKit 初始化（最多 3 秒），用進度條顯示
-            const waitTime = 3000;
+            // 動態等待 MiniKit 準備好（最多 2 秒，準備好就提前結束）
+            const maxWait = 2000;
             const startTime = Date.now();
+            let isReady = false;
+
+            const checkReady = () => {
+                const hasMK = typeof MiniKit !== 'undefined';
+                // 在 Mini App 中：isInstalled() 返回 true 表示準備好
+                // 在瀏覽器中：MiniKit 存在就夠了（會用 IDKit）
+                return hasMK && (MiniKit.isInstalled?.() || !window.WorldApp);
+            };
 
             const updateProgress = () => {
                 const elapsed = Date.now() - startTime;
-                const progress = Math.min((elapsed / waitTime) * 100, 100);
+                isReady = checkReady();
+
+                if (isReady) {
+                    // MiniKit 準備好了，直接完成
+                    progressBar.style.width = '100%';
+                    finishLoading();
+                    return;
+                }
+
+                // 還沒準備好，更新進度條
+                const progress = Math.min((elapsed / maxWait) * 100, 100);
                 progressBar.style.width = `${progress}%`;
 
-                if (elapsed < waitTime) {
+                if (elapsed < maxWait) {
                     requestAnimationFrame(updateProgress);
                 } else {
-                    // 載入完成，隱藏進度條
-                    progressBar.style.opacity = '0';
-                    setTimeout(() => {
-                        progressBar.style.display = 'none';
-                    }, 300);
-
-                    // Console 輸出調試信息（不顯示在 UI 上）
-                    const hasMK = typeof MiniKit !== 'undefined';
-                    const isInst = hasMK && MiniKit.isInstalled?.();
-                    console.log('📊 MiniKit 狀態:', {
-                        isInstalled: isInst,
-                        isReady: hasMK && MiniKit.isReady,
-                        hasVerify: hasMK && !!MiniKit.commandsAsync?.verify,
-                        hasWorldApp: typeof window.WorldApp !== 'undefined'
-                    });
+                    // 超時，也結束
+                    finishLoading();
                 }
             };
+
+            const finishLoading = () => {
+                // 淡出隱藏進度條
+                progressBar.style.opacity = '0';
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                }, 200);
+
+                // Console 輸出調試信息
+                const hasMK = typeof MiniKit !== 'undefined';
+                console.log('📊 MiniKit 狀態:', {
+                    isInstalled: hasMK && MiniKit.isInstalled?.(),
+                    isReady: hasMK && MiniKit.isReady,
+                    hasWorldApp: typeof window.WorldApp !== 'undefined',
+                    loadTime: Date.now() - startTime + 'ms'
+                });
+            };
+
             requestAnimationFrame(updateProgress);
 
             verifyBtn.addEventListener('click', () => {
