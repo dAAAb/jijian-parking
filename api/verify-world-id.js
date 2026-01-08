@@ -70,12 +70,25 @@ export default async function handler(req, res) {
             console.error('World API error response:', worldResponse.status, errorText);
 
             // 嘗試解析錯誤詳情
+            let errorJson = null;
             let errorDetail = `World API error: ${worldResponse.status}`;
             try {
-                const errorJson = JSON.parse(errorText);
+                errorJson = JSON.parse(errorText);
                 errorDetail = errorJson.detail || errorJson.message || errorJson.code || errorText;
             } catch (e) {
                 errorDetail = errorText || errorDetail;
+            }
+
+            // 特殊處理：max_verifications_reached 代表此人已驗證過
+            // World API 已記錄此 nullifier，視為驗證成功
+            if (errorJson && errorJson.code === 'max_verifications_reached') {
+                console.log('User already verified for this action, treating as success');
+                return res.status(200).json({
+                    success: true,
+                    already_verified: true,
+                    verification_level: verification_level || 'orb',
+                    nullifier_hash: nullifier_hash
+                });
             }
 
             return res.status(400).json({
