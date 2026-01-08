@@ -46,8 +46,9 @@ export default async function handler(req, res) {
 
         // 調用 World API 驗證 proof
         // API v2 端點不需要 Authorization header，只需要在 URL 中包含 app_id
+        // 注意：v2 API 使用 signal_hash 而非 signal，不傳則默認為空字串的 hash
         console.log('Verifying World ID proof for app:', appId);
-        console.log('Request payload:', { action, verification_level, signal: signal ? 'present' : 'empty' });
+        console.log('Request payload:', { action, verification_level });
         const worldResponse = await fetch(`https://developer.worldcoin.org/api/v2/verify/${appId}`, {
             method: 'POST',
             headers: {
@@ -58,8 +59,8 @@ export default async function handler(req, res) {
                 merkle_root,
                 nullifier_hash,
                 verification_level,
-                action,
-                signal
+                action
+                // 不傳 signal，API 會使用默認的空字串 hash
             })
         });
 

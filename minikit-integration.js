@@ -484,8 +484,9 @@ class WorldMiniKit {
         
         console.log('✅ IDKit 已加載', typeof window.IDKit);
         console.log('IDKit 方法:', Object.keys(window.IDKit));
-        
-        const signal = this.generateNonce();
+
+        // 不使用 signal，因為 API v2 需要 signal_hash 而非 signal
+        // 不傳 signal 時，API 會使用空字串的 hash
         const self = this;
         
         try {
@@ -493,28 +494,26 @@ class WorldMiniKit {
             console.log('配置參數:', {
                 app_id: this.appId,
                 action: this.actionId,
-                signal: signal,
                 verification_level: 'orb'
             });
-            
+
             // 使用 IDKit.init() 和 IDKit.open() - 參考官方文檔
             // https://docs.world.org/world-id/reference/idkit#idkit-standalone
+            // 注意：不使用 signal，因為 API v2 需要 signal_hash
             window.IDKit.init({
                 app_id: this.appId,
                 action: this.actionId,
-                signal: signal,
                 verification_level: 'orb',
                 // handleVerify 用於後端驗證（在用戶看到成功畫面前）
                 handleVerify: async (result) => {
                     console.log('🔄 handleVerify 被調用:', result);
-                    
-                    // 構造 payload
+
+                    // 構造 payload（不包含 signal，因為 API v2 使用 signal_hash）
                     const payload = {
                         proof: result.proof,
                         merkle_root: result.merkle_root,
                         nullifier_hash: result.nullifier_hash,
-                        verification_level: result.verification_level,
-                        signal: signal
+                        verification_level: result.verification_level
                     };
                     
                     console.log('📤 向後端驗證 proof...');
@@ -575,8 +574,8 @@ class WorldMiniKit {
                         merkle_root: payload.merkle_root,
                         nullifier_hash: payload.nullifier_hash,
                         verification_level: payload.verification_level,
-                        action: this.actionId,
-                        signal: payload.signal,
+                        action: this.actionId
+                        // 不傳 signal，API v2 會使用默認的空字串 hash
                     })
                 });
                 const data = await response.json();
@@ -595,19 +594,18 @@ class WorldMiniKit {
             // ⚠️ 注意：這樣做會暴露 API Key，僅用於開發測試！
             if (this.apiKey && !this.backendUrl) {
                 console.log('⚠️ 直接調用 World API（僅用於開發測試）');
-                const response = await fetch('https://developer.worldcoin.org/api/v2/verify', {
+                const response = await fetch(`https://developer.worldcoin.org/api/v2/verify/${this.appId}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.apiKey}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         proof: payload.proof,
                         merkle_root: payload.merkle_root,
                         nullifier_hash: payload.nullifier_hash,
                         verification_level: payload.verification_level,
-                        action: this.actionId,
-                        signal: payload.signal,
+                        action: this.actionId
+                        // 不傳 signal，API v2 會使用默認的空字串 hash
                     })
                 });
                 const data = await response.json();
