@@ -68,9 +68,19 @@ export default async function handler(req, res) {
         if (!worldResponse.ok) {
             const errorText = await worldResponse.text();
             console.error('World API error response:', worldResponse.status, errorText);
+
+            // 嘗試解析錯誤詳情
+            let errorDetail = `World API error: ${worldResponse.status}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorDetail = errorJson.detail || errorJson.message || errorJson.code || errorText;
+            } catch (e) {
+                errorDetail = errorText || errorDetail;
+            }
+
             return res.status(400).json({
                 success: false,
-                error: `World API error: ${worldResponse.status}`
+                error: errorDetail
             });
         }
 
