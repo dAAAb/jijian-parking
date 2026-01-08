@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.4
+// 版本: v1.5.5
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -12,9 +12,10 @@
 // v1.5.2: 修復 race condition - 防止 polling 和 visibilitychange 重複驗證
 // v1.5.3: 支援已驗證用戶 (max_verifications_reached) + 顯示用戶 ID
 // v1.5.4: 改進 World App 環境檢測 + 驗證時動態更新環境狀態
+// v1.5.5: 修復 World App 內 Approve 視窗被遮擋問題
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.4';
+        this.version = 'v1.5.5';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -746,19 +747,19 @@ class WorldMiniKit {
 
     async verifyWithMiniKit() {
         console.log('📱 使用 MiniKit 驗證（World App）');
-        
+
         // 檢查 MiniKit 是否可用
         if (typeof MiniKit === 'undefined') {
             console.error('❌ MiniKit 未定義');
             throw new Error('MiniKit 不可用');
         }
-        
+
         if (!MiniKit.commandsAsync || !MiniKit.commandsAsync.verify) {
             console.error('❌ MiniKit.commandsAsync.verify 不存在');
             console.log('可用的 MiniKit 方法:', Object.keys(MiniKit));
             throw new Error('MiniKit.commandsAsync.verify 不可用');
         }
-        
+
         // 準備驗證參數（不傳 signal，API v2 會使用空字串的 hash）
         const verifyPayload = {
             action: this.actionId,
@@ -769,12 +770,23 @@ class WorldMiniKit {
             action: this.actionId,
             verification_level: 'orb'
         });
-        
+
         console.log('🚀 調用 MiniKit.commandsAsync.verify...');
-        
+
+        // 暫時隱藏頁面內容，讓 World App 的 Approve 視窗能顯示
+        // 這是因為 Mini App WebView 可能會蓋住原生 UI
+        const gameContainer = document.getElementById('game-container');
+        const startScreen = document.getElementById('start-screen');
+        if (gameContainer) gameContainer.style.visibility = 'hidden';
+        if (startScreen) startScreen.style.opacity = '0.3';
+
         try {
             // 使用 MiniKit 進行 World ID 驗證
             const result = await MiniKit.commandsAsync.verify(verifyPayload);
+
+            // 恢復頁面顯示
+            if (gameContainer) gameContainer.style.visibility = 'visible';
+            if (startScreen) startScreen.style.opacity = '1';
             
             console.log('📦 收到完整回應:', result);
             
@@ -813,6 +825,12 @@ class WorldMiniKit {
                 this.onVerificationFailed('驗證過程發生錯誤');
             }
         } catch (error) {
+            // 恢復頁面顯示
+            const gameContainer = document.getElementById('game-container');
+            const startScreen = document.getElementById('start-screen');
+            if (gameContainer) gameContainer.style.visibility = 'visible';
+            if (startScreen) startScreen.style.opacity = '1';
+
             console.error('💥 MiniKit.commandsAsync.verify 調用失敗:', error);
             console.error('錯誤詳情:', error.message, error.stack);
             throw error;
