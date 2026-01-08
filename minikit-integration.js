@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.7.6
+// 版本: v1.7.7
 // 重要：MiniKit 現在用 dynamic import 在這裡加載
 // v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
@@ -105,9 +105,10 @@
 // v1.7.4: 移除調試信息，改用隱晦的進度條顯示載入狀態
 // v1.7.5: 改善 UI 文字 + 預載入 IDKit 加速桌面/手機瀏覽器響應
 // v1.7.6: 新增支援頁面、根目錄重定向
+// v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.6';
+        this.version = 'v1.7.7';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -545,7 +546,7 @@ class WorldMiniKit {
         } catch (error) {
             console.error('❌ World ID 驗證錯誤:', error);
             console.error('錯誤堆疊:', error.stack);
-            this.onVerificationFailed(error.message || '驗證過程發生錯誤');
+            this.onVerificationFailed(error.message || 'Error during verification');
 
             // 恢復按鈕狀態
             if (verifyBtn) {
@@ -702,7 +703,7 @@ class WorldMiniKit {
                     pollingIndicator.style.display = 'block';
                 }
                 if (statusEl) {
-                    statusEl.textContent = '請在 World App 中完成驗證...';
+                    statusEl.textContent = 'Please complete verification in World App...';
                 }
 
                 pollingInterval = setInterval(async () => {
@@ -723,7 +724,7 @@ class WorldMiniKit {
                             console.log('📋 result 的所有屬性:', Object.keys(status.result));
 
                             if (statusEl) {
-                                statusEl.textContent = '驗證成功！正在處理...';
+                                statusEl.textContent = 'Verified! Processing...';
                                 statusEl.style.color = '#4ade80';
                             }
 
@@ -757,14 +758,14 @@ class WorldMiniKit {
                                     resolve();
                                 } else {
                                     // 獲取具體錯誤訊息
-                                    const errorMsg = self.lastBackendError || '後端驗證失敗';
+                                    const errorMsg = self.lastBackendError || 'Backend verification failed';
                                     throw new Error(errorMsg);
                                 }
                             } catch (backendError) {
                                 console.error('❌ 後端驗證失敗:', backendError);
                                 console.error('❌ 錯誤詳情:', backendError.message);
                                 if (statusEl) {
-                                    statusEl.textContent = '後端驗證失敗: ' + (backendError.message || '未知錯誤');
+                                    statusEl.textContent = 'Backend error: ' + (backendError.message || 'Unknown error');
                                     statusEl.style.color = '#f87171';
                                 }
                                 window.IDKitSession.destroy();
@@ -785,14 +786,14 @@ class WorldMiniKit {
 
                             console.log('❌ 驗證失敗:', status.errorCode);
                             if (statusEl) {
-                                statusEl.textContent = '驗證失敗：' + (status.errorCode || '未知錯誤');
+                                statusEl.textContent = 'Verification failed: ' + (status.errorCode || 'Unknown error');
                                 statusEl.style.color = '#f87171';
                             }
 
                             window.IDKitSession.destroy();
                             setTimeout(() => {
                                 overlay.remove();
-                                self.onVerificationFailed(status.errorCode || '驗證失敗');
+                                self.onVerificationFailed(status.errorCode || 'Verification failed');
                                 reject(new Error(status.errorCode || '驗證失敗'));
                             }, 2000);
                         }
@@ -847,7 +848,7 @@ class WorldMiniKit {
                                 console.log('✅ 回來後驗證確認！');
                                 const statusEl = document.getElementById('session-status');
                                 if (statusEl) {
-                                    statusEl.textContent = '驗證成功！正在處理...';
+                                    statusEl.textContent = 'Verified! Processing...';
                                     statusEl.style.color = '#4ade80';
                                 }
 
@@ -870,7 +871,7 @@ class WorldMiniKit {
                                     self.onVerificationSuccess(payload.verification_level, payload.nullifier_hash);
                                     resolve();
                                 } else {
-                                    const errorMsg = self.lastBackendError || '後端驗證失敗';
+                                    const errorMsg = self.lastBackendError || 'Backend verification failed';
                                     if (statusEl) {
                                         statusEl.textContent = '錯誤: ' + errorMsg;
                                         statusEl.style.color = '#f87171';
@@ -932,9 +933,9 @@ class WorldMiniKit {
             `;
 
             dialog.innerHTML = `
-                <h3 style="margin-bottom: 15px; font-size: 1.3em;">📱 手機驗證</h3>
+                <h3 style="margin-bottom: 15px; font-size: 1.3em;">📱 Mobile Verification</h3>
                 <p style="color: #aaa; margin-bottom: 25px; font-size: 0.95em;">
-                    建議使用 World App 進行驗證，以獲得最佳體驗。
+                    We recommend using World App for the best experience.
                 </p>
                 <button id="btn-open-worldapp" style="
                     width: 100%;
@@ -947,7 +948,7 @@ class WorldMiniKit {
                     font-size: 1em;
                     font-weight: bold;
                     cursor: pointer;
-                ">🌍 開啟 World App 驗證</button>
+                ">🌍 Open World App</button>
                 <button id="btn-try-idkit" style="
                     width: 100%;
                     padding: 12px;
@@ -958,7 +959,7 @@ class WorldMiniKit {
                     color: white;
                     font-size: 0.9em;
                     cursor: pointer;
-                ">嘗試瀏覽器驗證（可能不穩定）</button>
+                ">Try browser verification</button>
                 <button id="btn-cancel" style="
                     width: 100%;
                     padding: 10px;
@@ -968,7 +969,7 @@ class WorldMiniKit {
                     color: #888;
                     font-size: 0.85em;
                     cursor: pointer;
-                ">取消</button>
+                ">Cancel</button>
             `;
 
             overlay.appendChild(dialog);
@@ -1058,7 +1059,7 @@ class WorldMiniKit {
         // 更新按鈕狀態
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
-            verifyBtn.textContent = '⏳ 等待驗證中...';
+            verifyBtn.textContent = '⏳ Waiting...';
         }
 
         try {
@@ -1079,7 +1080,7 @@ class WorldMiniKit {
             const result = await Promise.race([verifyPromise, timeoutPromise]);
 
             if (verifyBtn) {
-                verifyBtn.textContent = '✅ 驗證完成，處理中...';
+                verifyBtn.textContent = '✅ Verified, processing...';
             }
 
             console.log('📦 收到完整回應:', result);
@@ -1092,7 +1093,7 @@ class WorldMiniKit {
             
             if (!finalPayload) {
                 console.error('❌ finalPayload 為空');
-                throw new Error('驗證回應為空');
+                throw new Error('Empty verification response');
             }
             
             if (finalPayload.status === 'success') {
@@ -1111,14 +1112,14 @@ class WorldMiniKit {
                         false // 不是測試模式
                     );
                 } else {
-                    throw new Error('後端驗證失敗');
+                    throw new Error('Backend verification failed');
                 }
             } else if (finalPayload.status === 'error') {
                 console.error('❌ World ID 驗證失敗:', finalPayload);
-                this.onVerificationFailed(finalPayload.error_code || '驗證失敗，請重試');
+                this.onVerificationFailed(finalPayload.error_code || 'Verification failed, please try again');
             } else {
                 console.warn('⚠️ 未知狀態:', finalPayload);
-                this.onVerificationFailed('驗證過程發生錯誤');
+                this.onVerificationFailed('Error during verification');
             }
         } catch (error) {
             console.error('💥 MiniKit.commandsAsync.verify 調用失敗:', error);
@@ -1149,7 +1150,7 @@ class WorldMiniKit {
 
         if (typeof window.IDKit === 'undefined') {
             console.error('❌ IDKit 未找到，請檢查 CDN 是否加載');
-            throw new Error('IDKit 未加載，請重新整理頁面');
+            throw new Error('IDKit not loaded, please refresh');
         }
 
         console.log('✅ IDKit 已就緒');
@@ -1191,7 +1192,7 @@ class WorldMiniKit {
                     const isValid = await self.verifyProofWithBackend(payload);
                     
                     if (!isValid) {
-                        throw new Error('後端驗證失敗');
+                        throw new Error('Backend verification failed');
                     }
                     
                     console.log('✅ 後端驗證成功');
@@ -1320,11 +1321,11 @@ class WorldMiniKit {
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
             verifyBtn.disabled = false;
-            verifyBtn.textContent = '🌍 World ID 驗證';
+            verifyBtn.textContent = '🌍 Verify with World ID';
         }
         
         // 顯示更詳細的錯誤訊息
-        const errorMsg = `驗證失敗：${message}\n\n請確保你已經設置了 World ID。`;
+        const errorMsg = `Verification failed: ${message}\n\nPlease make sure you have set up World ID.`;
         console.error('完整錯誤訊息:', errorMsg);
         alert(errorMsg);
         
