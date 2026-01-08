@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.5.3
+// 版本: v1.5.4
 // 參考文檔:
 // - MiniKit: https://docs.world.org/mini-apps/commands/verify
 // - IDKit: https://docs.world.org/world-id/reference/idkit
@@ -11,9 +11,10 @@
 // v1.5.1: MiniKit 驗證也移除 signal 參數（與 API v2 一致）
 // v1.5.2: 修復 race condition - 防止 polling 和 visibilitychange 重複驗證
 // v1.5.3: 支援已驗證用戶 (max_verifications_reached) + 顯示用戶 ID
+// v1.5.4: 改進 World App 環境檢測 + 驗證時動態更新環境狀態
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.5.3';
+        this.version = 'v1.5.4';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -65,22 +66,40 @@ class WorldMiniKit {
     }
 
     // 等待並偵測 MiniKit 環境
-    async waitForMiniKit(maxWait = 2000) {
+    async waitForMiniKit(maxWait = 3000) {
         const startTime = Date.now();
+        let lastLog = 0;
 
         while (Date.now() - startTime < maxWait) {
             const hasMiniKit = typeof MiniKit !== 'undefined';
-            const isInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function' && MiniKit.isInstalled();
+            const hasIsInstalled = hasMiniKit && typeof MiniKit.isInstalled === 'function';
+            const isInstalled = hasIsInstalled && MiniKit.isInstalled();
+
+            // 每 500ms 輸出一次調試日誌
+            if (Date.now() - lastLog > 500) {
+                console.log('🔍 MiniKit 檢測中...', {
+                    elapsed: Date.now() - startTime,
+                    hasMiniKit,
+                    hasIsInstalled,
+                    isInstalled,
+                    miniKitKeys: hasMiniKit ? Object.keys(MiniKit).slice(0, 5) : []
+                });
+                lastLog = Date.now();
+            }
 
             if (isInstalled) {
-                console.log('✅ MiniKit 已安裝並準備好');
+                console.log('✅ MiniKit 已安裝並準備好（World App 環境）');
                 return true;
             }
 
             await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        console.log('⏱️ MiniKit 等待超時');
+        console.log('⏱️ MiniKit 等待超時 - 非 World App 環境');
+        console.log('📋 最終 MiniKit 狀態:', {
+            hasMiniKit: typeof MiniKit !== 'undefined',
+            isInstalled: typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.()
+        });
         return false;
     }
 
@@ -232,6 +251,21 @@ class WorldMiniKit {
                 return;
             }
 
+            // 再次檢查 MiniKit 狀態（可能在初始化後變化）
+            const miniKitNow = typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.();
+            console.log('🔄 驗證時 MiniKit 狀態:', {
+                isWorldApp: this.isWorldApp,
+                miniKitNow,
+                hasMiniKit: typeof MiniKit !== 'undefined'
+            });
+
+            // 如果現在 MiniKit 可用但初始化時沒檢測到，更新狀態
+            if (miniKitNow && !this.isWorldApp) {
+                console.log('🔄 更新：現在檢測到 World App 環境');
+                this.isWorldApp = true;
+                this.isMobileBrowser = false;
+            }
+
             // 根據環境選擇驗證方式
             if (this.isWorldApp) {
                 // World App Mini App 內部：使用 MiniKit
@@ -239,7 +273,7 @@ class WorldMiniKit {
                 await this.verifyWithMiniKit();
             } else if (this.isMobileBrowser) {
                 // 手機瀏覽器：顯示提示，建議使用 World App
-                console.log('📱 手機瀏覽器環境');
+                console.log('📱 手機瀏覽器環境 - 使用 IDKitSession');
                 await this.verifyOnMobileBrowser();
             } else {
                 // 桌面瀏覽器：使用 IDKit（QR Code）
