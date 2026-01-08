@@ -80,48 +80,52 @@
 - 可查看 Vercel 日誌：`https://vercel.com/daaabs-projects/jijian/logs`
 - **不要重複問用戶已經討論過的配置！**
 
-## 目前的挑戰：Mini App 環境 isInstalled() 返回 false
+## ✅ 已解決：Mini App 驗證（v1.7.3）
 
-### 測試結果（v1.7.0）
+### 測試結果（v1.7.3）
 | 平台 | 狀態 | 結果 |
 |------|------|------|
 | 桌面瀏覽器 | ✅ 正常 | IDKit QR Code 彈窗 |
 | 手機瀏覽器 | ✅ 正常 | IDKitSession + polling |
-| Mini App | ❌ 異常 | 顯示 `I:N V:Y W:Y` |
+| Mini App | ✅ 正常 | MiniKit verify 抽屜滑出 |
 
-### Mini App 問題分析
-- 用戶透過 Developer Portal QR Code 掃描開啟（正確方式）
-- `window.WorldApp` 存在 (W:Y) - 確實在 World App 中
-- `MiniKit.commandsAsync.verify` 存在 (V:Y) - SDK 已加載
-- **但 `MiniKit.isInstalled()` 返回 false (I:N)** - 這是問題！
+### 🔥 關鍵發現與解決方案
 
-### 可能原因
-1. **ESM 加載時機問題**：
-   - `<script type="module">` 是 deferred（延遲執行）
-   - `minikit-integration.js` 同步執行，可能在 MiniKit ESM 之前
-   - 雖然 waitForMiniKit 等待 5 秒，但 install() 可能時機不對
+**根本原因**：`MiniKit.install()` 必須在 `window.WorldApp` **已經存在**時調用，才會設置 `isReady = true`。
 
-2. **MiniKit.install() 調用問題**：
-   - 在 index.html ESM 中調用了 install()
-   - 在 waitForMiniKit 中也調用了 install()
-   - 可能需要特定條件或參數
+之前的問題：
+- Dynamic import 異步加載 MiniKit
+- `install()` 在 `window.WorldApp` 注入前就被調用
+- 導致 `isReady = false`，`isInstalled() = false`
 
-### 重要發現（v1.7.2）
-- 之前看到的 `MK:Y V:Y WA:Y` 中的 **MK:Y 不是 isInstalled()**
-- MK:Y 只是 `typeof MiniKit !== 'undefined'`
-- I:Y 才是 `MiniKit.isInstalled()` 返回 true
-- **isInstalled() 可能從未在 Mini App 環境返回過 true！**
+**解決方案（v1.7.3）**：
+```javascript
+// 等待 window.WorldApp 出現（最多 3 秒）
+let worldAppWaitTime = 0;
+const maxWait = 3000;
+while (typeof window.WorldApp === 'undefined' && worldAppWaitTime < maxWait) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    worldAppWaitTime += 100;
+}
+
+// window.WorldApp 存在後再調用 install()
+const installResult = MiniKit.install();
+```
+
+### MiniKit 初始化的正確順序
+1. Dynamic import 加載 MiniKit ESM
+2. **等待 `window.WorldApp` 出現**（World App 會注入這個對象）
+3. 調用 `MiniKit.install()`
+4. `install()` 檢測到 `window.WorldApp` 存在，設置 `isReady = true`
+5. `isInstalled()` 返回 `true`（因為 `isReady && window.MiniKit` 都成立）
 
 ### isInstalled() 返回 true 的條件
 根據 MiniKit 源碼：
 1. `MiniKit.isReady` 必須是 `true`
 2. `window.MiniKit` 必須存在
-3. 需要收到來自 World App 的 **init payload**
+3. `install()` 調用時 `window.WorldApp` 必須存在
 
-### 調試方向
-- 按鈕現在顯示 `[R:? I:? V:? W:?]`
-  - R = isReady
-  - I = isInstalled
-  - V = verify 存在
-  - W = WorldApp 存在
-- Console 會顯示 install() 的返回值
+### 調試指標
+- 按鈕顯示 `[R:Y I:Y V:Y W:Y]` = Mini App 環境正確
+- 按鈕顯示 `[R:N I:N V:Y W:N]` = 普通瀏覽器環境（正常）
+- 按鈕顯示 `[R:N I:N V:Y W:Y]` = World App 但 install() 時機錯誤
