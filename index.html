@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="style.css">
     
     <!-- World MiniKit SDK (for World App) -->
-    <script src="https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@0.0.68/dist/minikit.js"></script>
+    <!-- 使用 UMD build，會創建全局的 MiniKit 對象 -->
+    <script src="https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@1.9.9/build/index.umd.cjs"></script>
     
     <!-- World IDKit Standalone (for Web browsers) -->
     <script src="https://unpkg.com/@worldcoin/idkit-standalone@latest/build/index.global.js"></script>
@@ -119,7 +120,7 @@
     </div>
 
     <!-- 版本號 -->
-    <div class="version">v1.6.1</div>
+    <div class="version">v1.6.2</div>
 
     <!-- 載入 Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
