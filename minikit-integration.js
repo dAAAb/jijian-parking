@@ -23,9 +23,10 @@
 // v1.6.3: 使用正確的 ESM 格式導入 MiniKit (+esm)，並在 HTML 中掛載到 window
 // v1.6.4: 添加更多調試信息到按鈕上，追蹤 verify() 調用狀態
 // v1.6.5: 顯示 isInstalled 狀態 + 為 verify() 添加 timeout 防止無限等待
+// v1.6.6: 關鍵修正！只有 isInstalled()=true 才用 MiniKit，否則用 IDKit
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.6.5';
+        this.version = 'v1.6.6';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -339,19 +340,20 @@ class WorldMiniKit {
                 return;
             }
 
-            // 🔥 優先檢測：如果 MiniKit 存在且有 verify 命令，直接使用（World App 環境）
-            // 這是最可靠的檢測方式，不依賴 isInstalled() 或 window.WorldApp
-            const hasMiniKitVerify = typeof MiniKit !== 'undefined' &&
-                                      MiniKit.commandsAsync?.verify;
+            // 🔥 關鍵修正：必須檢查 isInstalled() 而不只是 verify 方法存在
+            // MiniKit CDN 加載後 verify 方法會存在，但只有真正以 Mini App 開啟時 isInstalled() 才會返回 true
+            const hasMiniKit = typeof MiniKit !== 'undefined';
+            const mkInstalled = hasMiniKit && MiniKit.isInstalled?.();
+            const hasMiniKitVerify = hasMiniKit && !!MiniKit.commandsAsync?.verify;
 
-            const mkInstalled = typeof MiniKit !== 'undefined' && MiniKit.isInstalled?.();
             if (verifyBtn) {
                 verifyBtn.textContent = `I:${mkInstalled?'Y':'N'} V:${hasMiniKitVerify?'Y':'N'}`;
             }
 
-            if (hasMiniKitVerify) {
-                console.log('🌍 檢測到 MiniKit.commandsAsync.verify 可用！');
-                console.log('🚀 直接使用 MiniKit 驗證（World App 環境）');
+            // 只有當 isInstalled() 為 true 時才使用 MiniKit 驗證
+            if (mkInstalled && hasMiniKitVerify) {
+                console.log('🌍 MiniKit.isInstalled() = true，確認在 Mini App 環境！');
+                console.log('🚀 使用 MiniKit 驗證');
 
                 if (verifyBtn) {
                     verifyBtn.textContent = '🌍 MiniKit 驗證中...';
