@@ -412,7 +412,8 @@ class WorldMiniKit {
                             isCompleted = true;
                             clearInterval(pollingInterval);
 
-                            console.log('✅ 驗證確認！結果:', status.result);
+                            console.log('✅ 驗證確認！完整結果:', JSON.stringify(status.result, null, 2));
+                            console.log('📋 result 的所有屬性:', Object.keys(status.result));
 
                             if (statusEl) {
                                 statusEl.textContent = '驗證成功！正在處理...';
@@ -420,44 +421,56 @@ class WorldMiniKit {
                             }
 
                             // 向後端驗證 proof
+                            // 注意：IDKitSession 返回的屬性名可能不同
+                            const result = status.result;
                             const payload = {
-                                proof: status.result.proof,
-                                merkle_root: status.result.merkle_root,
-                                nullifier_hash: status.result.nullifier_hash,
-                                verification_level: status.result.verification_level
+                                proof: result.proof,
+                                merkle_root: result.merkle_root || result.merkleRoot,
+                                nullifier_hash: result.nullifier_hash || result.nullifierHash,
+                                verification_level: result.verification_level || result.verificationLevel || 'orb'
                             };
+
+                            console.log('📤 準備發送到後端的 payload:', JSON.stringify(payload, null, 2));
 
                             try {
                                 const isValid = await self.verifyProofWithBackend(payload);
 
                                 if (isValid) {
                                     self.isVerified = true;
-                                    self.verificationLevel = status.result.verification_level;
+                                    self.verificationLevel = result.verification_level || result.verificationLevel || 'orb';
 
                                     // 清理
                                     window.IDKitSession.destroy();
                                     overlay.remove();
 
                                     self.onVerificationSuccess(
-                                        status.result.verification_level,
-                                        status.result.nullifier_hash
+                                        result.verification_level || result.verificationLevel || 'orb',
+                                        result.nullifier_hash || result.nullifierHash
                                     );
                                     resolve();
                                 } else {
-                                    throw new Error('後端驗證失敗');
+                                    // 獲取具體錯誤訊息
+                                    const errorMsg = self.lastBackendError || '後端驗證失敗';
+                                    throw new Error(errorMsg);
                                 }
                             } catch (backendError) {
                                 console.error('❌ 後端驗證失敗:', backendError);
+                                console.error('❌ 錯誤詳情:', backendError.message);
                                 if (statusEl) {
-                                    statusEl.textContent = '驗證失敗，請重試';
+                                    statusEl.textContent = '後端驗證失敗: ' + (backendError.message || '未知錯誤');
                                     statusEl.style.color = '#f87171';
                                 }
                                 window.IDKitSession.destroy();
                                 setTimeout(() => {
                                     overlay.remove();
-                                    self.onVerificationFailed('後端驗證失敗');
-                                    reject(backendError);
-                                }, 2000);
+                                    // 不要觸發降級流程，直接恢復按鈕
+                                    const verifyBtn = document.getElementById('verify-world-id-btn');
+                                    if (verifyBtn) {
+                                        verifyBtn.disabled = false;
+                                        verifyBtn.textContent = '🌍 World ID 驗證';
+                                    }
+                                    resolve(); // 用 resolve 而不是 reject，避免觸發降級
+                                }, 3000);
                             }
                         } else if (status.state === 'failed') {
                             isCompleted = true;
