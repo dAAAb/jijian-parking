@@ -46,7 +46,7 @@ body {
     padding: 30px 25px;
     max-width: 340px;
     width: 85%;
-    background: rgba(20, 20, 35, 0.92);
+    background: rgba(20, 20, 35, 0.70);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 24px;

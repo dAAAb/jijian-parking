@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.0.0
+// 版本: v2.0.1
 
 // 多語言輔助函數
 function getText(key, fallback) {
