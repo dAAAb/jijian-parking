@@ -24,6 +24,7 @@ class MinimalParking {
         // Demo 模式屬性
         this.isDemoMode = false;
         this.demoAnimationId = null;
+        this.demoResetting = false; // 防止重複重置
 
         this.init();
         this.setupEventListeners();
@@ -763,7 +764,10 @@ class MinimalParking {
     }
 
     resetDemo() {
-        if (!this.isDemoMode) return;
+        if (!this.isDemoMode || this.demoResetting) return;
+
+        // 設置標記，防止重複觸發
+        this.demoResetting = true;
 
         // 短暫停頓後重新開始
         setTimeout(() => {
@@ -780,6 +784,9 @@ class MinimalParking {
             // 重置狀態
             this.carSpeed = 0;
             this.carRotation = 0;
+
+            // 解除標記
+            this.demoResetting = false;
         }, 800);
     }
 }
