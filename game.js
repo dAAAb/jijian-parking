@@ -485,7 +485,8 @@ class MinimalParking {
         document.getElementById('complete-time').textContent = elapsedTime + 's';
         document.getElementById('time-bonus').textContent = '+' + timeBonus;
         document.getElementById('total-score').textContent = this.score;
-        document.getElementById('wld-reward').textContent = '+' + wldReward + ' WLD';
+        // TODO: 整合錢包後啟用
+        // document.getElementById('wld-reward').textContent = '+' + wldReward + ' WLD';
         document.getElementById('level-complete-screen').classList.remove('hidden');
 
         // 添加完成特效

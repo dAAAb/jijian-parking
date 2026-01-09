@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v1.7.7
+// 版本: v1.7.8
 // 重要：MiniKit 現在用 dynamic import 在這裡加載
 // v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
