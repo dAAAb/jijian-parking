@@ -680,10 +680,13 @@ class MinimalParking {
         // 根據距離調整速度
         if (distance > 3) {
             this.carSpeed = this.maxSpeed * 0.5; // 中速行駛
-        } else if (distance > 1) {
+        } else if (distance > 1.5) {
             this.carSpeed = this.maxSpeed * 0.3; // 接近時減速
+        } else if (distance > 0.5) {
+            this.carSpeed = this.maxSpeed * 0.1; // 非常慢
         } else {
-            this.carSpeed = this.maxSpeed * 0.15; // 最後慢慢停
+            // 到達停車位，停止給速度，讓摩擦力自然減速
+            this.carSpeed = 0;
         }
     }
 
