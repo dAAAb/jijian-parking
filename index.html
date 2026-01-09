@@ -33,29 +33,32 @@
     <!-- Start Screen -->
     <div id="start-screen" class="screen">
         <div class="content">
-            <h1 class="game-title">Minimal Parking</h1>
-            <p class="subtitle">One-hand control · Easy to play</p>
+            <h1 class="game-title" data-i18n="game.title">Minimal Parking</h1>
+            <p class="subtitle" data-i18n="game.subtitle">One-hand control · Easy to play</p>
+
+            <!-- Language Selector -->
+            <div class="lang-selector">
+                <button class="lang-btn" data-lang="en">🇺🇸</button>
+                <button class="lang-btn" data-lang="zh-TW">🇹🇼</button>
+                <button class="lang-btn" data-lang="ja">🇯🇵</button>
+                <button class="lang-btn" data-lang="ko">🇰🇷</button>
+            </div>
 
             <!-- World ID Verify Button -->
-            <button id="verify-world-id-btn" class="secondary-btn verify-btn">
+            <button id="verify-world-id-btn" class="secondary-btn verify-btn" data-i18n="btn.verify">
                 🌍 Verify with World ID
             </button>
 
             <!-- Verification Status -->
             <div id="verification-status" class="verification-status">
-                <span class="status-unverified">⚠️ Not Verified</span>
+                <span class="status-unverified" data-i18n="status.unverified">⚠️ Not Verified</span>
             </div>
 
             <!-- Start Game Button -->
-            <button id="start-btn" class="main-btn">Start Game</button>
+            <button id="start-btn" class="main-btn" data-i18n="btn.start">Start Game</button>
 
-            <div class="instructions">
-                <p>📱 Drag screen to steer</p>
-                <p>🅿️ Park in the glowing spot</p>
-                <p>⚡ Faster = Higher score</p>
-                <!-- TODO: 整合錢包後啟用 <p>💰 Earn WLD rewards</p> -->
-                <p>🔐 Verified humans only</p>
-            </div>
+            <!-- Simplified instruction -->
+            <p class="instruction-hint" data-i18n="hint.instruction">Drag to drive · Park to win</p>
         </div>
     </div>
 
@@ -63,21 +66,21 @@
     <div id="game-ui" class="hidden">
         <div class="top-bar">
             <div class="stat">
-                <span class="label">Level</span>
+                <span class="label" data-i18n="ui.level">Level</span>
                 <span id="level-display" class="value">1</span>
             </div>
             <div class="stat">
-                <span class="label">Score</span>
+                <span class="label" data-i18n="ui.score">Score</span>
                 <span id="score-display" class="value">0</span>
             </div>
             <div class="stat">
-                <span class="label">Time</span>
+                <span class="label" data-i18n="ui.time">Time</span>
                 <span id="time-display" class="value">0.0s</span>
             </div>
         </div>
 
         <!-- Control Hint -->
-        <div id="control-hint" class="hint">
+        <div id="control-hint" class="hint" data-i18n="ui.dragHint">
             Drag to control
         </div>
     </div>
@@ -85,18 +88,18 @@
     <!-- Level Complete Screen -->
     <div id="level-complete-screen" class="screen hidden">
         <div class="content">
-            <h2 class="success-title">🎉 Complete!</h2>
+            <h2 class="success-title" data-i18n="complete.title">🎉 Complete!</h2>
             <div class="stats-container">
                 <div class="stat-row">
-                    <span>Time</span>
+                    <span data-i18n="complete.time">Time</span>
                     <span id="complete-time" class="highlight">0.0s</span>
                 </div>
                 <div class="stat-row">
-                    <span>Time Bonus</span>
+                    <span data-i18n="complete.bonus">Time Bonus</span>
                     <span id="time-bonus" class="highlight">+0</span>
                 </div>
                 <div class="stat-row">
-                    <span>Total Score</span>
+                    <span data-i18n="complete.total">Total Score</span>
                     <span id="total-score" class="highlight">0</span>
                 </div>
                 <!-- TODO: 整合錢包後啟用
@@ -106,25 +109,39 @@
                 </div>
                 -->
             </div>
-            <button id="next-level-btn" class="main-btn">Next Level</button>
-            <button id="share-btn" class="secondary-btn">📤 Share</button>
+            <button id="next-level-btn" class="main-btn" data-i18n="btn.next">Next Level</button>
+            <button id="share-btn" class="secondary-btn" data-i18n="btn.share">📤 Share</button>
         </div>
     </div>
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="screen hidden">
         <div class="content">
-            <h2 class="fail-title">💥 Crashed!</h2>
-            <p class="message">Drive carefully, avoid obstacles</p>
-            <button id="retry-btn" class="main-btn">Try Again</button>
+            <h2 class="fail-title" data-i18n="gameover.title">💥 Crashed!</h2>
+            <p class="message" data-i18n="gameover.message">Drive carefully, avoid obstacles</p>
+            <button id="retry-btn" class="main-btn" data-i18n="btn.retry">Try Again</button>
         </div>
     </div>
 
-    <!-- Version -->
-    <div class="version">v1.7.8</div>
+    <!-- Version & Settings -->
+    <div class="version-container">
+        <span class="version">v2.0.0</span>
+        <button class="settings-btn" id="settings-btn">⚙️</button>
+    </div>
+
+    <!-- Settings Panel (Language switcher for other screens) -->
+    <div class="settings-panel" id="settings-panel">
+        <div class="lang-selector">
+            <button class="lang-btn" data-lang="en">🇺🇸</button>
+            <button class="lang-btn" data-lang="zh-TW">🇹🇼</button>
+            <button class="lang-btn" data-lang="ja">🇯🇵</button>
+            <button class="lang-btn" data-lang="ko">🇰🇷</button>
+        </div>
+    </div>
 
     <!-- Load Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="i18n.js"></script>
     <script src="minikit-integration.js"></script>
     <script src="game.js"></script>
 </body>

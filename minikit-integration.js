@@ -1,5 +1,10 @@
 // World MiniKit 整合
-// 版本: v1.7.8
+// 版本: v2.0.0
+
+// 多語言輔助函數
+function getText(key, fallback) {
+    return window.i18n?.t(key) || fallback;
+}
 // 重要：MiniKit 現在用 dynamic import 在這裡加載
 // v1.7.3: 關鍵修正 - 必須等待 window.WorldApp 注入後再調用 install()
 
@@ -1059,7 +1064,7 @@ class WorldMiniKit {
         // 更新按鈕狀態
         const verifyBtn = document.getElementById('verify-world-id-btn');
         if (verifyBtn) {
-            verifyBtn.textContent = '⏳ Waiting...';
+            verifyBtn.textContent = getText('verify.waiting', '⏳ Waiting...');
         }
 
         try {
@@ -1080,7 +1085,7 @@ class WorldMiniKit {
             const result = await Promise.race([verifyPromise, timeoutPromise]);
 
             if (verifyBtn) {
-                verifyBtn.textContent = '✅ Verified, processing...';
+                verifyBtn.textContent = getText('verify.processing', '✅ Verified, processing...');
             }
 
             console.log('📦 收到完整回應:', result);

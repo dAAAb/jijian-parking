@@ -1,4 +1,5 @@
 // 極簡停車 - 遊戲主邏輯
+// v2.0.0 - 新增 Demo 模式
 class MinimalParking {
     constructor() {
         this.scene = null;
@@ -19,7 +20,11 @@ class MinimalParking {
         this.acceleration = 0.01;
         this.friction = 0.97;
         this.turnSpeed = 0.05;
-        
+
+        // Demo 模式屬性
+        this.isDemoMode = false;
+        this.demoAnimationId = null;
+
         this.init();
         this.setupEventListeners();
     }
@@ -335,9 +340,12 @@ class MinimalParking {
     }
 
     startGame() {
+        // 停止 Demo 模式
+        this.stopDemoMode();
+
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-ui').classList.remove('hidden');
-        
+
         this.level = 1;
         this.score = 0;
         this.createCar();
@@ -465,7 +473,8 @@ class MinimalParking {
         // 車輛速度要夠慢才能停車
         const speed = Math.sqrt(this.car.speed.x ** 2 + this.car.speed.z ** 2);
 
-        if (distance < 1.5 && speed < 0.02) {
+        // 放寬停車判定（v2.0: 從 1.5 改為 2.0）
+        if (distance < 2.0 && speed < 0.02) {
             this.levelComplete();
         }
     }
@@ -589,10 +598,197 @@ class MinimalParking {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
+
+    // ===== Demo 模式 =====
+
+    startDemoMode() {
+        this.isDemoMode = true;
+        this.isPlaying = false;
+        this.level = 1;
+
+        // 創建場景元素
+        this.createCar();
+        this.createParkingSpot();
+        this.createObstacles();
+
+        // 重置車輛狀態
+        this.carSpeed = 0;
+        this.carRotation = 0;
+
+        // 啟動 Demo 動畫循環
+        this.animateDemo();
+    }
+
+    stopDemoMode() {
+        this.isDemoMode = false;
+        if (this.demoAnimationId) {
+            cancelAnimationFrame(this.demoAnimationId);
+            this.demoAnimationId = null;
+        }
+    }
+
+    animateDemo() {
+        if (!this.isDemoMode) return;
+
+        this.demoAnimationId = requestAnimationFrame(() => this.animateDemo());
+
+        // AI 控制
+        this.updateDemoAI();
+
+        // 更新車輛物理
+        this.updateCarDemo();
+
+        // 檢查碰撞和停車
+        this.checkDemoCollision();
+        this.checkDemoParking();
+
+        // 停車位呼吸效果
+        if (this.parkingSpot) {
+            const pulse = Math.sin(Date.now() * 0.003) * 0.2 + 0.8;
+            this.parkingSpot.group.children[0].material.emissiveIntensity = pulse;
+        }
+
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    updateDemoAI() {
+        if (!this.car || !this.parkingSpot) return;
+
+        // 計算車輛到停車位的方向
+        const dx = this.parkingSpot.x - this.car.group.position.x;
+        const dz = this.parkingSpot.z - this.car.group.position.z;
+        const targetAngle = Math.atan2(dx, dz);
+
+        // 計算角度差
+        let angleDiff = targetAngle - this.car.rotation;
+
+        // 處理角度環繞 (-PI 到 PI)
+        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+        // 平滑轉向
+        const turnRate = 0.03;
+        if (Math.abs(angleDiff) > 0.1) {
+            this.carRotation = Math.sign(angleDiff) * turnRate;
+        } else {
+            this.carRotation = angleDiff * 0.3;
+        }
+
+        // 計算距離
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        // 根據距離調整速度
+        if (distance > 3) {
+            this.carSpeed = this.maxSpeed * 0.5; // 中速行駛
+        } else if (distance > 1) {
+            this.carSpeed = this.maxSpeed * 0.3; // 接近時減速
+        } else {
+            this.carSpeed = this.maxSpeed * 0.15; // 最後慢慢停
+        }
+    }
+
+    updateCarDemo() {
+        if (!this.car) return;
+
+        // 更新車輛旋轉
+        this.car.rotation += this.carRotation;
+        this.car.group.rotation.y = this.car.rotation;
+
+        // 應用速度
+        const rad = this.car.rotation;
+        this.car.speed.x = Math.sin(rad) * this.carSpeed;
+        this.car.speed.z = Math.cos(rad) * this.carSpeed;
+
+        // 更新位置
+        this.car.group.position.x += this.car.speed.x;
+        this.car.group.position.z += this.car.speed.z;
+
+        // 應用摩擦力
+        this.carSpeed *= this.friction;
+
+        // 限制邊界
+        const boundary = 12;
+        this.car.group.position.x = Math.max(-boundary, Math.min(boundary, this.car.group.position.x));
+        this.car.group.position.z = Math.max(-boundary, Math.min(boundary, this.car.group.position.z));
+
+        // 相機跟隨
+        this.updateCamera();
+    }
+
+    checkDemoCollision() {
+        if (!this.car) return;
+
+        const carBox = {
+            minX: this.car.group.position.x - this.car.width / 2,
+            maxX: this.car.group.position.x + this.car.width / 2,
+            minZ: this.car.group.position.z - this.car.length / 2,
+            maxZ: this.car.group.position.z + this.car.length / 2
+        };
+
+        // 檢查與障礙物碰撞
+        for (const obstacle of this.obstacles) {
+            const obsBox = {
+                minX: obstacle.x - obstacle.width / 2,
+                maxX: obstacle.x + obstacle.width / 2,
+                minZ: obstacle.z - obstacle.length / 2,
+                maxZ: obstacle.z + obstacle.length / 2
+            };
+
+            if (this.boxIntersects(carBox, obsBox)) {
+                // Demo 模式：碰撞後靜默重置
+                this.resetDemo();
+                return;
+            }
+        }
+    }
+
+    checkDemoParking() {
+        if (!this.car || !this.parkingSpot) return;
+
+        const distance = Math.sqrt(
+            (this.car.group.position.x - this.parkingSpot.x) ** 2 +
+            (this.car.group.position.z - this.parkingSpot.z) ** 2
+        );
+
+        const speed = Math.sqrt(this.car.speed.x ** 2 + this.car.speed.z ** 2);
+
+        // 放寬停車判定
+        if (distance < 2.0 && speed < 0.02) {
+            // Demo 模式：停車成功後靜默重置
+            this.resetDemo();
+        }
+    }
+
+    resetDemo() {
+        if (!this.isDemoMode) return;
+
+        // 短暫停頓後重新開始
+        setTimeout(() => {
+            if (!this.isDemoMode) return;
+
+            // 隨機變換關卡（1-3）讓 Demo 更有變化
+            this.level = Math.floor(Math.random() * 3) + 1;
+
+            // 重新創建場景
+            this.createCar();
+            this.createParkingSpot();
+            this.createObstacles();
+
+            // 重置狀態
+            this.carSpeed = 0;
+            this.carRotation = 0;
+        }, 800);
+    }
 }
 
 // 初始化遊戲
 window.addEventListener('DOMContentLoaded', () => {
-    new MinimalParking();
+    const game = new MinimalParking();
+
+    // 頁面載入後自動啟動 Demo 模式
+    game.startDemoMode();
+
+    // 暴露給全局（方便其他模組存取）
+    window.parkingGame = game;
 });
 

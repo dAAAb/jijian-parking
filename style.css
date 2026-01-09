@@ -32,10 +32,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
+    background: transparent;
     z-index: 100;
-    animation: fadeIn 0.3s ease;
+    pointer-events: none;
 }
 
 .screen.hidden {
@@ -44,9 +43,28 @@ body {
 
 .content {
     text-align: center;
-    padding: 20px;
-    max-width: 400px;
-    width: 90%;
+    padding: 30px 25px;
+    max-width: 340px;
+    width: 85%;
+    background: rgba(20, 20, 35, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    animation: cardAppear 0.4s ease;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .game-title {
@@ -63,6 +81,44 @@ body {
     margin-bottom: 40px;
 }
 
+/* 語言選擇器 */
+.lang-selector {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.lang-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 1.4em;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.lang-btn:hover {
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.lang-btn.active {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* 簡化說明文字 */
+.instruction-hint {
+    color: #888;
+    font-size: 0.9em;
+    margin-top: 20px;
+}
+
+/* 舊版 instructions（保留相容） */
 .instructions {
     margin-top: 40px;
     padding: 20px;
@@ -283,18 +339,74 @@ body {
     }
 }
 
-/* 版本號 */
-.version {
+/* 版本號與設定 */
+.version-container {
     position: fixed;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 9999;
+}
+
+.version {
     font-size: 0.7em;
     color: rgba(255, 255, 255, 0.3);
     font-family: monospace;
-    z-index: 9999;
-    pointer-events: none;
-    text-align: center;
+}
+
+.settings-btn {
+    background: none;
+    border: none;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    padding: 4px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.settings-btn:hover {
+    opacity: 1;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 設定面板（語言切換） */
+.settings-panel {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 35, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+    z-index: 9998;
+    display: none;
+    animation: slideUp 0.2s ease;
+}
+
+.settings-panel.show {
+    display: block;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.settings-panel .lang-selector {
+    margin: 0;
 }
 
 /* 驗證徽章（藍勾勾） */

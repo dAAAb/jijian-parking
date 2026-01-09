@@ -1,0 +1,270 @@
+// i18n.js - 多語言支援
+// v2.0.0
+
+const translations = {
+    en: {
+        // Start Screen
+        'game.title': 'Minimal Parking',
+        'game.subtitle': 'One-hand control · Easy to play',
+        'btn.verify': '🌍 Verify with World ID',
+        'btn.start': 'Start Game',
+        'status.unverified': '⚠️ Not Verified',
+        'status.verified': '✅ Verified',
+        'hint.instruction': 'Drag to drive · Park to win',
+
+        // Game UI
+        'ui.level': 'Level',
+        'ui.score': 'Score',
+        'ui.time': 'Time',
+        'ui.dragHint': 'Drag to control',
+
+        // Level Complete
+        'complete.title': '🎉 Complete!',
+        'complete.time': 'Time',
+        'complete.bonus': 'Time Bonus',
+        'complete.total': 'Total Score',
+        'btn.next': 'Next Level',
+        'btn.share': '📤 Share',
+
+        // Game Over
+        'gameover.title': '💥 Crashed!',
+        'gameover.message': 'Drive carefully, avoid obstacles',
+        'btn.retry': 'Try Again',
+
+        // Badge
+        'badge.verified': 'Verified Human',
+        'badge.orb': 'Orb Verified',
+
+        // Verification messages (for minikit-integration.js)
+        'verify.waiting': '⏳ Waiting...',
+        'verify.processing': '✅ Verified, processing...',
+        'verify.error.backend': 'Backend error',
+        'verify.error.failed': 'Verification failed',
+    },
+
+    'zh-TW': {
+        'game.title': '極簡停車',
+        'game.subtitle': '單手操作 · 輕鬆上手',
+        'btn.verify': '🌍 使用 World ID 驗證',
+        'btn.start': '開始遊戲',
+        'status.unverified': '⚠️ 尚未驗證',
+        'status.verified': '✅ 已驗證',
+        'hint.instruction': '拖曳駕駛 · 停好即贏',
+
+        'ui.level': '關卡',
+        'ui.score': '分數',
+        'ui.time': '時間',
+        'ui.dragHint': '拖曳控制方向',
+
+        'complete.title': '🎉 過關！',
+        'complete.time': '耗時',
+        'complete.bonus': '時間獎勵',
+        'complete.total': '總分',
+        'btn.next': '下一關',
+        'btn.share': '📤 分享',
+
+        'gameover.title': '💥 撞車了！',
+        'gameover.message': '小心駕駛，避開障礙物',
+        'btn.retry': '再試一次',
+
+        'badge.verified': '真人驗證',
+        'badge.orb': 'Orb 驗證',
+
+        'verify.waiting': '⏳ 等待中...',
+        'verify.processing': '✅ 驗證完成，處理中...',
+        'verify.error.backend': '後端錯誤',
+        'verify.error.failed': '驗證失敗',
+    },
+
+    ja: {
+        'game.title': 'ミニマル駐車',
+        'game.subtitle': '片手操作 · 簡単プレイ',
+        'btn.verify': '🌍 World IDで認証',
+        'btn.start': 'ゲーム開始',
+        'status.unverified': '⚠️ 未認証',
+        'status.verified': '✅ 認証済み',
+        'hint.instruction': 'ドラッグで運転 · 駐車で勝利',
+
+        'ui.level': 'レベル',
+        'ui.score': 'スコア',
+        'ui.time': 'タイム',
+        'ui.dragHint': 'ドラッグで操作',
+
+        'complete.title': '🎉 クリア！',
+        'complete.time': 'タイム',
+        'complete.bonus': 'タイムボーナス',
+        'complete.total': '合計スコア',
+        'btn.next': '次のレベル',
+        'btn.share': '📤 シェア',
+
+        'gameover.title': '💥 クラッシュ！',
+        'gameover.message': '障害物に注意して運転',
+        'btn.retry': 'もう一度',
+
+        'badge.verified': '認証済み',
+        'badge.orb': 'Orb認証',
+
+        'verify.waiting': '⏳ 待機中...',
+        'verify.processing': '✅ 認証完了、処理中...',
+        'verify.error.backend': 'バックエンドエラー',
+        'verify.error.failed': '認証失敗',
+    },
+
+    ko: {
+        'game.title': '미니멀 주차',
+        'game.subtitle': '한 손 조작 · 쉬운 플레이',
+        'btn.verify': '🌍 World ID로 인증',
+        'btn.start': '게임 시작',
+        'status.unverified': '⚠️ 미인증',
+        'status.verified': '✅ 인증됨',
+        'hint.instruction': '드래그로 운전 · 주차해서 승리',
+
+        'ui.level': '레벨',
+        'ui.score': '점수',
+        'ui.time': '시간',
+        'ui.dragHint': '드래그로 조작',
+
+        'complete.title': '🎉 완료!',
+        'complete.time': '시간',
+        'complete.bonus': '시간 보너스',
+        'complete.total': '총점',
+        'btn.next': '다음 레벨',
+        'btn.share': '📤 공유',
+
+        'gameover.title': '💥 충돌!',
+        'gameover.message': '장애물을 피해서 운전하세요',
+        'btn.retry': '다시 시도',
+
+        'badge.verified': '인증된 사람',
+        'badge.orb': 'Orb 인증',
+
+        'verify.waiting': '⏳ 대기 중...',
+        'verify.processing': '✅ 인증 완료, 처리 중...',
+        'verify.error.backend': '백엔드 오류',
+        'verify.error.failed': '인증 실패',
+    }
+};
+
+class I18n {
+    constructor() {
+        this.translations = translations;
+        this.currentLang = this.detectLanguage();
+        this.init();
+    }
+
+    // 偵測使用者語言
+    detectLanguage() {
+        // 1. 檢查 localStorage
+        const saved = localStorage.getItem('lang');
+        if (saved && this.translations[saved]) return saved;
+
+        // 2. 檢查瀏覽器語言
+        const browserLang = navigator.language || navigator.userLanguage;
+
+        // 匹配完整語言碼
+        if (this.translations[browserLang]) return browserLang;
+
+        // 匹配語言前綴
+        const prefix = browserLang.split('-')[0];
+        if (prefix === 'zh') return 'zh-TW'; // 中文預設繁體
+        if (this.translations[prefix]) return prefix;
+
+        // 3. 預設英文
+        return 'en';
+    }
+
+    // 取得翻譯
+    t(key) {
+        const lang = this.translations[this.currentLang];
+        return lang?.[key] || this.translations.en[key] || key;
+    }
+
+    // 切換語言
+    setLanguage(lang) {
+        if (this.translations[lang]) {
+            this.currentLang = lang;
+            localStorage.setItem('lang', lang);
+            this.applyTranslations();
+            this.updateLangButtons();
+        }
+    }
+
+    // 套用翻譯到 DOM
+    applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translation = this.t(key);
+
+            // 保留 emoji 前綴（如果原本有的話）
+            if (el.textContent.match(/^[\u{1F300}-\u{1F9FF}]/u)) {
+                const emoji = el.textContent.match(/^[\u{1F300}-\u{1F9FF}]+\s?/u)?.[0] || '';
+                el.textContent = emoji + translation.replace(/^[\u{1F300}-\u{1F9FF}]+\s?/u, '');
+            } else {
+                el.textContent = translation;
+            }
+        });
+    }
+
+    // 更新語言按鈕狀態
+    updateLangButtons() {
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            const lang = btn.getAttribute('data-lang');
+            btn.classList.toggle('active', lang === this.currentLang);
+        });
+    }
+
+    // 初始化
+    init() {
+        // 等待 DOM 準備好
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.setup());
+        } else {
+            this.setup();
+        }
+    }
+
+    setup() {
+        // 套用初始翻譯
+        this.applyTranslations();
+        this.updateLangButtons();
+
+        // 綁定語言按鈕事件
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.getAttribute('data-lang');
+                this.setLanguage(lang);
+            });
+        });
+
+        // 綁定設定按鈕事件
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+
+        if (settingsBtn && settingsPanel) {
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsPanel.classList.toggle('show');
+            });
+
+            // 點擊其他地方關閉設定面板
+            document.addEventListener('click', (e) => {
+                if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+                    settingsPanel.classList.remove('show');
+                }
+            });
+        }
+    }
+
+    // 取得可用語言列表
+    getLanguages() {
+        return [
+            { code: 'en', name: 'English', flag: '🇺🇸' },
+            { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' },
+            { code: 'ja', name: '日本語', flag: '🇯🇵' },
+            { code: 'ko', name: '한국어', flag: '🇰🇷' },
+        ];
+    }
+}
+
+// 全局實例
+window.i18n = new I18n();
