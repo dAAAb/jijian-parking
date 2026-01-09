@@ -711,8 +711,8 @@ class MinimalParking {
         this.car.group.position.x = Math.max(-boundary, Math.min(boundary, this.car.group.position.x));
         this.car.group.position.z = Math.max(-boundary, Math.min(boundary, this.car.group.position.z));
 
-        // 相機跟隨
-        this.updateCamera();
+        // Demo 模式：相機固定不動，讓用戶看清楚車輛移動
+        // （不調用 updateCamera()）
     }
 
     checkDemoCollision() {
