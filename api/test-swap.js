@@ -45,8 +45,8 @@ export default async function handler(req, res) {
     const testAmount = parseFloat(amount) || 0.05;
 
     // 限制測試金額
-    if (testAmount > 1) {
-      return res.status(400).json({ success: false, error: 'Test amount limited to 1 WLD max' });
+    if (testAmount > 2) {
+      return res.status(400).json({ success: false, error: 'Test amount limited to 2 WLD max' });
     }
 
     try {
