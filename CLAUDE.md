@@ -286,7 +286,6 @@ KV_REST_API_TOKEN=<Token>
 
 **相關檔案**：
 - `api/lib/dex-swap.js` - DEX swap + 轉帳邏輯
-- `api/test-swap.js` - 測試端點（上線前移除）
 - `api/purchase-slowdown.js` - 購買時觸發完整流程
 
 **錢包設定**：
