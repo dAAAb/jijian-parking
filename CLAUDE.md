@@ -348,9 +348,49 @@ const testNullifier = '0x' + 'deadbeef'.repeat(6) + timestamp;
 - `game.js`: 過關時顯示 tokenomicsUI 狀態
 - `tokenomics-ui.js`: addReward 呼叫和回應記錄
 
+#### 4. 🐛 支付驗證 Polling 機制
+**現象**：支付完成但 API 回傳 `transactionStatus: "pending"`，驗證失敗
+
+**根本原因**：交易剛提交時狀態是 pending，需等待區塊確認變成 mined
+
+**修復**（`api/purchase-slowdown.js`）：
+```javascript
+// 加入 polling 機制：最多重試 5 次，每次間隔 2 秒
+for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  const txStatus = data.transactionStatus || data.transaction_status || data.status;
+
+  if (['mined', 'confirmed', 'success'].includes(txStatus)) {
+    return { success: true, data };
+  }
+
+  if (txStatus === 'pending' && attempt < maxRetries) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    continue;
+  }
+}
+```
+
+#### 5. 🐛 舊用戶 verified 欄位缺失
+**現象**：已驗證用戶過關時顯示「User verification incomplete」
+
+**根本原因**：舊版用戶資料沒有 `verified` 欄位（只有新用戶才有）
+
+**修復**（`api/add-reward.js`）：
+```javascript
+// 如果用戶存在但 verified 欄位缺失（舊版本資料），自動補上
+if (userData.verified === undefined) {
+  console.log(`Updating legacy user - setting verified=true`);
+  userData.verified = true;
+  await kv.set(userKey, userData);
+}
+```
+
 **測試結果**：
 - ✅ 課金功能正常（WLD 支付 → 90% TREASURY + 10% swap → CPK 返還）
+- ✅ Claim 功能正常（CPK 鏈上轉帳）
 - ✅ 過關獎勵正常（分數 → CPK）
+- ✅ 支付驗證 polling 正常（等待 pending → mined）
+- ✅ 舊用戶相容性正常（自動補 verified 欄位）
 - ✅ 測試模式 (`?test=1`) 可正常使用
 
 ---
@@ -386,31 +426,6 @@ https://jijian-car-parking.vercel.app/?test=1
 - 生成符合格式的測試 nullifierHash (`0xdeadbeef...`)
 - 可測試完整的課金和獎勵流程
 - 顯示 "Test Mode" 標籤
-
----
-
-## 🐛 待調查：World App 中出現測試模式 nullifierHash
-
-**現象**：用戶在 World App 實測時，登入驗證後出現的不是真正的用戶地址（顯示 `0xdeadbeef...`）
-
-**可能原因**：
-1. World App 的 deep link 不小心帶了 `?test=1` 參數
-2. 緩存問題
-3. 測試模式判斷邏輯有 bug
-
-**診斷步驟**：
-1. 在 World App 中打開遊戲
-2. 完成驗證後查看 Console 日誌
-3. 找到 `🔍 驗證來源診斷:` 這行，檢查：
-   - `isTestMode`: 應該是 `false`
-   - `testModeFromUrl`: 應該是 `false`
-   - `thisTestMode`: 應該是 `false`
-   - `url`: 不應該有 `?test=1`
-   - `nullifierHashPrefix`: 不應該是 `0xdeadbeef`
-
-**相關代碼**：
-- `minikit-integration.js` 第 139 行：`this.testMode = urlParams.get('test') === '1'`
-- `minikit-integration.js` 第 513 行：`if (this.testMode)` 觸發模擬驗證
 
 ---
 
