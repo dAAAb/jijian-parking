@@ -333,3 +333,100 @@ export async function getPoolStatus() {
     return { success: false, error: error.message };
   }
 }
+
+// 真正的金庫地址（接收 90% WLD）
+const REAL_TREASURY_ADDRESS = '0x3976493CD69B56EA8DBBDdfEd07276aa5915c466';
+
+/**
+ * 把 WLD 轉給真正的 TREASURY（90% 部分）
+ * @param {number} wldAmount - WLD 數量
+ * @returns {Promise<{success: boolean, txHash?: string, error?: string}>}
+ */
+export async function transferWLDToTreasury(wldAmount) {
+  try {
+    const privateKey = process.env.REWARD_WALLET_PRIVATE_KEY?.trim();
+
+    if (!privateKey) {
+      console.error('REWARD_WALLET_PRIVATE_KEY not configured');
+      return { success: false, error: 'Wallet not configured' };
+    }
+
+    const provider = new ethers.JsonRpcProvider(WORLD_CHAIN_RPC);
+    const wallet = new ethers.Wallet(privateKey, provider);
+    const wldContract = new ethers.Contract(WLD_TOKEN_ADDRESS, ERC20_ABI, wallet);
+
+    const amountWei = ethers.parseUnits(wldAmount.toString(), 18);
+
+    // 檢查餘額
+    const balance = await wldContract.balanceOf(wallet.address);
+    if (balance < amountWei) {
+      return {
+        success: false,
+        error: `Insufficient WLD balance: ${ethers.formatUnits(balance, 18)} < ${wldAmount}`
+      };
+    }
+
+    // 轉帳
+    console.log(`Transferring ${wldAmount} WLD to TREASURY ${REAL_TREASURY_ADDRESS}...`);
+    const tx = await wldContract.transfer(REAL_TREASURY_ADDRESS, amountWei);
+    const receipt = await tx.wait();
+
+    console.log(`WLD transfer completed: ${wldAmount} WLD - TX: ${receipt.hash}`);
+
+    return {
+      success: true,
+      amount: wldAmount,
+      txHash: receipt.hash
+    };
+
+  } catch (error) {
+    console.error('Error transferring WLD to treasury:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 執行完整的課金流程：90% 轉給 TREASURY + 10% swap 成 CPK
+ * @param {number} wldAmount - 總 WLD 金額
+ * @param {number} cashbackRate - 返還比例（如 0.10 = 10%）
+ * @returns {Promise<{success: boolean, treasuryAmount?: number, cpkCashback?: number, error?: string}>}
+ */
+export async function processPaymentWithSwap(wldAmount, cashbackRate = 0.10) {
+  const treasuryAmount = wldAmount * (1 - cashbackRate);  // 90%
+  const swapAmount = wldAmount * cashbackRate;  // 10%
+
+  // Step 1: 把 90% 轉給 TREASURY
+  const transferResult = await transferWLDToTreasury(treasuryAmount);
+  if (!transferResult.success) {
+    console.error('Failed to transfer to treasury:', transferResult.error);
+    return {
+      success: false,
+      error: `Treasury transfer failed: ${transferResult.error}`
+    };
+  }
+
+  // Step 2: 用 10% 做 swap
+  let cpkCashback = 0;
+  let swapTxHash = null;
+
+  if (swapAmount >= 0.01) {  // 最小 swap 金額
+    const swapResult = await swapWLDtoCPK(swapAmount, 5);  // 5% 滑點
+    if (swapResult.success) {
+      cpkCashback = Math.floor(parseFloat(swapResult.amountOut));
+      swapTxHash = swapResult.txHash;
+      console.log(`Swap completed: ${swapAmount} WLD → ${cpkCashback} CPK`);
+    } else {
+      console.error('Swap failed:', swapResult.error);
+      // swap 失敗不影響整體流程，只是沒有 CPK 返還
+    }
+  }
+
+  return {
+    success: true,
+    treasuryAmount,
+    treasuryTxHash: transferResult.txHash,
+    cpkCashback,
+    swapTxHash,
+    wldSwapped: swapAmount
+  };
+}

@@ -10,7 +10,7 @@ import {
   validateNullifierHash,
   checkRateLimit
 } from './lib/tokenomics.js';
-import { executeCashbackSwap } from './lib/dex-swap.js';
+import { processPaymentWithSwap } from './lib/dex-swap.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(res);
@@ -113,21 +113,25 @@ export default async function handler(req, res) {
         break;
     }
 
-    // 執行即時 DEX swap 造市（10% WLD → CPK）
+    // 執行完整課金流程：90% 轉給 TREASURY + 10% swap 成 CPK
     let cpkCashback = 0;
     let cashbackTxHash = null;
+    let treasuryTxHash = null;
 
-    // 立即執行 swap：REWARD_WALLET 的 WLD → CPK，產生造市效果
-    const swapResult = await executeCashbackSwap(wldCost, CASHBACK_RATE);
-    if (swapResult.success) {
-      cpkCashback = swapResult.cpkCashback || 0;
-      cashbackTxHash = swapResult.txHash;
-      console.log(`Cashback swap executed: ${swapResult.wldSwapped} WLD → ${cpkCashback} CPK, TX: ${cashbackTxHash}`);
-    } else if (swapResult.skipped) {
-      console.log('Cashback swap skipped (amount too small)');
+    // 處理收到的 WLD：90% 轉給金庫，10% swap 造市
+    const paymentResult = await processPaymentWithSwap(wldCost, CASHBACK_RATE);
+    if (paymentResult.success) {
+      cpkCashback = paymentResult.cpkCashback || 0;
+      cashbackTxHash = paymentResult.swapTxHash;
+      treasuryTxHash = paymentResult.treasuryTxHash;
+      console.log(`Payment processed: ${paymentResult.treasuryAmount} WLD → TREASURY, ${paymentResult.wldSwapped} WLD → ${cpkCashback} CPK`);
     } else {
-      console.error('Cashback swap failed:', swapResult.error);
-      // swap 失敗不影響購買，只是沒有 CPK 返還
+      console.error('Payment processing failed:', paymentResult.error);
+      // 如果轉帳失敗，返回錯誤（這是關鍵操作）
+      return res.status(500).json({
+        success: false,
+        error: 'Payment processing failed: ' + paymentResult.error
+      });
     }
 
     userData.cpk_pending += cpkCashback;
@@ -167,7 +171,8 @@ export default async function handler(req, res) {
       wld_spent: wldCost,
       cpk_cashback: cpkCashback,
       cpk_pending_total: userData.cpk_pending,
-      cashback_tx_hash: cashbackTxHash,  // DEX swap 交易 hash
+      treasury_tx_hash: treasuryTxHash,  // 90% WLD 轉帳交易
+      cashback_tx_hash: cashbackTxHash,  // 10% DEX swap 交易
       speed_multiplier: speedMultiplier,
       effective_slowdown: Math.round((1 - speedMultiplier) * 100),
       l2_temp_active: userData.current_session.l2_temp_active,
