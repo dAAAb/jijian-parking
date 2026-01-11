@@ -2,7 +2,7 @@
 // 測試 DEX swap 功能（僅供測試用，上線前移除）
 
 import { setCorsHeaders } from './lib/tokenomics.js';
-import { getSwapQuote, swapWLDtoCPK, getPoolStatus } from './lib/dex-swap.js';
+import { getSwapQuote, swapWLDtoCPK, getPoolStatus, processPaymentWithSwap } from './lib/dex-swap.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(res);
@@ -35,41 +35,67 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    // 執行 swap
-    const { amount, secret } = req.body;
+    const { amount, secret, mode } = req.body;
 
     // 簡單的安全檢查（防止意外調用）
     if (secret !== 'test-swap-2024') {
       return res.status(403).json({ success: false, error: 'Invalid secret' });
     }
 
-    const swapAmount = parseFloat(amount) || 0.05;
+    const testAmount = parseFloat(amount) || 0.05;
 
     // 限制測試金額
-    if (swapAmount > 1) {
+    if (testAmount > 1) {
       return res.status(400).json({ success: false, error: 'Test amount limited to 1 WLD max' });
     }
 
     try {
-      console.log(`Test swap: ${swapAmount} WLD → CPK`);
+      // mode: 'swap' = 只測試 swap, 'full' = 測試完整流程（90% 轉帳 + 10% swap）
+      if (mode === 'full') {
+        console.log(`Test full payment flow: ${testAmount} WLD`);
 
-      const result = await swapWLDtoCPK(swapAmount, 3); // 3% 滑點
+        const result = await processPaymentWithSwap(testAmount, 0.10);  // 10% cashback
 
-      if (result.success) {
-        return res.status(200).json({
-          success: true,
-          amountIn: result.amountIn,
-          amountOut: result.amountOut,
-          txHash: result.txHash
-        });
+        if (result.success) {
+          return res.status(200).json({
+            success: true,
+            mode: 'full',
+            totalAmount: testAmount,
+            treasuryAmount: result.treasuryAmount,
+            treasuryTxHash: result.treasuryTxHash,
+            cpkCashback: result.cpkCashback,
+            swapTxHash: result.swapTxHash,
+            wldSwapped: result.wldSwapped
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: result.error
+          });
+        }
       } else {
-        return res.status(400).json({
-          success: false,
-          error: result.error
-        });
+        // 預設：只測試 swap
+        console.log(`Test swap: ${testAmount} WLD → CPK`);
+
+        const result = await swapWLDtoCPK(testAmount, 3); // 3% 滑點
+
+        if (result.success) {
+          return res.status(200).json({
+            success: true,
+            mode: 'swap',
+            amountIn: result.amountIn,
+            amountOut: result.amountOut,
+            txHash: result.txHash
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: result.error
+          });
+        }
       }
     } catch (error) {
-      console.error('Test swap error:', error);
+      console.error('Test error:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
