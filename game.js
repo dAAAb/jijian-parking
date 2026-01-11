@@ -500,8 +500,16 @@ class MinimalParking {
         document.getElementById('level-complete-screen').classList.remove('hidden');
 
         // Token-nomics: 向後端報告得分，獲取 CPK 獎勵
+        console.log('🎮 Level complete - checking tokenomicsUI:', {
+            hasTokenomicsUI: !!window.tokenomicsUI,
+            nullifierHash: window.tokenomicsUI?.nullifierHash?.substring(0, 10),
+            levelScore,
+            level: this.level
+        });
         if (window.tokenomicsUI?.nullifierHash) {
             window.tokenomicsUI.addReward(levelScore, this.level);
+        } else {
+            console.warn('⚠️ tokenomicsUI not ready, CPK reward skipped');
         }
 
         // 添加完成特效
