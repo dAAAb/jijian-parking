@@ -407,7 +407,12 @@ class TokenomicsUI {
 
   // 過關時新增獎勵
   async addReward(score, level) {
-    if (!this.nullifierHash) return;
+    console.log('🎮 addReward called:', { score, level, nullifierHash: this.nullifierHash?.substring(0, 10) });
+
+    if (!this.nullifierHash) {
+      console.warn('⚠️ addReward: nullifierHash is empty, skipping');
+      return;
+    }
 
     try {
       const response = await fetch(`${this.apiBase}/api/add-reward`, {
@@ -421,6 +426,7 @@ class TokenomicsUI {
       });
 
       const result = await response.json();
+      console.log('🎮 addReward response:', result);
 
       if (result.success) {
         this.userState.cpk_pending = result.cpk_pending_total;
@@ -428,9 +434,12 @@ class TokenomicsUI {
 
         // 顯示獲得的 CPK
         this.showRewardPopup(result.cpk_earned);
+        console.log('✅ CPK reward added:', result.cpk_earned);
+      } else {
+        console.error('❌ addReward failed:', result.error);
       }
     } catch (error) {
-      console.error('Failed to add reward:', error);
+      console.error('❌ Failed to add reward:', error);
     }
   }
 
