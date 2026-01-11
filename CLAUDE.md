@@ -389,6 +389,31 @@ https://jijian-car-parking.vercel.app/?test=1
 
 ---
 
+## 🐛 待調查：World App 中出現測試模式 nullifierHash
+
+**現象**：用戶在 World App 實測時，登入驗證後出現的不是真正的用戶地址（顯示 `0xdeadbeef...`）
+
+**可能原因**：
+1. World App 的 deep link 不小心帶了 `?test=1` 參數
+2. 緩存問題
+3. 測試模式判斷邏輯有 bug
+
+**診斷步驟**：
+1. 在 World App 中打開遊戲
+2. 完成驗證後查看 Console 日誌
+3. 找到 `🔍 驗證來源診斷:` 這行，檢查：
+   - `isTestMode`: 應該是 `false`
+   - `testModeFromUrl`: 應該是 `false`
+   - `thisTestMode`: 應該是 `false`
+   - `url`: 不應該有 `?test=1`
+   - `nullifierHashPrefix`: 不應該是 `0xdeadbeef`
+
+**相關代碼**：
+- `minikit-integration.js` 第 139 行：`this.testMode = urlParams.get('test') === '1'`
+- `minikit-integration.js` 第 513 行：`if (this.testMode)` 觸發模擬驗證
+
+---
+
 ## 📌 待優化項目
 
 1. **CPK 獎勵倍率**：目前是 1:1（分數 = CPK），原設計是 3 倍
@@ -397,6 +422,7 @@ https://jijian-car-parking.vercel.app/?test=1
 2. **移除診斷日誌**：上線前可移除 console.log
    - `game.js`: 第 503-512 行
    - `tokenomics-ui.js`: 第 410, 429, 437-440 行
+   - `minikit-integration.js`: 驗證來源診斷日誌
 
 3. **test-swap.js**：測試完成後可移除
    - 檔案：`api/test-swap.js`
