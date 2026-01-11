@@ -439,7 +439,6 @@ https://jijian-car-parking.vercel.app/?test=1
    - `tokenomics-ui.js`: 第 410, 429, 437-440 行
    - `minikit-integration.js`: 驗證來源診斷日誌
 
-3. **test-swap.js**：測試完成後可移除
-   - 檔案：`api/test-swap.js`
+3. ~~**test-swap.js**~~：✅ 已移除（2026-01-12）
 
 4. **REWARD_WALLET 白名單**：確認已加入 Developer Portal
