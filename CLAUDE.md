@@ -289,6 +289,13 @@ KV_REST_API_TOKEN=<Token>
 - [ ] 實際測試 WLD 支付流程
 - [ ] 實際測試 CPK 領取流程
 
+**待調查問題**：
+- [ ] 🐛 過關後 CPK 顯示為 0（API 測試正常，懷疑前端 nullifierHash 傳遞問題）
+  - 需檢查 Console 確認：
+    1. `✅ 驗證成功! { level, nullifierHash }` 是否有 nullifierHash
+    2. `🪙 TokenomicsUI 已初始化` 是否有出現
+    3. 是否有 `Failed to add reward` 錯誤
+
 **私鑰安全確認**：
 - ✅ 原始碼中無私鑰
 - ✅ Git 歷史中無私鑰
