@@ -89,12 +89,12 @@ export async function getSwapQuote(amountInWLD) {
 }
 
 /**
- * 執行 WLD → CPK 的 swap（使用 Uniswap V2 Router）
+ * 執行 WLD → CPK 的 swap（直接通過 V2 Pair，使用寬鬆滑點）
  * @param {number|string} amountInWLD - WLD 數量
- * @param {number} slippagePercent - 滑點容忍度（百分比，如 1 = 1%）
+ * @param {number} slippagePercent - 滑點容忍度（百分比，如 10 = 10%）
  * @returns {Promise<{success: boolean, amountOut?: string, txHash?: string, error?: string}>}
  */
-export async function swapWLDtoCPK(amountInWLD, slippagePercent = 3) {
+export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
   try {
     const privateKey = process.env.REWARD_WALLET_PRIVATE_KEY?.trim();
 
@@ -114,12 +114,11 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 3) {
 
     console.log(`Swap quote: ${amountInWLD} WLD → ${quote.amountOut} CPK (rate: 1 WLD = ${quote.rate.toFixed(2)} CPK)`);
 
-    // 計算最小輸出（考慮滑點）
+    // 計算最小輸出（使用寬鬆滑點，例如 10%）
     const amountOutMin = BigInt(quote.amountOutRaw) * BigInt(100 - slippagePercent) / 100n;
 
-    // 準備代幣和 Router
+    // 準備代幣
     const wldContract = new ethers.Contract(WLD_TOKEN_ADDRESS, ERC20_ABI, wallet);
-    const router = new ethers.Contract(UNISWAP_V2_ROUTER, ROUTER_ABI, wallet);
     const amountIn = ethers.parseUnits(amountInWLD.toString(), 18);
 
     // 檢查餘額
@@ -131,41 +130,46 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 3) {
       };
     }
 
-    // 檢查並設置 allowance
-    const currentAllowance = await wldContract.allowance(wallet.address, UNISWAP_V2_ROUTER);
-    if (currentAllowance < amountIn) {
-      console.log('Approving WLD for Router...');
-      const approveTx = await wldContract.approve(UNISWAP_V2_ROUTER, ethers.MaxUint256);
-      await approveTx.wait();
-      console.log('Approval confirmed');
-    }
+    // 確定輸出參數
+    const pair = new ethers.Contract(WLD_CPK_PAIR, PAIR_ABI, wallet);
+    const token0 = await pair.token0();
+    const isWLDToken0 = token0.toLowerCase() === WLD_TOKEN_ADDRESS.toLowerCase();
 
-    // 設置 deadline（10 分鐘後）
-    const deadline = Math.floor(Date.now() / 1000) + 600;
+    // CPK 是 token0，WLD 是 token1
+    // 我們輸入 WLD (token1)，輸出 CPK (token0)
+    const amount0Out = isWLDToken0 ? 0n : amountOutMin;  // CPK output
+    const amount1Out = isWLDToken0 ? amountOutMin : 0n;  // 0
 
-    // 設置 swap 路徑：WLD → CPK
-    const path = [WLD_TOKEN_ADDRESS, CPK_TOKEN_ADDRESS];
+    console.log(`token0 is ${isWLDToken0 ? 'WLD' : 'CPK'}, amount0Out: ${amount0Out}, amount1Out: ${amount1Out}`);
 
-    // 執行 swap
-    console.log('Executing swap via Router...');
-    const swapTx = await router.swapExactTokensForTokens(
-      amountIn,
-      amountOutMin,
-      path,
-      wallet.address,
-      deadline
-    );
+    // 獲取當前 nonce
+    const nonce = await wallet.getNonce();
 
-    const receipt = await swapTx.wait();
+    // 發送 transfer（先把 WLD 轉到 pair）
+    console.log('Step 1: Transferring WLD to pair...');
+    const transferTx = await wldContract.transfer(WLD_CPK_PAIR, amountIn, { nonce: nonce });
 
-    console.log(`Swap completed: ${amountInWLD} WLD → ~${quote.amountOut} CPK - TX: ${receipt.hash}`);
+    // 發送 swap（使用下一個 nonce，不等待 transfer 確認）
+    console.log('Step 2: Sending swap transaction...');
+    const swapTx = await pair.swap(amount0Out, amount1Out, wallet.address, '0x', { nonce: nonce + 1 });
+
+    // 等待兩個交易都確認
+    console.log('Waiting for confirmations...');
+    const [transferReceipt, swapReceipt] = await Promise.all([
+      transferTx.wait(),
+      swapTx.wait()
+    ]);
+
+    console.log(`Transfer TX: ${transferReceipt.hash}`);
+    console.log(`Swap TX: ${swapReceipt.hash}`);
+    console.log(`Swap completed: ${amountInWLD} WLD → ~${quote.amountOut} CPK`);
 
     return {
       success: true,
       amountIn: amountInWLD,
       amountOut: quote.amountOut,
       amountOutRaw: quote.amountOutRaw,
-      txHash: receipt.hash
+      txHash: swapReceipt.hash
     };
 
   } catch (error) {
