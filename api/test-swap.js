@@ -37,9 +37,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { amount, secret, mode } = req.body;
 
-    // 安全檢查：使用環境變數（不在代碼中暴露）
-    const testSecret = process.env.TEST_SWAP_SECRET;
-    if (!testSecret || secret !== testSecret) {
+    // 簡單的安全檢查（防止意外調用）
+    if (secret !== 'test-swap-2024') {
       return res.status(403).json({ success: false, error: 'Invalid secret' });
     }
 
