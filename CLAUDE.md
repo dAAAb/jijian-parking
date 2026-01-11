@@ -266,7 +266,26 @@ KV_REST_API_TOKEN=<Token>
 - [x] 設定環境變數（REWARD_WALLET_PRIVATE_KEY、GAME_TREASURY_ADDRESS）
 - [x] 在 Developer Portal 白名單中添加收款地址
 - [x] 新增 vercel.json 修復靜態網站部署
-- [ ] **待完成**：轉 CPK 代幣到獎勵錢包（等明天代幣可轉移）
+- [x] DEX Swap 功能實作完成
+- [ ] **待完成**：轉 WLD 到獎勵錢包（供 swap 造市用）
+
+### DEX Swap 造市功能（v2.2.0）
+
+**流程**：
+1. 玩家付 10 WLD → 全部進 TREASURY
+2. REWARD_WALLET 用 1 WLD (10%) → swap → CPK（造市效果）
+3. CPK 記錄到玩家 pending，之後可 claim
+
+**技術細節**：
+- DEX：PUFSwapVM Router `0xF1A7bD6CDDc9fE3704F5233c84D57a081B11B23b`
+- 交易對：WLD/CPK Uniswap V2 Pair `0x3D1Ec7119a5cC8f17B2789A3f00655C91ebcfe5A`
+- 授權：Permit2 PermitTransferFrom 簽名
+- 參數：registry=1 (V2), swapType=3 (REGISTRY_UNISWAP_BUY)
+
+**相關檔案**：
+- `api/lib/dex-swap.js` - DEX swap 核心邏輯
+- `api/test-swap.js` - 測試端點（上線前移除）
+- `api/purchase-slowdown.js` - 購買時觸發 swap
 
 ---
 
