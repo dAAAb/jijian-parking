@@ -259,11 +259,37 @@ KV_REST_API_TOKEN=<Token>
 - **獎勵錢包**：`0xD32e7a4Ee499D9bbdE0D1A2F33eEd758932bC54c`（發送 CPK 獎勵）
 - **收款錢包**：`0x3976493CD69B56EA8DBBDdfEd07276aa5915c466`（接收 WLD 支付）
 
-### 部署前檢查清單
+### 部署檢查清單
 
 - [x] 在 config.js 填入 TREASURY_ADDRESS
-- [ ] 在 Vercel 啟用 KV 儲存
-- [ ] 設定環境變數（私鑰、API Key）
-- [ ] 在 Developer Portal 白名單中添加收款地址
-- [ ] 執行 `npm install` 安裝依賴
-- [ ] 轉 CPK 代幣到獎勵錢包
+- [x] 在 Vercel 啟用 KV 儲存（`jijian-car-parking-kv`，區域：sin1）
+- [x] 設定環境變數（REWARD_WALLET_PRIVATE_KEY、GAME_TREASURY_ADDRESS）
+- [x] 在 Developer Portal 白名單中添加收款地址
+- [x] 新增 vercel.json 修復靜態網站部署
+- [ ] **待完成**：轉 CPK 代幣到獎勵錢包（等明天代幣可轉移）
+
+---
+
+## 📋 工作日誌
+
+### 2026-01-11：Token-nomics v2.1.0 實作
+
+**已完成**：
+1. ✅ 建立 Token-nomics 系統架構（6 個 API + 前端 UI）
+2. ✅ 產生新獎勵錢包 `0xD32e7a4Ee499D9bbdE0D1A2F33eEd758932bC54c`
+3. ✅ 設定 Vercel 環境變數（私鑰、收款地址）
+4. ✅ 建立 Vercel KV 儲存（jijian-car-parking-kv）
+5. ✅ 修復部署配置（vercel.json）
+6. ✅ Developer Portal 白名單設定
+7. ✅ 提交到 `feature/tokenomics` 分支
+
+**待完成**：
+- [ ] 轉 CPK 到獎勵錢包（明天代幣解鎖後）
+- [ ] 合併到 main 分支
+- [ ] 實際測試 WLD 支付流程
+- [ ] 實際測試 CPK 領取流程
+
+**私鑰安全確認**：
+- ✅ 原始碼中無私鑰
+- ✅ Git 歷史中無私鑰
+- ✅ 私鑰僅存於 Vercel 環境變數（已加密）
