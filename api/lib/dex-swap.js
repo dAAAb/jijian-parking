@@ -1,5 +1,5 @@
 // api/lib/dex-swap.js
-// DEX Swap 功能 - 使用 Uniswap V2 在 World Chain 上交換代幣
+// DEX Swap 功能 - 使用 PUFSwapVM 在 World Chain 上交換代幣
 
 import { ethers } from 'ethers';
 import { CPK_TOKEN_ADDRESS, WORLD_CHAIN_RPC } from './tokenomics.js';
@@ -7,14 +7,17 @@ import { CPK_TOKEN_ADDRESS, WORLD_CHAIN_RPC } from './tokenomics.js';
 // WLD 代幣地址 (World Chain)
 export const WLD_TOKEN_ADDRESS = '0x2cfc85d8e48f8eab294be644d9e25c3030863003';
 
-// Uniswap V2 Pair (WLD/CPK) - 確認有流動性
+// Uniswap V2 Pair (WLD/CPK) - 用於報價計算
 export const WLD_CPK_PAIR = '0x3D1Ec7119a5cC8f17B2789A3f00655C91ebcfe5A';
 
-// Uniswap V2 Router02 (標準地址，World Chain 上有部署)
-export const UNISWAP_V2_ROUTER = '0x7a250d5630b4cf539739df2c5dacb4c659f2488d';
-
-// PUFSwapVM Router (用戶實際使用的 router)
+// PUFSwapVM Router (World Chain 上實際有效的 DEX)
 export const PUFSWAP_ROUTER = '0xF1A7bD6CDDc9fE3704F5233c84D57a081B11B23b';
+
+// Permit2 合約地址 (Canonical address)
+export const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
+
+// World Chain ID
+export const WORLD_CHAIN_ID = 480;
 
 // ERC-20 ABI
 const ERC20_ABI = [
@@ -33,10 +36,24 @@ const PAIR_ABI = [
   'function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external'
 ];
 
-// Uniswap V2 Router02 ABI
-const ROUTER_ABI = [
-  'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-  'function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)'
+// PUFSwapVM ABI
+const PUFSWAP_ABI = [
+  `function swap(tuple(
+    address tokenIn,
+    address tokenOut,
+    uint256 amountIn,
+    tuple(uint8 registry, uint8 swapType, address tokenIn, address tokenOut, uint24 v3PoolFee, uint256 minAmountOut)[] steps,
+    uint256 permitNonce,
+    uint256 permitDeadline,
+    bytes permitSignature
+  ) params) external returns (uint256 finalAmountOut)`
+];
+
+// Permit2 ABI
+const PERMIT2_ABI = [
+  'function allowance(address owner, address token, address spender) external view returns (uint160 amount, uint48 expiration, uint48 nonce)',
+  'function approve(address token, address spender, uint160 amount, uint48 expiration) external',
+  `function permit(address owner, tuple(tuple(address token, uint160 amount, uint48 expiration, uint48 nonce) details, address spender, uint256 sigDeadline) permitSingle, bytes signature) external`
 ];
 
 /**
@@ -88,8 +105,30 @@ export async function getSwapQuote(amountInWLD) {
   }
 }
 
+// Permit2 EIP-712 Domain
+const PERMIT2_DOMAIN = {
+  name: 'Permit2',
+  chainId: WORLD_CHAIN_ID,
+  verifyingContract: PERMIT2_ADDRESS
+};
+
+// Permit2 Types for EIP-712
+const PERMIT2_TYPES = {
+  PermitSingle: [
+    { name: 'details', type: 'PermitDetails' },
+    { name: 'spender', type: 'address' },
+    { name: 'sigDeadline', type: 'uint256' }
+  ],
+  PermitDetails: [
+    { name: 'token', type: 'address' },
+    { name: 'amount', type: 'uint160' },
+    { name: 'expiration', type: 'uint48' },
+    { name: 'nonce', type: 'uint48' }
+  ]
+};
+
 /**
- * 執行 WLD → CPK 的 swap（直接通過 V2 Pair，使用寬鬆滑點）
+ * 執行 WLD → CPK 的 swap（使用 PUFSwapVM + Permit2）
  * @param {number|string} amountInWLD - WLD 數量
  * @param {number} slippagePercent - 滑點容忍度（百分比，如 10 = 10%）
  * @returns {Promise<{success: boolean, amountOut?: string, txHash?: string, error?: string}>}
@@ -114,14 +153,11 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
 
     console.log(`Swap quote: ${amountInWLD} WLD → ${quote.amountOut} CPK (rate: 1 WLD = ${quote.rate.toFixed(2)} CPK)`);
 
-    // 計算最小輸出（使用寬鬆滑點，例如 10%）
+    const amountIn = ethers.parseUnits(amountInWLD.toString(), 18);
     const amountOutMin = BigInt(quote.amountOutRaw) * BigInt(100 - slippagePercent) / 100n;
 
-    // 準備代幣
+    // 檢查 WLD 餘額
     const wldContract = new ethers.Contract(WLD_TOKEN_ADDRESS, ERC20_ABI, wallet);
-    const amountIn = ethers.parseUnits(amountInWLD.toString(), 18);
-
-    // 檢查餘額
     const balance = await wldContract.balanceOf(wallet.address);
     if (balance < amountIn) {
       return {
@@ -130,46 +166,74 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
       };
     }
 
-    // 確定輸出參數
-    const pair = new ethers.Contract(WLD_CPK_PAIR, PAIR_ABI, wallet);
-    const token0 = await pair.token0();
-    const isWLDToken0 = token0.toLowerCase() === WLD_TOKEN_ADDRESS.toLowerCase();
+    // Step 1: 確保 WLD 已經 approve 給 Permit2
+    const permit2 = new ethers.Contract(PERMIT2_ADDRESS, PERMIT2_ABI, wallet);
+    const currentAllowance = await wldContract.allowance(wallet.address, PERMIT2_ADDRESS);
+    if (currentAllowance < amountIn) {
+      console.log('Approving WLD to Permit2...');
+      const approveTx = await wldContract.approve(PERMIT2_ADDRESS, ethers.MaxUint256);
+      await approveTx.wait();
+      console.log('WLD approved to Permit2');
+    }
 
-    // CPK 是 token0，WLD 是 token1
-    // 我們輸入 WLD (token1)，輸出 CPK (token0)
-    const amount0Out = isWLDToken0 ? 0n : amountOutMin;  // CPK output
-    const amount1Out = isWLDToken0 ? amountOutMin : 0n;  // 0
+    // Step 2: 獲取 Permit2 的 nonce
+    const [, , permit2Nonce] = await permit2.allowance(wallet.address, WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER);
+    console.log('Permit2 nonce:', permit2Nonce);
 
-    console.log(`token0 is ${isWLDToken0 ? 'WLD' : 'CPK'}, amount0Out: ${amount0Out}, amount1Out: ${amount1Out}`);
+    // Step 3: 構造 Permit2 簽名
+    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 小時後過期
+    const expiration = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 天後過期
 
-    // 獲取當前 nonce
-    const nonce = await wallet.getNonce();
+    const permitSingle = {
+      details: {
+        token: WLD_TOKEN_ADDRESS,
+        amount: amountIn,
+        expiration: expiration,
+        nonce: permit2Nonce
+      },
+      spender: PUFSWAP_ROUTER,
+      sigDeadline: deadline
+    };
 
-    // 發送 transfer（先把 WLD 轉到 pair）
-    console.log('Step 1: Transferring WLD to pair...');
-    const transferTx = await wldContract.transfer(WLD_CPK_PAIR, amountIn, { nonce: nonce });
+    console.log('Signing Permit2...');
+    const signature = await wallet.signTypedData(PERMIT2_DOMAIN, PERMIT2_TYPES, permitSingle);
+    console.log('Permit2 signed');
 
-    // 發送 swap（使用下一個 nonce，不等待 transfer 確認）
-    console.log('Step 2: Sending swap transaction...');
-    const swapTx = await pair.swap(amount0Out, amount1Out, wallet.address, '0x', { nonce: nonce + 1 });
+    // Step 4: 構造 PUFSwapVM swap 參數
+    // SwapType.UNISWAP_V2 = 4, Registry.NONE = 2
+    const swapStep = {
+      registry: 2,  // NONE
+      swapType: 4,  // UNISWAP_V2
+      tokenIn: WLD_TOKEN_ADDRESS,
+      tokenOut: CPK_TOKEN_ADDRESS,
+      v3PoolFee: 0,  // 不用 V3
+      minAmountOut: amountOutMin
+    };
 
-    // 等待兩個交易都確認
-    console.log('Waiting for confirmations...');
-    const [transferReceipt, swapReceipt] = await Promise.all([
-      transferTx.wait(),
-      swapTx.wait()
-    ]);
+    const swapParams = {
+      tokenIn: WLD_TOKEN_ADDRESS,
+      tokenOut: CPK_TOKEN_ADDRESS,
+      amountIn: amountIn,
+      steps: [swapStep],
+      permitNonce: permit2Nonce,
+      permitDeadline: deadline,
+      permitSignature: signature
+    };
 
-    console.log(`Transfer TX: ${transferReceipt.hash}`);
-    console.log(`Swap TX: ${swapReceipt.hash}`);
-    console.log(`Swap completed: ${amountInWLD} WLD → ~${quote.amountOut} CPK`);
+    // Step 5: 執行 swap
+    console.log('Executing PUFSwapVM swap...');
+    const pufSwap = new ethers.Contract(PUFSWAP_ROUTER, PUFSWAP_ABI, wallet);
+    const swapTx = await pufSwap.swap(swapParams, { gasLimit: 500000 });
+    const receipt = await swapTx.wait();
+
+    console.log(`Swap completed: ${amountInWLD} WLD → ~${quote.amountOut} CPK - TX: ${receipt.hash}`);
 
     return {
       success: true,
       amountIn: amountInWLD,
       amountOut: quote.amountOut,
       amountOutRaw: quote.amountOutRaw,
-      txHash: swapReceipt.hash
+      txHash: receipt.hash
     };
 
   } catch (error) {
