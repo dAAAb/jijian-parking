@@ -200,8 +200,10 @@ async function verifyWorldAppPayment(transactionId, reference) {
     }
 
     // 調用 World App Developer Portal API 驗證支付
+    // 文檔：https://docs.world.org/mini-apps/reference/api
+    // 必須加上 type=payment 參數
     const response = await fetch(
-      `https://developer.worldcoin.org/api/v2/minikit/transaction/${transactionId}?app_id=${appId}`,
+      `https://developer.worldcoin.org/api/v2/minikit/transaction/${transactionId}?app_id=${appId}&type=payment`,
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`
@@ -211,8 +213,8 @@ async function verifyWorldAppPayment(transactionId, reference) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Payment verification failed:', errorText);
-      return { success: false, error: 'Payment verification failed' };
+      console.error('Payment verification failed:', response.status, errorText);
+      return { success: false, error: `Payment verification failed (${response.status})` };
     }
 
     const data = await response.json();
@@ -220,8 +222,10 @@ async function verifyWorldAppPayment(transactionId, reference) {
     console.log('Expected reference:', reference);
 
     // 確認交易狀態和 reference 匹配
-    // 狀態可能是 'mined' 或 'confirmed'
-    const validStatus = ['mined', 'confirmed', 'success'].includes(data.status);
+    // 文檔說 transaction_status 可能是 'pending', 'mined', 'failed'
+    // 但也檢查 status 欄位以防萬一
+    const txStatus = data.transaction_status || data.status;
+    const validStatus = ['mined', 'confirmed', 'success'].includes(txStatus);
     const referenceMatch = !reference || data.reference === reference;
 
     if (validStatus && referenceMatch) {
@@ -229,13 +233,15 @@ async function verifyWorldAppPayment(transactionId, reference) {
     }
 
     console.error('Payment verification mismatch:', {
+      transaction_status: data.transaction_status,
       status: data.status,
+      txStatus,
       validStatus,
       expectedRef: reference,
       actualRef: data.reference,
       referenceMatch
     });
-    return { success: false, error: `Payment not confirmed (status: ${data.status}) or reference mismatch` };
+    return { success: false, error: `Payment not confirmed (status: ${txStatus}) or reference mismatch` };
 
   } catch (error) {
     console.error('Error verifying payment:', error);
