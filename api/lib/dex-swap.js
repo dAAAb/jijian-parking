@@ -122,13 +122,6 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 2) {
       };
     }
 
-    // 直接 transfer WLD 到 pair，然後調用 swap
-    // 這是標準的 Uniswap V2 swap 方式
-    console.log('Transferring WLD to pair...');
-    const transferTx = await wldContract.transfer(WLD_CPK_PAIR, amountIn);
-    await transferTx.wait();
-    console.log('Transfer confirmed');
-
     // 確定輸出參數
     const pair = new ethers.Contract(WLD_CPK_PAIR, PAIR_ABI, wallet);
     const token0 = await pair.token0();
@@ -139,9 +132,27 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 2) {
     const amount0Out = isWLDToken0 ? 0n : amountOutMin;
     const amount1Out = isWLDToken0 ? amountOutMin : 0n;
 
-    console.log('Executing swap...');
-    const swapTx = await pair.swap(amount0Out, amount1Out, wallet.address, '0x');
-    const receipt = await swapTx.wait();
+    // 獲取當前 nonce
+    const nonce = await wallet.getNonce();
+
+    // 同時發送 transfer 和 swap（使用連續的 nonce）
+    console.log('Sending transfer and swap transactions...');
+
+    // 發送 transfer（nonce）
+    const transferTx = await wldContract.transfer(WLD_CPK_PAIR, amountIn, { nonce: nonce });
+
+    // 立即發送 swap（nonce + 1），不等待 transfer 確認
+    const swapTx = await pair.swap(amount0Out, amount1Out, wallet.address, '0x', { nonce: nonce + 1 });
+
+    // 等待兩個交易確認
+    console.log('Waiting for transactions...');
+    const [transferReceipt, swapReceipt] = await Promise.all([
+      transferTx.wait(),
+      swapTx.wait()
+    ]);
+
+    console.log('Transfer confirmed:', transferReceipt.hash);
+    const receipt = swapReceipt;
 
     console.log(`Swap completed: ${amountInWLD} WLD → ~${quote.amountOut} CPK - TX: ${receipt.hash}`);
 
