@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.0 - Token-nomics 整合
+// 版本: v2.1.1 - 修復代幣顯示重複問題
 
 // 多語言輔助函數
 function getText(key, fallback) {

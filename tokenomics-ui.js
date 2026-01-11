@@ -66,6 +66,12 @@ class TokenomicsUI {
 
   // 渲染 UI
   renderUI() {
+    // 檢查元素是否已存在，避免重複創建
+    if (document.getElementById('token-panel')) {
+      this.updateUI();
+      return;
+    }
+
     // 創建 Token 面板容器
     const panel = document.createElement('div');
     panel.id = 'token-panel';
