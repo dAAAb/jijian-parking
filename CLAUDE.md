@@ -297,6 +297,64 @@ KV_REST_API_TOKEN=<Token>
 
 ## 📋 工作日誌
 
+### 2026-01-12：修復支付驗證 + CPK 獎勵 ✅
+
+**問題與修復**：
+
+#### 1. 🐛 WLD 支付驗證失敗
+**現象**：玩家付款成功（鏈上有記錄），但顯示「Payment not confirmed (status: undefined)」
+
+**根本原因**：World App API 回應使用 **camelCase**
+```javascript
+// API 實際回傳
+{ "transactionStatus": "mined" }
+
+// 我們檢查的（錯誤）
+data.transaction_status || data.status  // undefined!
+```
+
+**修復**（`api/purchase-slowdown.js`）：
+```javascript
+// 修改後
+const txStatus = data.transactionStatus || data.transaction_status || data.status;
+```
+
+**額外修復**：API URL 需加 `&type=payment` 參數
+```javascript
+`https://developer.worldcoin.org/api/v2/minikit/transaction/${transactionId}?app_id=${appId}&type=payment`
+```
+
+#### 2. 🐛 過關 CPK 獎勵為 0
+**現象**：過關後左上角 CPK 一直顯示 0
+
+**根本原因**：測試模式的 nullifierHash 格式不對
+```javascript
+// 之前（錯誤）
+'test_nullifier_' + Date.now()  // "test_nullifier_1768157..."
+
+// 後端要求格式
+/^0x[a-fA-F0-9]{64}$/  // 必須是 0x 開頭 + 64 個 hex 字符
+```
+
+**修復**（`minikit-integration.js` 的 `simulateVerification()`）：
+```javascript
+// 生成符合格式的測試 nullifierHash
+const timestamp = Date.now().toString(16).padStart(16, '0');
+const testNullifier = '0x' + 'deadbeef'.repeat(6) + timestamp;
+// 結果：0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef0000018f4a2b3c4d
+```
+
+#### 3. 📝 新增診斷日誌
+- `game.js`: 過關時顯示 tokenomicsUI 狀態
+- `tokenomics-ui.js`: addReward 呼叫和回應記錄
+
+**測試結果**：
+- ✅ 課金功能正常（WLD 支付 → 90% TREASURY + 10% swap → CPK 返還）
+- ✅ 過關獎勵正常（分數 → CPK）
+- ✅ 測試模式 (`?test=1`) 可正常使用
+
+---
+
 ### 2026-01-11：Token-nomics v2.1.0 實作
 
 **已完成**：
@@ -306,22 +364,41 @@ KV_REST_API_TOKEN=<Token>
 4. ✅ 建立 Vercel KV 儲存（jijian-car-parking-kv）
 5. ✅ 修復部署配置（vercel.json）
 6. ✅ Developer Portal 白名單設定
-7. ✅ 提交到 `feature/tokenomics` 分支
-
-**待完成**：
-- [ ] 轉 CPK 到獎勵錢包（明天代幣解鎖後）
-- [ ] 合併到 main 分支
-- [ ] 實際測試 WLD 支付流程
-- [ ] 實際測試 CPK 領取流程
-
-**待調查問題**：
-- [ ] 🐛 過關後 CPK 顯示為 0（API 測試正常，懷疑前端 nullifierHash 傳遞問題）
-  - 需檢查 Console 確認：
-    1. `✅ 驗證成功! { level, nullifierHash }` 是否有 nullifierHash
-    2. `🪙 TokenomicsUI 已初始化` 是否有出現
-    3. 是否有 `Failed to add reward` 錯誤
+7. ✅ DEX Swap 功能（PUFSwapVM + Permit2）
+8. ✅ 方式 B 完整流程測試通過
 
 **私鑰安全確認**：
 - ✅ 原始碼中無私鑰
 - ✅ Git 歷史中無私鑰
 - ✅ 私鑰僅存於 Vercel 環境變數（已加密）
+
+---
+
+## 🔧 測試模式使用方式
+
+在 URL 加上 `?test=1` 參數可啟用測試模式：
+```
+https://jijian-car-parking.vercel.app/?test=1
+```
+
+**測試模式特性**：
+- 點擊驗證按鈕會模擬 World ID 驗證成功
+- 生成符合格式的測試 nullifierHash (`0xdeadbeef...`)
+- 可測試完整的課金和獎勵流程
+- 顯示 "Test Mode" 標籤
+
+---
+
+## 📌 待優化項目
+
+1. **CPK 獎勵倍率**：目前是 1:1（分數 = CPK），原設計是 3 倍
+   - 檔案：`api/lib/tokenomics.js` 的 `CPK_REWARD_MULTIPLIER`
+
+2. **移除診斷日誌**：上線前可移除 console.log
+   - `game.js`: 第 503-512 行
+   - `tokenomics-ui.js`: 第 410, 429, 437-440 行
+
+3. **test-swap.js**：測試完成後可移除
+   - 檔案：`api/test-swap.js`
+
+4. **REWARD_WALLET 白名單**：確認已加入 Developer Portal
