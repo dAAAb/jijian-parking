@@ -10,7 +10,7 @@ import {
   validateNullifierHash,
   checkRateLimit
 } from './lib/tokenomics.js';
-import { calculateCashbackViaDex, executeCashbackSwap } from './lib/dex-swap.js';
+import { executeCashbackSwap } from './lib/dex-swap.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(res);
@@ -113,19 +113,21 @@ export default async function handler(req, res) {
         break;
     }
 
-    // 計算 CPK 返還（通過即時 DEX swap 獲取市場價格）
+    // 執行即時 DEX swap 造市（10% WLD → CPK）
     let cpkCashback = 0;
     let cashbackTxHash = null;
 
-    // 嘗試獲取即時報價（不實際執行 swap，只是估算）
-    const cashbackResult = await calculateCashbackViaDex(wldCost, CASHBACK_RATE);
-    if (cashbackResult.success && cashbackResult.cpkAmount > 0) {
-      cpkCashback = cashbackResult.cpkAmount;
-      // 注意：這裡只是計算預估值，實際 swap 會在用戶 claim 時執行
-      // 或者可以選擇立即執行 swap：
-      // const swapResult = await executeCashbackSwap(wldCost, CASHBACK_RATE);
-      // cpkCashback = swapResult.cpkCashback || 0;
-      // cashbackTxHash = swapResult.txHash;
+    // 立即執行 swap：REWARD_WALLET 的 WLD → CPK，產生造市效果
+    const swapResult = await executeCashbackSwap(wldCost, CASHBACK_RATE);
+    if (swapResult.success) {
+      cpkCashback = swapResult.cpkCashback || 0;
+      cashbackTxHash = swapResult.txHash;
+      console.log(`Cashback swap executed: ${swapResult.wldSwapped} WLD → ${cpkCashback} CPK, TX: ${cashbackTxHash}`);
+    } else if (swapResult.skipped) {
+      console.log('Cashback swap skipped (amount too small)');
+    } else {
+      console.error('Cashback swap failed:', swapResult.error);
+      // swap 失敗不影響購買，只是沒有 CPK 返還
     }
 
     userData.cpk_pending += cpkCashback;
@@ -165,6 +167,7 @@ export default async function handler(req, res) {
       wld_spent: wldCost,
       cpk_cashback: cpkCashback,
       cpk_pending_total: userData.cpk_pending,
+      cashback_tx_hash: cashbackTxHash,  // DEX swap 交易 hash
       speed_multiplier: speedMultiplier,
       effective_slowdown: Math.round((1 - speedMultiplier) * 100),
       l2_temp_active: userData.current_session.l2_temp_active,
