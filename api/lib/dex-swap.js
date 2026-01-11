@@ -176,28 +176,24 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
       console.log('WLD approved to Permit2');
     }
 
-    // Step 2: 獲取 Permit2 的 nonce
-    const [, , permit2Nonce] = await permit2.allowance(wallet.address, WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER);
-    console.log('Permit2 nonce:', permit2Nonce);
+    // Step 2: 檢查並設置 Permit2 對 PUFSwapVM 的 allowance
+    const [currentPermit2Amount, currentExpiration, permit2Nonce] = await permit2.allowance(wallet.address, WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER);
+    console.log('Permit2 allowance:', { amount: currentPermit2Amount.toString(), expiration: currentExpiration.toString(), nonce: permit2Nonce.toString() });
 
-    // Step 3: 構造 Permit2 簽名
-    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 小時後過期
-    const expiration = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 天後過期
+    const farFutureExpiration = Math.floor(Date.now() / 1000) + 86400 * 365; // 1 年後過期
 
-    const permitSingle = {
-      details: {
-        token: WLD_TOKEN_ADDRESS,
-        amount: amountIn,
-        expiration: expiration,
-        nonce: permit2Nonce
-      },
-      spender: PUFSWAP_ROUTER,
-      sigDeadline: deadline
-    };
+    // 如果 allowance 不足或已過期，直接調用 permit2.approve()
+    if (currentPermit2Amount < amountIn || currentExpiration < Math.floor(Date.now() / 1000)) {
+      console.log('Approving Permit2 allowance for PUFSwapVM...');
+      // 使用 MaxUint160 作為授權金額
+      const maxUint160 = (2n ** 160n) - 1n;
+      const approveTx = await permit2.approve(WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER, maxUint160, farFutureExpiration);
+      await approveTx.wait();
+      console.log('Permit2 allowance approved for PUFSwapVM');
+    }
 
-    console.log('Signing Permit2...');
-    const signature = await wallet.signTypedData(PERMIT2_DOMAIN, PERMIT2_TYPES, permitSingle);
-    console.log('Permit2 signed');
+    // Step 3: 不再需要簽名，使用空簽名和 0 nonce/deadline
+    const signature = '0x';
 
     // Step 4: 構造 PUFSwapVM swap 參數
     // 根據成功交易：swapType: 3 (REGISTRY_UNISWAP_BUY), registry: 1 (V2)
@@ -215,9 +211,9 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
       tokenOut: CPK_TOKEN_ADDRESS,
       amountIn: amountIn,
       steps: [swapStep],
-      permitNonce: permit2Nonce,
-      permitDeadline: deadline,
-      permitSignature: signature
+      permitNonce: 0,  // 不使用 permit 簽名
+      permitDeadline: 0,  // 不使用 permit 簽名
+      permitSignature: signature  // 空簽名
     };
 
     // Step 5: 執行 swap
