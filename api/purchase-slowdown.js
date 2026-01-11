@@ -185,65 +185,88 @@ export default async function handler(req, res) {
   }
 }
 
-async function verifyWorldAppPayment(transactionId, reference) {
-  try {
-    const appId = process.env.WORLD_APP_ID || 'app_8759766ce92173ee6e1ce6568a9bc9e6';
-    const apiKey = process.env.WORLD_API_KEY;
+async function verifyWorldAppPayment(transactionId, reference, maxRetries = 5) {
+  const appId = process.env.WORLD_APP_ID || 'app_8759766ce92173ee6e1ce6568a9bc9e6';
+  const apiKey = process.env.WORLD_API_KEY;
 
-    if (!apiKey) {
-      console.warn('WORLD_API_KEY not configured - skipping payment verification in dev mode');
-      // 開發模式：跳過驗證
-      if (process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview') {
-        return { success: true, data: { status: 'mined', reference } };
-      }
-      return { success: false, error: 'API key not configured' };
+  if (!apiKey) {
+    console.warn('WORLD_API_KEY not configured - skipping payment verification in dev mode');
+    // 開發模式：跳過驗證
+    if (process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview') {
+      return { success: true, data: { status: 'mined', reference } };
     }
-
-    // 調用 World App Developer Portal API 驗證支付
-    // 文檔：https://docs.world.org/mini-apps/reference/api
-    // 必須加上 type=payment 參數
-    const response = await fetch(
-      `https://developer.worldcoin.org/api/v2/minikit/transaction/${transactionId}?app_id=${appId}&type=payment`,
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`
-        }
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Payment verification failed:', response.status, errorText);
-      return { success: false, error: `Payment verification failed (${response.status})` };
-    }
-
-    const data = await response.json();
-    console.log('Payment API response:', JSON.stringify(data));
-    console.log('Expected reference:', reference);
-
-    // 確認交易狀態和 reference 匹配
-    // API 回傳 camelCase: transactionStatus (不是 transaction_status)
-    const txStatus = data.transactionStatus || data.transaction_status || data.status;
-    const validStatus = ['mined', 'confirmed', 'success'].includes(txStatus);
-    const referenceMatch = !reference || data.reference === reference;
-
-    if (validStatus && referenceMatch) {
-      return { success: true, data };
-    }
-
-    console.error('Payment verification mismatch:', {
-      transaction_status: data.transaction_status,
-      status: data.status,
-      txStatus,
-      validStatus,
-      expectedRef: reference,
-      actualRef: data.reference,
-      referenceMatch
-    });
-    return { success: false, error: `Payment not confirmed (status: ${txStatus}) or reference mismatch` };
-
-  } catch (error) {
-    console.error('Error verifying payment:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'API key not configured' };
   }
+
+  // Polling 機制：等待交易確認（最多重試 maxRetries 次，每次間隔 2 秒）
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Payment verification attempt ${attempt}/${maxRetries}...`);
+
+      const response = await fetch(
+        `https://developer.worldcoin.org/api/v2/minikit/transaction/${transactionId}?app_id=${appId}&type=payment`,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Payment verification failed:', response.status, errorText);
+        return { success: false, error: `Payment verification failed (${response.status})` };
+      }
+
+      const data = await response.json();
+      console.log(`Attempt ${attempt} - Payment API response:`, JSON.stringify(data));
+
+      const txStatus = data.transactionStatus || data.transaction_status || data.status;
+      const referenceMatch = !reference || data.reference === reference;
+
+      // 交易已確認
+      if (['mined', 'confirmed', 'success'].includes(txStatus) && referenceMatch) {
+        console.log('✅ Payment confirmed!');
+        return { success: true, data };
+      }
+
+      // 交易失敗
+      if (txStatus === 'failed') {
+        console.error('❌ Payment failed');
+        return { success: false, error: 'Payment transaction failed' };
+      }
+
+      // 交易還在 pending，等待後重試
+      if (txStatus === 'pending' && attempt < maxRetries) {
+        console.log(`⏳ Payment pending, waiting 2s before retry...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      // Reference 不匹配
+      if (!referenceMatch) {
+        console.error('Reference mismatch:', { expected: reference, actual: data.reference });
+        return { success: false, error: 'Payment reference mismatch' };
+      }
+
+      // 最後一次嘗試仍是 pending
+      if (txStatus === 'pending') {
+        console.error('Payment still pending after max retries');
+        return { success: false, error: 'Payment still pending, please try again later' };
+      }
+
+      // 未知狀態
+      console.error('Unknown payment status:', txStatus);
+      return { success: false, error: `Unknown payment status: ${txStatus}` };
+
+    } catch (error) {
+      console.error(`Attempt ${attempt} error:`, error);
+      if (attempt === maxRetries) {
+        return { success: false, error: error.message };
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  return { success: false, error: 'Payment verification failed after retries' };
 }
