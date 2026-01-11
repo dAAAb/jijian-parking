@@ -1305,6 +1305,13 @@ class WorldMiniKit {
 
     onVerificationSuccess(level, nullifierHash, isTestMode = false) {
         console.log('✅ 驗證成功!', { level, nullifierHash, isTestMode });
+        console.log('🔍 驗證來源診斷:', {
+            isTestMode,
+            testModeFromUrl: new URLSearchParams(window.location.search).get('test') === '1',
+            thisTestMode: this.testMode,
+            url: window.location.href,
+            nullifierHashPrefix: nullifierHash?.substring(0, 16)
+        });
 
         this.isVerified = true;
         this.verificationLevel = level;
