@@ -113,7 +113,7 @@ export default async function handler(req, res) {
 
 async function sendCPKTokens(toAddress, amount) {
   try {
-    const privateKey = process.env.REWARD_WALLET_PRIVATE_KEY;
+    const privateKey = process.env.REWARD_WALLET_PRIVATE_KEY?.trim();
 
     if (!privateKey) {
       console.error('REWARD_WALLET_PRIVATE_KEY not configured');

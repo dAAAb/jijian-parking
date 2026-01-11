@@ -88,7 +88,7 @@ export async function getSwapQuote(amountInWLD) {
  */
 export async function swapWLDtoCPK(amountInWLD, slippagePercent = 2) {
   try {
-    const privateKey = process.env.REWARD_WALLET_PRIVATE_KEY;
+    const privateKey = process.env.REWARD_WALLET_PRIVATE_KEY?.trim();
 
     if (!privateKey) {
       console.error('REWARD_WALLET_PRIVATE_KEY not configured');
