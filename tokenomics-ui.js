@@ -276,13 +276,16 @@ class TokenomicsUI {
       this.showToast('正在發起支付...');
 
       // 使用 MiniKit 發起支付
+      // WLD 使用 18 位小數，token_amount 需要是最小單位的字符串
+      const tokenAmountWei = BigInt(wldAmount) * BigInt(10 ** 18);
+
       const { finalPayload } = await MiniKit.commandsAsync.pay({
         reference: reference,
         to: this.treasuryAddress,
         tokens: [
           {
             symbol: 'WLD',
-            token_amount: (wldAmount * 1e6).toString() // WLD 使用 6 位小數
+            token_amount: tokenAmountWei.toString()
           }
         ],
         description: `極簡停車 - ${this.getPurchaseDescription(type)}`
