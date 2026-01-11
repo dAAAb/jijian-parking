@@ -61,6 +61,13 @@ export default async function handler(req, res) {
       });
     }
 
+    // 如果用戶存在但 verified 欄位缺失（舊版本資料），自動補上
+    if (userData.verified === undefined) {
+      console.log(`Updating legacy user ${nullifier_hash.substring(0, 10)}... - setting verified=true`);
+      userData.verified = true;
+      await kv.set(userKey, userData);
+    }
+
     // 額外檢查：確認用戶已驗證（防止繞過）
     if (!userData.verified) {
       return res.status(403).json({
