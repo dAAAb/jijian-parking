@@ -112,18 +112,17 @@ const PERMIT2_DOMAIN = {
   verifyingContract: PERMIT2_ADDRESS
 };
 
-// Permit2 Types for EIP-712
-const PERMIT2_TYPES = {
-  PermitSingle: [
-    { name: 'details', type: 'PermitDetails' },
+// Permit2 Types for PermitTransferFrom (用於 PUFSwapVM)
+const PERMIT_TRANSFER_FROM_TYPES = {
+  PermitTransferFrom: [
+    { name: 'permitted', type: 'TokenPermissions' },
     { name: 'spender', type: 'address' },
-    { name: 'sigDeadline', type: 'uint256' }
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' }
   ],
-  PermitDetails: [
+  TokenPermissions: [
     { name: 'token', type: 'address' },
-    { name: 'amount', type: 'uint160' },
-    { name: 'expiration', type: 'uint48' },
-    { name: 'nonce', type: 'uint48' }
+    { name: 'amount', type: 'uint256' }
   ]
 };
 
@@ -167,7 +166,6 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
     }
 
     // Step 1: 確保 WLD 已經 approve 給 Permit2
-    const permit2 = new ethers.Contract(PERMIT2_ADDRESS, PERMIT2_ABI, wallet);
     const currentAllowance = await wldContract.allowance(wallet.address, PERMIT2_ADDRESS);
     if (currentAllowance < amountIn) {
       console.log('Approving WLD to Permit2...');
@@ -176,23 +174,26 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
       console.log('WLD approved to Permit2');
     }
 
-    // Step 2: 檢查並設置 Permit2 對 PUFSwapVM 的 allowance
-    const [currentPermit2Amount, currentExpiration, permit2Nonce] = await permit2.allowance(wallet.address, WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER);
-    console.log('Permit2 allowance:', { amount: currentPermit2Amount.toString(), expiration: currentExpiration.toString(), nonce: permit2Nonce.toString() });
+    // Step 2: 獲取 Permit2 的 nonce（用於 PermitTransferFrom）
+    // 使用 nonceBitmap 來獲取下一個可用的 nonce
+    // 簡單起見，我們使用當前時間戳作為唯一 nonce（Permit2 支持任意未使用的 nonce）
+    const permitNonce = BigInt(Date.now());
+    const permitDeadline = Math.floor(Date.now() / 1000) + 3600; // 1 小時後過期
 
-    const farFutureExpiration = Math.floor(Date.now() / 1000) + 86400 * 365; // 1 年後過期
+    // Step 3: 構造並簽署 PermitTransferFrom
+    const permitTransferFrom = {
+      permitted: {
+        token: WLD_TOKEN_ADDRESS,
+        amount: amountIn
+      },
+      spender: PUFSWAP_ROUTER,
+      nonce: permitNonce,
+      deadline: permitDeadline
+    };
 
-    // 如果 allowance 不足或已過期，授權剛好需要的數量（更安全）
-    if (currentPermit2Amount < amountIn || currentExpiration < Math.floor(Date.now() / 1000)) {
-      console.log('Approving Permit2 allowance for PUFSwapVM...');
-      // 只授權當前需要的數量，避免過度授權的安全風險
-      const approveTx = await permit2.approve(WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER, amountIn, farFutureExpiration);
-      await approveTx.wait();
-      console.log(`Permit2 allowance approved: ${ethers.formatUnits(amountIn, 18)} WLD`);
-    }
-
-    // Step 3: 不再需要簽名，使用空簽名和 0 nonce/deadline
-    const signature = '0x';
+    console.log('Signing PermitTransferFrom...');
+    const signature = await wallet.signTypedData(PERMIT2_DOMAIN, PERMIT_TRANSFER_FROM_TYPES, permitTransferFrom);
+    console.log('PermitTransferFrom signed');
 
     // Step 4: 構造 PUFSwapVM swap 參數
     // 根據成功交易：swapType: 3 (REGISTRY_UNISWAP_BUY), registry: 1 (V2)
@@ -210,9 +211,9 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
       tokenOut: CPK_TOKEN_ADDRESS,
       amountIn: amountIn,
       steps: [swapStep],
-      permitNonce: 0,  // 不使用 permit 簽名
-      permitDeadline: 0,  // 不使用 permit 簽名
-      permitSignature: signature  // 空簽名
+      permitNonce: permitNonce,
+      permitDeadline: permitDeadline,
+      permitSignature: signature
     };
 
     // Step 5: 執行 swap
