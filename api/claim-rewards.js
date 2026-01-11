@@ -7,7 +7,8 @@ import {
   CPK_TOKEN_ADDRESS,
   WORLD_CHAIN_RPC,
   setCorsHeaders,
-  validateNullifierHash
+  validateNullifierHash,
+  checkRateLimit
 } from './lib/tokenomics.js';
 
 // ERC-20 ABI（僅需 transfer 和 decimals）
@@ -43,6 +44,16 @@ export default async function handler(req, res) {
     // 驗證錢包地址格式
     if (!ethers.isAddress(wallet_address)) {
       return res.status(400).json({ success: false, error: 'Invalid wallet address' });
+    }
+
+    // Rate Limiting 檢查
+    const rateLimit = await checkRateLimit(kv, nullifier_hash, 'claimRewards');
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        success: false,
+        error: rateLimit.error,
+        resetIn: rateLimit.resetIn
+      });
     }
 
     const userKey = `user:${nullifier_hash}`;

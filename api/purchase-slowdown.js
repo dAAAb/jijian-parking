@@ -4,12 +4,13 @@
 import { kv } from '@vercel/kv';
 import {
   SLOWDOWN_CONFIG,
-  WLD_TO_CPK_RATE,
   CASHBACK_RATE,
   calculateSpeedMultiplier,
   setCorsHeaders,
-  validateNullifierHash
+  validateNullifierHash,
+  checkRateLimit
 } from './lib/tokenomics.js';
+import { calculateCashbackViaDex, executeCashbackSwap } from './lib/dex-swap.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(res);
@@ -41,6 +42,16 @@ export default async function handler(req, res) {
 
     if (!['single', 'l1_badge', 'l3_badge'].includes(purchase_type)) {
       return res.status(400).json({ success: false, error: 'Invalid purchase type' });
+    }
+
+    // Rate Limiting 檢查
+    const rateLimit = await checkRateLimit(kv, nullifier_hash, 'purchase');
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        success: false,
+        error: rateLimit.error,
+        resetIn: rateLimit.resetIn
+      });
     }
 
     // 檢查交易是否已處理過（防重放）
@@ -102,8 +113,21 @@ export default async function handler(req, res) {
         break;
     }
 
-    // 計算 CPK 返還（10% 等值）
-    const cpkCashback = Math.floor(wldCost * WLD_TO_CPK_RATE * CASHBACK_RATE);
+    // 計算 CPK 返還（通過即時 DEX swap 獲取市場價格）
+    let cpkCashback = 0;
+    let cashbackTxHash = null;
+
+    // 嘗試獲取即時報價（不實際執行 swap，只是估算）
+    const cashbackResult = await calculateCashbackViaDex(wldCost, CASHBACK_RATE);
+    if (cashbackResult.success && cashbackResult.cpkAmount > 0) {
+      cpkCashback = cashbackResult.cpkAmount;
+      // 注意：這裡只是計算預估值，實際 swap 會在用戶 claim 時執行
+      // 或者可以選擇立即執行 swap：
+      // const swapResult = await executeCashbackSwap(wldCost, CASHBACK_RATE);
+      // cpkCashback = swapResult.cpkCashback || 0;
+      // cashbackTxHash = swapResult.txHash;
+    }
+
     userData.cpk_pending += cpkCashback;
 
     // 更新本局 WLD 花費（用於 L2 臨時徽章判定）

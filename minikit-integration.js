@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.1 - 修復代幣顯示重複問題
+// 版本: v2.1.3 - 使用 DEX swap 即時價格計算 CPK 返還
 
 // 多語言輔助函數
 function getText(key, fallback) {

@@ -7,9 +7,16 @@ export const REWARD_WALLET_ADDRESS = '0x3976493CD69B56EA8DBBDdfEd07276aa5915c466
 export const WORLD_CHAIN_RPC = 'https://worldchain-mainnet.g.alchemy.com/public';
 
 // 經濟參數
-export const CPK_REWARD_MULTIPLIER = 3;      // 分數 × 3 = CPK 獎勵
-export const WLD_TO_CPK_RATE = 1000;         // 1 WLD = 1000 CPK（用於計算返還）
-export const CASHBACK_RATE = 0.10;           // 10% 返還
+export const CPK_REWARD_MULTIPLIER = 1;      // 分數 1:1 兌換 CPK
+export const CASHBACK_RATE = 0.10;           // 10% 返還（通過 DEX swap 即時計算）
+// 注意：WLD_TO_CPK_RATE 已移除，改用 api/lib/dex-swap.js 即時獲取市場價格
+
+// Rate Limiting 配置
+export const RATE_LIMIT_CONFIG = {
+  addReward: { maxRequests: 10, windowMs: 60 * 1000 },     // 每分鐘最多 10 次過關獎勵
+  claimRewards: { maxRequests: 3, windowMs: 60 * 1000 },   // 每分鐘最多 3 次領取
+  purchase: { maxRequests: 5, windowMs: 60 * 1000 }        // 每分鐘最多 5 次購買
+};
 
 // 降速配置
 export const SLOWDOWN_CONFIG = {
@@ -19,12 +26,15 @@ export const SLOWDOWN_CONFIG = {
   l3_badge: { cost: 30, percent: 80, duration: 3 * 24 * 60 * 60 * 1000 }   // L3：30 WLD, 80%, 3天
 };
 
-// 創建新用戶
+// 創建新用戶（只有通過 World ID 驗證後才會調用）
 export function createNewUser(nullifierHash) {
   return {
     nullifier_hash: nullifierHash,
     created_at: Date.now(),
     last_active: Date.now(),
+
+    // World ID 驗證狀態
+    verified: true,  // 用戶通過驗證後才會創建，所以默認為 true
 
     // CPK 獎勵
     cpk_pending: 0,
@@ -119,4 +129,43 @@ export function validateNullifierHash(nullifierHash) {
   }
   // nullifier_hash 是 256-bit hash
   return /^0x[a-fA-F0-9]{64}$/.test(nullifierHash);
+}
+
+// Rate Limiting 檢查（使用 Vercel KV）
+export async function checkRateLimit(kv, identifier, action) {
+  const config = RATE_LIMIT_CONFIG[action];
+  if (!config) return { allowed: true };
+
+  const key = `ratelimit:${action}:${identifier}`;
+  const now = Date.now();
+  const windowStart = now - config.windowMs;
+
+  try {
+    // 獲取該用戶在時間窗口內的請求記錄
+    let requests = await kv.get(key) || [];
+
+    // 過濾掉過期的請求
+    requests = requests.filter(timestamp => timestamp > windowStart);
+
+    // 檢查是否超過限制
+    if (requests.length >= config.maxRequests) {
+      const oldestRequest = Math.min(...requests);
+      const resetIn = Math.ceil((oldestRequest + config.windowMs - now) / 1000);
+      return {
+        allowed: false,
+        error: `Rate limit exceeded. Try again in ${resetIn} seconds.`,
+        resetIn
+      };
+    }
+
+    // 記錄這次請求
+    requests.push(now);
+    await kv.set(key, requests, { ex: Math.ceil(config.windowMs / 1000) });
+
+    return { allowed: true, remaining: config.maxRequests - requests.length };
+  } catch (error) {
+    console.error('Rate limit check error:', error);
+    // 如果 KV 出錯，允許請求通過（fail open）
+    return { allowed: true };
+  }
 }
