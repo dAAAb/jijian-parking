@@ -200,10 +200,10 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
     console.log('Permit2 signed');
 
     // Step 4: 構造 PUFSwapVM swap 參數
-    // SwapType.UNISWAP_V2 = 4, Registry.NONE = 2
+    // 根據成功交易：swapType: 3 (REGISTRY_UNISWAP_BUY), registry: 1 (V2)
     const swapStep = {
-      registry: 2,  // NONE
-      swapType: 4,  // UNISWAP_V2
+      registry: 1,  // V2
+      swapType: 3,  // REGISTRY_UNISWAP_BUY
       tokenIn: WLD_TOKEN_ADDRESS,
       tokenOut: CPK_TOKEN_ADDRESS,
       v3PoolFee: 0,  // 不用 V3
