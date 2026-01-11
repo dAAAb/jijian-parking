@@ -216,14 +216,26 @@ async function verifyWorldAppPayment(transactionId, reference) {
     }
 
     const data = await response.json();
+    console.log('Payment API response:', JSON.stringify(data));
+    console.log('Expected reference:', reference);
 
     // 確認交易狀態和 reference 匹配
-    if (data.status === 'mined' && (!reference || data.reference === reference)) {
+    // 狀態可能是 'mined' 或 'confirmed'
+    const validStatus = ['mined', 'confirmed', 'success'].includes(data.status);
+    const referenceMatch = !reference || data.reference === reference;
+
+    if (validStatus && referenceMatch) {
       return { success: true, data };
     }
 
-    console.error('Payment verification mismatch:', data);
-    return { success: false, error: 'Payment not confirmed or reference mismatch' };
+    console.error('Payment verification mismatch:', {
+      status: data.status,
+      validStatus,
+      expectedRef: reference,
+      actualRef: data.reference,
+      referenceMatch
+    });
+    return { success: false, error: `Payment not confirmed (status: ${data.status}) or reference mismatch` };
 
   } catch (error) {
     console.error('Error verifying payment:', error);
