@@ -26,6 +26,9 @@ class MinimalParking {
         this.demoAnimationId = null;
         this.demoResetting = false; // 防止重複重置
 
+        // Token-nomics 速度乘數（1.0 = 正常速度，0.5 = 半速）
+        this.speedMultiplier = 1.0;
+
         this.init();
         this.setupEventListeners();
     }
@@ -318,16 +321,17 @@ class MinimalParking {
 
     onTouchMove(e) {
         if (!this.isPlaying || !this.isDragging) return;
-        
+
         e.preventDefault();
         const touch = e.touches ? e.touches[0] : e;
         const deltaX = touch.clientX - this.touchStartX;
         const deltaY = touch.clientY - this.touchStartY;
 
         // 根據拖動方向控制車輛
-        // 前後控制速度
+        // 前後控制速度（套用 Token-nomics 速度乘數）
+        const effectiveMaxSpeed = this.maxSpeed * this.speedMultiplier;
         const speedInput = -deltaY / window.innerHeight * 2;
-        this.carSpeed = Math.max(-this.maxSpeed, Math.min(this.maxSpeed, speedInput * this.maxSpeed));
+        this.carSpeed = Math.max(-effectiveMaxSpeed, Math.min(effectiveMaxSpeed, speedInput * effectiveMaxSpeed));
 
         // 左右控制轉向
         const turnInput = deltaX / window.innerWidth * 2;
@@ -483,25 +487,26 @@ class MinimalParking {
     levelComplete() {
         this.isPlaying = false;
         const elapsedTime = ((Date.now() - this.startTime) / 1000).toFixed(1);
-        
+
         // 計算時間獎勵
         const timeBonus = Math.max(0, Math.floor((30 - elapsedTime) * 10));
-        this.score += 100 + timeBonus;
-
-        // 計算 WLD 獎勵
-        const wldReward = (0.05 + (this.level * 0.01)).toFixed(2);
+        const levelScore = 100 + timeBonus;
+        this.score += levelScore;
 
         // 顯示完成畫面
         document.getElementById('complete-time').textContent = elapsedTime + 's';
         document.getElementById('time-bonus').textContent = '+' + timeBonus;
         document.getElementById('total-score').textContent = this.score;
-        // TODO: 整合錢包後啟用
-        // document.getElementById('wld-reward').textContent = '+' + wldReward + ' WLD';
         document.getElementById('level-complete-screen').classList.remove('hidden');
+
+        // Token-nomics: 向後端報告得分，獲取 CPK 獎勵
+        if (window.tokenomicsUI?.nullifierHash) {
+            window.tokenomicsUI.addReward(levelScore, this.level);
+        }
 
         // 添加完成特效
         this.addCompleteEffect();
-        
+
         // 發送震動反饋
         if (window.worldMiniKit) {
             window.worldMiniKit.sendHapticFeedback('success');
@@ -550,7 +555,7 @@ class MinimalParking {
     gameOver() {
         this.isPlaying = false;
         document.getElementById('game-over-screen').classList.remove('hidden');
-        
+
         // 車輛爆炸效果
         if (this.car) {
             this.car.group.children.forEach(child => {
@@ -559,11 +564,22 @@ class MinimalParking {
                 }
             });
         }
-        
+
+        // Token-nomics: 重置當局狀態（單次降速失效）
+        if (window.tokenomicsUI?.nullifierHash) {
+            window.tokenomicsUI.resetSession();
+        }
+
         // 發送震動反饋
         if (window.worldMiniKit) {
             window.worldMiniKit.sendHapticFeedback('error');
         }
+    }
+
+    // Token-nomics: 從外部更新速度乘數
+    updateSpeedFromTokenomics(multiplier) {
+        this.speedMultiplier = multiplier;
+        console.log(`🐢 速度乘數更新: ${multiplier.toFixed(2)} (降速 ${Math.round((1 - multiplier) * 100)}%)`);
     }
 
     updateUI() {

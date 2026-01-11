@@ -21,9 +21,11 @@
 ### 核心檔案
 - `minikit-integration.js` - World ID 驗證整合（MiniKit + IDKit）
 - `game.js` - 遊戲邏輯
+- `tokenomics-ui.js` - Token 經濟 UI（CPK 獎勵、降速購買）
 - `i18n.js` - 多語言支援（英文、繁體中文、日文、韓文）
 - `index.html` - 主頁面
 - `style.css` - 樣式
+- `api/` - 後端 API（Vercel Serverless）
 
 ### 驗證流程
 1. **World App 內** → 使用 MiniKit (`MiniKit.commandsAsync.verify`)
@@ -191,14 +193,67 @@ const installResult = MiniKit.install();
 
 ---
 
-### 3. 錢包整合與 WLD 空投獎勵
-**狀態**：待開發
+---
 
-**目標**：
-- 整合 World App 錢包
-- 停車成功後發放 WLD 獎勵
-- 顯示用戶餘額
+## ✅ v2.1.0 Token-nomics 系統
 
-**目前狀態**：
-- WLD 獎勵相關 UI 已暫時註解（index.html）
-- 搜尋 `TODO: 整合錢包後啟用` 可找到註解位置
+**完成日期**：2026-01-11
+
+### 功能概覽
+
+| 功能 | 規格 |
+|------|------|
+| CPK 獎勵 | 停車成功 → 分數 × 3 的 $CPK |
+| 單次降速 | 1 WLD → -20%（可累加，死亡失效） |
+| L1 徽章 | 10 WLD → -20%（3天有效） |
+| L2 臨時徽章 | 單局累計 3 WLD → -40%（單局有效） |
+| L3 徽章 | 30 WLD → -80%（3天有效） |
+| CPK 返還 | 每次 WLD 支付 → 10% 等值 CPK |
+
+### 新增檔案
+
+```
+api/
+├── lib/tokenomics.js      # 共用函數
+├── user-state.js          # 用戶狀態查詢
+├── add-reward.js          # 新增 CPK 獎勵
+├── claim-rewards.js       # 領取 CPK（鏈上轉帳）
+├── purchase-slowdown.js   # 購買降速
+└── session-reset.js       # 重置當局狀態
+
+tokenomics-ui.js           # Token 面板 UI
+package.json               # 依賴配置
+```
+
+### 修改檔案
+
+| 檔案 | 修改內容 |
+|------|----------|
+| `game.js` | 新增 speedMultiplier、過關回報、死亡重置 |
+| `style.css` | 新增 Token 面板樣式 |
+| `index.html` | 載入 tokenomics-ui.js、更新版本號 |
+| `minikit-integration.js` | 驗證成功後初始化 TokenomicsUI |
+| `config.js` | 新增 TREASURY_ADDRESS 配置 |
+
+### 環境變數需求
+
+```
+REWARD_WALLET_PRIVATE_KEY=<獎勵錢包私鑰>
+GAME_TREASURY_ADDRESS=<收款地址>
+KV_URL=<Vercel KV URL>
+KV_REST_API_URL=<Vercel KV REST URL>
+KV_REST_API_TOKEN=<Token>
+```
+
+### 代幣配置
+
+- **$CPK 合約**：`0x006201CEEC3Cf7fEFB24638a229784F1D10ADc92` (World Chain)
+- **獎勵錢包**：`0x3976493CD69B56EA8DBBDdfEd07276aa5915c466`
+
+### 部署前檢查清單
+
+- [ ] 在 Vercel 啟用 KV 儲存
+- [ ] 設定環境變數（私鑰、API Key）
+- [ ] 在 config.js 填入 TREASURY_ADDRESS
+- [ ] 在 Developer Portal 白名單中添加收款地址
+- [ ] 執行 `npm install` 安裝依賴
