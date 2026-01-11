@@ -40,6 +40,10 @@ const translations = {
         'verify.processing': '✅ Verified, processing...',
         'verify.error.backend': 'Backend error',
         'verify.error.failed': 'Verification failed',
+
+        // Tokenomics
+        'btn.claim': 'Claim',
+        'ui.slowdown': 'Slowdown',
     },
 
     'zh-TW': {
@@ -74,6 +78,10 @@ const translations = {
         'verify.processing': '✅ 驗證完成，處理中...',
         'verify.error.backend': '後端錯誤',
         'verify.error.failed': '驗證失敗',
+
+        // Tokenomics
+        'btn.claim': '領取',
+        'ui.slowdown': '降速',
     },
 
     ja: {
@@ -108,6 +116,10 @@ const translations = {
         'verify.processing': '✅ 認証完了、処理中...',
         'verify.error.backend': 'バックエンドエラー',
         'verify.error.failed': '認証失敗',
+
+        // Tokenomics
+        'btn.claim': '受取',
+        'ui.slowdown': '減速',
     },
 
     ko: {
@@ -142,6 +154,10 @@ const translations = {
         'verify.processing': '✅ 인증 완료, 처리 중...',
         'verify.error.backend': '백엔드 오류',
         'verify.error.failed': '인증 실패',
+
+        // Tokenomics
+        'btn.claim': '수령',
+        'ui.slowdown': '감속',
     }
 };
 

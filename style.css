@@ -495,19 +495,384 @@ body {
     color: #f59e0b;
 }
 
+/* ================================
+   Token-nomics UI 樣式
+   ================================ */
+
+/* Token 觸發按鈕（遊戲畫面上） */
+.token-trigger-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1000;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    color: #1a1a1a;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.token-trigger-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+}
+
+.token-trigger-btn:active {
+    transform: scale(0.95);
+}
+
+/* Token 面板 */
+.token-panel {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 35, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    z-index: 2000;
+    min-width: 320px;
+    max-width: 360px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: panelSlideUp 0.3s ease;
+}
+
+.token-panel.hidden {
+    display: none;
+}
+
+@keyframes panelSlideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* 關閉按鈕 */
+.close-panel-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: #888;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-panel-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* Token 面板頭部 */
+.token-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cpk-balance {
+    font-size: 1.4em;
+    color: #ffd700;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.token-icon {
+    font-size: 1.2em;
+}
+
+.token-symbol {
+    font-size: 0.7em;
+    color: #888;
+    margin-left: 4px;
+}
+
+.claim-btn {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    border: none;
+    padding: 10px 24px;
+    border-radius: 25px;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.claim-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.claim-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* 降速區塊 */
+.slowdown-section {
+    margin-bottom: 18px;
+}
+
+.slowdown-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #aaa;
+    font-size: 1.05em;
+    margin-bottom: 12px;
+}
+
+.slowdown-value {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #888;
+    transition: color 0.3s;
+}
+
+.slowdown-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.slowdown-btn {
+    flex: 1;
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.4);
+    padding: 14px 12px;
+    border-radius: 14px;
+    color: white;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.slowdown-btn:hover {
+    background: rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.slowdown-btn:active {
+    transform: translateY(0);
+}
+
+/* 徽章區塊 */
+.badge-section {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.badge-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    padding: 14px 10px;
+    border-radius: 14px;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    font-size: 1.1em;
+}
+
+.badge-btn.l1 {
+    border-color: rgba(205, 127, 50, 0.5);
+}
+
+.badge-btn.l1:hover {
+    background: rgba(205, 127, 50, 0.15);
+    border-color: #cd7f32;
+    box-shadow: 0 4px 15px rgba(205, 127, 50, 0.3);
+}
+
+.badge-btn.l3 {
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.badge-btn.l3:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: #ffd700;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.badge-btn:hover {
+    transform: translateY(-3px);
+}
+
+.badge-btn:active {
+    transform: translateY(0);
+}
+
+.badge-btn small {
+    display: block;
+    font-size: 0.65em;
+    color: #888;
+    margin-top: 6px;
+    font-weight: normal;
+}
+
+/* 徽章狀態 */
+.badge-status {
+    text-align: center;
+    color: #666;
+    font-size: 0.85em;
+    padding-top: 5px;
+}
+
+/* Token Toast 提示 */
+.token-toast {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 30px;
+    font-size: 1em;
+    z-index: 10000;
+    text-align: center;
+    white-space: pre-line;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: toastFade 3s ease-out forwards;
+    max-width: 300px;
+}
+
+@keyframes toastFade {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* 獎勵彈出效果 */
+.reward-popup {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+    padding: 20px 40px;
+    border-radius: 50px;
+    z-index: 10000;
+    animation: rewardPop 2s ease-out forwards;
+    box-shadow: 0 10px 40px rgba(255, 215, 0, 0.5);
+}
+
+.reward-icon {
+    font-size: 2em;
+}
+
+.reward-amount {
+    font-size: 2em;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.reward-label {
+    font-size: 1.2em;
+    color: #333;
+    font-weight: 600;
+}
+
+@keyframes rewardPop {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+    30% {
+        transform: translateX(-50%) scale(1);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-50px);
+    }
+}
+
 /* 響應式設計 */
 @media (max-width: 480px) {
     .game-title {
         font-size: 2.5em;
     }
-    
+
     .stat .value {
         font-size: 1.2em;
     }
-    
+
     .main-btn {
         padding: 15px 40px;
         font-size: 1.1em;
+    }
+
+    .token-panel {
+        min-width: 290px;
+        max-width: 95%;
+        padding: 15px;
+    }
+
+    .badge-btn {
+        padding: 12px 8px;
+        font-size: 1em;
+    }
+
+    .badge-btn small {
+        font-size: 0.6em;
     }
 }
 

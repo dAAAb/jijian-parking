@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.0.1
+// 版本: v2.1.1 - 修復代幣顯示重複問題
 
 // 多語言輔助函數
 function getText(key, fallback) {
@@ -1317,6 +1317,12 @@ class WorldMiniKit {
         // 如果不是測試模式，發送成功震動
         if (!isTestMode) {
             this.sendHapticFeedback('success');
+        }
+
+        // Token-nomics: 初始化 Token UI
+        if (window.tokenomicsUI && nullifierHash) {
+            window.tokenomicsUI.init(nullifierHash);
+            console.log('🪙 TokenomicsUI 已初始化');
         }
     }
 

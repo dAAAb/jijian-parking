@@ -23,6 +23,12 @@ config.local.js
 api-keys.txt
 
 
+# Node.js
+node_modules/
+package-lock.json
+
 # 服務器日誌
 server.log
 ngrok.log
+.vercel
+.env*.local
