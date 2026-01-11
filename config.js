@@ -11,7 +11,7 @@ window.LOCAL_CONFIG = {
 
     // Token-nomics 配置
     // 收款地址（接收 WLD 支付）- 需要在 Developer Portal 白名單中
-    TREASURY_ADDRESS: '',  // TODO: 填入你的收款錢包地址
+    TREASURY_ADDRESS: '0x3976493CD69B56EA8DBBDdfEd07276aa5915c466',
 
     // ⚠️ 不要在此文件中包含 WORLD_API_KEY！
     // API Key 應該只存在於：

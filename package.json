@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@vercel/kv": "^2.0.0",
-    "ethers": "^6.9.0"
+    "ethers": "^6.16.0"
   },
   "engines": {
     "node": ">=18.0.0"

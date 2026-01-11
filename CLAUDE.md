@@ -14,7 +14,15 @@
 ### 部署
 - 專案部署在 Vercel
 - 推送到 main 分支後自動部署
-- 用 Playwright MCP 可以直接查看 Vercel 日誌：`https://vercel.com/daaabs-projects/jijian/logs`
+- Vercel 日誌：`https://vercel.com/daaabs-projects/jijian-car-parking/logs`
+
+### ⚠️ Vercel 專案說明
+帳號下有兩個專案連到同一個 GitHub repo，**只使用 `jijian-car-parking`**：
+
+| 專案名稱 | URL | 狀態 |
+|----------|-----|------|
+| `jijian-car-parking` | jijian-car-parking.vercel.app | ✅ 正在使用 |
+| `jijian` | jijian-seven.vercel.app | ❌ 舊的/重複，可刪除 |
 
 ## 專案架構
 
@@ -248,12 +256,14 @@ KV_REST_API_TOKEN=<Token>
 ### 代幣配置
 
 - **$CPK 合約**：`0x006201CEEC3Cf7fEFB24638a229784F1D10ADc92` (World Chain)
-- **獎勵錢包**：`0x3976493CD69B56EA8DBBDdfEd07276aa5915c466`
+- **獎勵錢包**：`0xD32e7a4Ee499D9bbdE0D1A2F33eEd758932bC54c`（發送 CPK 獎勵）
+- **收款錢包**：`0x3976493CD69B56EA8DBBDdfEd07276aa5915c466`（接收 WLD 支付）
 
 ### 部署前檢查清單
 
+- [x] 在 config.js 填入 TREASURY_ADDRESS
 - [ ] 在 Vercel 啟用 KV 儲存
 - [ ] 設定環境變數（私鑰、API Key）
-- [ ] 在 config.js 填入 TREASURY_ADDRESS
 - [ ] 在 Developer Portal 白名單中添加收款地址
 - [ ] 執行 `npm install` 安裝依賴
+- [ ] 轉 CPK 代幣到獎勵錢包
