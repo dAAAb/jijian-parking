@@ -222,9 +222,8 @@ async function verifyWorldAppPayment(transactionId, reference) {
     console.log('Expected reference:', reference);
 
     // 確認交易狀態和 reference 匹配
-    // 文檔說 transaction_status 可能是 'pending', 'mined', 'failed'
-    // 但也檢查 status 欄位以防萬一
-    const txStatus = data.transaction_status || data.status;
+    // API 回傳 camelCase: transactionStatus (不是 transaction_status)
+    const txStatus = data.transactionStatus || data.transaction_status || data.status;
     const validStatus = ['mined', 'confirmed', 'success'].includes(txStatus);
     const referenceMatch = !reference || data.reference === reference;
 
