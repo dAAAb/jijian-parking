@@ -182,14 +182,13 @@ export async function swapWLDtoCPK(amountInWLD, slippagePercent = 10) {
 
     const farFutureExpiration = Math.floor(Date.now() / 1000) + 86400 * 365; // 1 年後過期
 
-    // 如果 allowance 不足或已過期，直接調用 permit2.approve()
+    // 如果 allowance 不足或已過期，授權剛好需要的數量（更安全）
     if (currentPermit2Amount < amountIn || currentExpiration < Math.floor(Date.now() / 1000)) {
       console.log('Approving Permit2 allowance for PUFSwapVM...');
-      // 使用 MaxUint160 作為授權金額
-      const maxUint160 = (2n ** 160n) - 1n;
-      const approveTx = await permit2.approve(WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER, maxUint160, farFutureExpiration);
+      // 只授權當前需要的數量，避免過度授權的安全風險
+      const approveTx = await permit2.approve(WLD_TOKEN_ADDRESS, PUFSWAP_ROUTER, amountIn, farFutureExpiration);
       await approveTx.wait();
-      console.log('Permit2 allowance approved for PUFSwapVM');
+      console.log(`Permit2 allowance approved: ${ethers.formatUnits(amountIn, 18)} WLD`);
     }
 
     // Step 3: 不再需要簽名，使用空簽名和 0 nonce/deadline
