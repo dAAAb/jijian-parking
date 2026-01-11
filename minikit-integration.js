@@ -1007,9 +1007,14 @@ class WorldMiniKit {
         this.isVerified = true;
         this.verificationLevel = 'orb'; // 模擬 Orb 驗證
 
-        this.onVerificationSuccess('orb', 'test_nullifier_' + Date.now(), true);
+        // 生成符合格式的測試 nullifierHash (0x + 64 hex chars)
+        // 後端要求格式：/^0x[a-fA-F0-9]{64}$/
+        const timestamp = Date.now().toString(16).padStart(16, '0');
+        const testNullifier = '0x' + 'deadbeef'.repeat(6) + timestamp;
 
-        console.log('✅ 測試驗證完成');
+        this.onVerificationSuccess('orb', testNullifier, true);
+
+        console.log('✅ 測試驗證完成, nullifier:', testNullifier);
     }
 
     async verifyWithMiniKit() {
