@@ -44,6 +44,8 @@ const translations = {
         // Tokenomics
         'btn.claim': 'Claim',
         'ui.slowdown': 'Slowdown',
+        'ui.promoHint': 'Promo: 50% $CPK cashback on purchases!',
+        'ui.slowdownHint': 'Slowdown makes your car slower, easier to park',
     },
 
     'zh-TW': {
@@ -82,6 +84,8 @@ const translations = {
         // Tokenomics
         'btn.claim': '領取',
         'ui.slowdown': '降速',
+        'ui.promoHint': '特惠期間：課金享 50% $CPK 返還！',
+        'ui.slowdownHint': '減速功能讓車子變慢，更容易控制停車',
     },
 
     ja: {
@@ -120,6 +124,8 @@ const translations = {
         // Tokenomics
         'btn.claim': '受取',
         'ui.slowdown': '減速',
+        'ui.promoHint': 'プロモ：購入で50% $CPKキャッシュバック！',
+        'ui.slowdownHint': '減速機能で車がゆっくりに、駐車しやすく',
     },
 
     ko: {
@@ -158,6 +164,8 @@ const translations = {
         // Tokenomics
         'btn.claim': '수령',
         'ui.slowdown': '감속',
+        'ui.promoHint': '프로모: 구매 시 50% $CPK 캐시백!',
+        'ui.slowdownHint': '감속 기능으로 차가 느려져 주차가 쉬워져요',
     }
 };
 

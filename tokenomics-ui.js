@@ -18,6 +18,7 @@ class TokenomicsUI {
     this.slowdownConfig = {
       single: { cost: 1, percent: 20 },
       l1_badge: { cost: 10, percent: 20, duration: '3 天' },
+      l2_badge: { cost: 15, percent: 40, duration: '3 天' },
       l2_temp: { threshold: 3, percent: 40 },
       l3_badge: { cost: 30, percent: 80, duration: '3 天' }
     };
@@ -95,9 +96,13 @@ class TokenomicsUI {
 
         <div class="slowdown-actions">
           <button id="buy-single" class="slowdown-btn">
-            ⚡ 1 WLD (-20%)
+            ⏬ 1 WLD (-20%)
           </button>
         </div>
+      </div>
+
+      <div class="promo-hint">
+        🎁 ${window.i18n?.t('ui.promoHint') || '特惠期間：課金享 50% $CPK 返還！'}
       </div>
 
       <div class="badge-section">
@@ -105,10 +110,18 @@ class TokenomicsUI {
           🥉 L1<br>
           <small>10 WLD | -20% | 3天</small>
         </button>
+        <button id="buy-l2" class="badge-btn l2">
+          🥈 L2<br>
+          <small>15 WLD | -40% | 3天</small>
+        </button>
         <button id="buy-l3" class="badge-btn l3">
           🥇 L3<br>
           <small>30 WLD | -80% | 3天</small>
         </button>
+      </div>
+
+      <div class="feature-hint">
+        <small>🐢 ${window.i18n?.t('ui.slowdownHint') || '減速功能讓車子變慢，更容易控制停車'}</small>
       </div>
 
       <div id="badge-status" class="badge-status"></div>
@@ -180,9 +193,16 @@ class TokenomicsUI {
       badges.push(`🥉 L1 (${remaining})`);
     }
 
-    // L2 臨時徽章
+    // L2 徽章（購買的）
+    if (this.userState.badges?.l2?.active &&
+        this.userState.badges.l2.expires_at > now) {
+      const remaining = this.formatTimeRemaining(this.userState.badges.l2.expires_at);
+      badges.push(`🥈 L2 (${remaining})`);
+    }
+
+    // L2 臨時徽章（累計解鎖的）
     if (this.userState.current_session?.l2_temp_active) {
-      badges.push('⚡ L2');
+      badges.push('⚡ L2臨時');
     }
 
     // L3 徽章
@@ -226,6 +246,11 @@ class TokenomicsUI {
     // 購買 L1 徽章
     document.getElementById('buy-l1')?.addEventListener('click', () => {
       this.purchaseSlowdown('l1_badge', 10);
+    });
+
+    // 購買 L2 徽章
+    document.getElementById('buy-l2')?.addEventListener('click', () => {
+      this.purchaseSlowdown('l2_badge', 15);
     });
 
     // 購買 L3 徽章
@@ -497,6 +522,7 @@ class TokenomicsUI {
     switch (type) {
       case 'single': return '單次降速 (-20%)';
       case 'l1_badge': return 'L1 徽章 (3天)';
+      case 'l2_badge': return 'L2 徽章 (3天)';
       case 'l3_badge': return 'L3 徽章 (3天)';
       default: return '購買';
     }

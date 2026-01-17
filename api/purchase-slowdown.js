@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Invalid nullifier_hash format' });
     }
 
-    if (!['single', 'l1_badge', 'l3_badge'].includes(purchase_type)) {
+    if (!['single', 'l1_badge', 'l2_badge', 'l3_badge'].includes(purchase_type)) {
       return res.status(400).json({ success: false, error: 'Invalid purchase type' });
     }
 
@@ -99,6 +99,21 @@ export default async function handler(req, res) {
           expires_at: Date.now() + SLOWDOWN_CONFIG.l1_badge.duration
         };
         message = `L1 Badge purchased (${SLOWDOWN_CONFIG.l1_badge.percent}% slowdown, 3 days)`;
+        break;
+
+      case 'l2_badge':
+        // L2 徽章：15 WLD，40%，3 天
+        wldCost = SLOWDOWN_CONFIG.l2_badge.cost;
+        // 確保 badges.l2 存在（舊用戶可能沒有）
+        if (!userData.badges.l2) {
+          userData.badges.l2 = { active: false, expires_at: null, purchased_at: null };
+        }
+        userData.badges.l2 = {
+          active: true,
+          purchased_at: Date.now(),
+          expires_at: Date.now() + SLOWDOWN_CONFIG.l2_badge.duration
+        };
+        message = `L2 Badge purchased (${SLOWDOWN_CONFIG.l2_badge.percent}% slowdown, 3 days)`;
         break;
 
       case 'l3_badge':

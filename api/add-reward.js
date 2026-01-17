@@ -32,9 +32,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Invalid nullifier_hash format' });
     }
 
-    if (typeof score !== 'number' || score < 0 || score > 10000) {
+    // 單次分數上限 1000（防止刷分）
+    const MAX_SCORE_PER_LEVEL = 1000;
+    if (typeof score !== 'number' || score < 0) {
       return res.status(400).json({ success: false, error: 'Invalid score' });
     }
+    const validatedScore = Math.min(score, MAX_SCORE_PER_LEVEL);
 
     if (typeof level !== 'number' || level < 1 || level > 1000) {
       return res.status(400).json({ success: false, error: 'Invalid level' });
@@ -76,19 +79,19 @@ export default async function handler(req, res) {
       });
     }
 
-    // 計算 CPK 獎勵：單次得分 1:1 兌換
-    const cpkReward = Math.floor(score * CPK_REWARD_MULTIPLIER);
+    // 計算 CPK 獎勵：單次得分 1:1 兌換（使用驗證後的分數）
+    const cpkReward = Math.floor(validatedScore * CPK_REWARD_MULTIPLIER);
 
     // 更新用戶狀態
     userData.cpk_pending += cpkReward;
-    userData.total_score += score;
+    userData.total_score += validatedScore;
     userData.total_games += 1;
     userData.highest_level = Math.max(userData.highest_level, level);
     userData.last_active = Date.now();
 
     await kv.set(userKey, userData);
 
-    console.log(`Added reward: ${cpkReward} CPK for user ${nullifier_hash.substring(0, 10)}... (Level ${level}, Score ${score})`);
+    console.log(`Added reward: ${cpkReward} CPK for user ${nullifier_hash.substring(0, 10)}... (Level ${level}, Score ${validatedScore}${score > MAX_SCORE_PER_LEVEL ? ' [capped]' : ''})`);
 
     return res.status(200).json({
       success: true,

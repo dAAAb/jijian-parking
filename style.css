@@ -594,6 +594,7 @@ body {
     align-items: center;
     margin-bottom: 18px;
     padding-bottom: 15px;
+    padding-right: 30px; /* 避免與關閉按鈕重疊 */
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -689,6 +690,30 @@ body {
     transform: translateY(0);
 }
 
+/* 特惠提示 */
+.promo-hint {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.15));
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #ffd700;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+/* 功能說明提示 */
+.feature-hint {
+    text-align: center;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.feature-hint small {
+    font-size: 0.8em;
+}
+
 /* 徽章區塊 */
 .badge-section {
     display: flex;
@@ -718,6 +743,16 @@ body {
     background: rgba(205, 127, 50, 0.15);
     border-color: #cd7f32;
     box-shadow: 0 4px 15px rgba(205, 127, 50, 0.3);
+}
+
+.badge-btn.l2 {
+    border-color: rgba(192, 192, 192, 0.5);
+}
+
+.badge-btn.l2:hover {
+    background: rgba(192, 192, 192, 0.15);
+    border-color: #c0c0c0;
+    box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3);
 }
 
 .badge-btn.l3 {

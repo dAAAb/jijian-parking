@@ -8,7 +8,7 @@ export const WORLD_CHAIN_RPC = 'https://worldchain-mainnet.g.alchemy.com/public'
 
 // 經濟參數
 export const CPK_REWARD_MULTIPLIER = 1;      // 分數 1:1 兌換 CPK
-export const CASHBACK_RATE = 0.10;           // 10% 返還（通過 DEX swap 即時計算）
+export const CASHBACK_RATE = 0.50;           // 50% 返還（特惠期間）
 // 注意：WLD_TO_CPK_RATE 已移除，改用 api/lib/dex-swap.js 即時獲取市場價格
 
 // Rate Limiting 配置
@@ -22,7 +22,8 @@ export const RATE_LIMIT_CONFIG = {
 export const SLOWDOWN_CONFIG = {
   single: { cost: 1, percent: 20 },          // 單次：1 WLD, 20%
   l1_badge: { cost: 10, percent: 20, duration: 3 * 24 * 60 * 60 * 1000 },  // L1：10 WLD, 20%, 3天
-  l2_temp: { threshold: 3, percent: 40 },    // L2 臨時：累計 3 WLD, 40%
+  l2_badge: { cost: 15, percent: 40, duration: 3 * 24 * 60 * 60 * 1000 },  // L2：15 WLD, 40%, 3天
+  l2_temp: { threshold: 3, percent: 40 },    // L2 臨時：累計 3 WLD, 40%（與購買的 L2 不累加）
   l3_badge: { cost: 30, percent: 80, duration: 3 * 24 * 60 * 60 * 1000 }   // L3：30 WLD, 80%, 3天
 };
 
@@ -52,6 +53,7 @@ export function createNewUser(nullifierHash) {
     // 徽章
     badges: {
       l1: { active: false, expires_at: null, purchased_at: null },
+      l2: { active: false, expires_at: null, purchased_at: null },
       l3: { active: false, expires_at: null, purchased_at: null }
     }
   };
@@ -73,12 +75,17 @@ export function updateBadgeStatus(userData) {
   const now = Date.now();
 
   // 檢查 L1 徽章過期
-  if (userData.badges.l1.active && userData.badges.l1.expires_at <= now) {
+  if (userData.badges.l1?.active && userData.badges.l1.expires_at <= now) {
     userData.badges.l1.active = false;
   }
 
+  // 檢查 L2 徽章過期
+  if (userData.badges.l2?.active && userData.badges.l2.expires_at <= now) {
+    userData.badges.l2.active = false;
+  }
+
   // 檢查 L3 徽章過期
-  if (userData.badges.l3.active && userData.badges.l3.expires_at <= now) {
+  if (userData.badges.l3?.active && userData.badges.l3.expires_at <= now) {
     userData.badges.l3.active = false;
   }
 
@@ -91,20 +98,22 @@ export function calculateSpeedMultiplier(userData) {
   const now = Date.now();
 
   // 1. 單次降速（累加，死亡失效）
-  totalSlowdown += userData.current_session.single_slowdown_percent;
+  totalSlowdown += userData.current_session?.single_slowdown_percent || 0;
 
   // 2. L1 徽章：+20%（如果有效）
-  if (userData.badges.l1.active && userData.badges.l1.expires_at > now) {
+  if (userData.badges?.l1?.active && userData.badges.l1.expires_at > now) {
     totalSlowdown += SLOWDOWN_CONFIG.l1_badge.percent;
   }
 
-  // 3. L2 臨時徽章：+40%（本局充值滿 3 次）
-  if (userData.current_session.l2_temp_active) {
-    totalSlowdown += SLOWDOWN_CONFIG.l2_temp.percent;
+  // 3. L2 效果：購買的 L2 徽章或臨時 L2（取最大，不累加）
+  const hasL2Badge = userData.badges?.l2?.active && userData.badges.l2.expires_at > now;
+  const hasL2Temp = userData.current_session?.l2_temp_active;
+  if (hasL2Badge || hasL2Temp) {
+    totalSlowdown += SLOWDOWN_CONFIG.l2_badge.percent; // 兩者效果相同，只加一次
   }
 
   // 4. L3 徽章：+80%（如果有效）
-  if (userData.badges.l3.active && userData.badges.l3.expires_at > now) {
+  if (userData.badges?.l3?.active && userData.badges.l3.expires_at > now) {
     totalSlowdown += SLOWDOWN_CONFIG.l3_badge.percent;
   }
 
