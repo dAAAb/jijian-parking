@@ -1279,6 +1279,77 @@ body {
 }
 
 /* ========================================
+   Game Over 高分與排名樣式
+   ======================================== */
+
+.gameover-content {
+    text-align: center;
+}
+
+.highscore-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.1));
+    border: 2px solid rgba(255, 215, 0, 0.5);
+    border-radius: 12px;
+    animation: pulse-gold 2s ease-in-out infinite;
+}
+
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
+}
+
+.highscore-badge {
+    font-size: 1.2em;
+    color: #ffd700;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.highscore-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.rank-section {
+    margin: 15px 0 20px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.rank-info {
+    font-size: 1.1em;
+    color: #ddd;
+}
+
+.rank-value {
+    font-weight: bold;
+    color: #fff;
+    font-size: 1.3em;
+}
+
+.rank-change {
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+.rank-change.up {
+    color: #4ade80;
+}
+
+.rank-change.down {
+    color: #f87171;
+}
+
+.rank-change.same {
+    color: #9ca3af;
+}
+
+/* ========================================
    復活彈窗樣式
    ======================================== */
 

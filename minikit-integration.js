@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.5 - 課金窗口多語言支援 + support.html 多語言
+// 版本: v2.1.6 - 簡化復活功能（只用 CPK）
 
 // 多語言輔助函數
 function getText(key, fallback) {
