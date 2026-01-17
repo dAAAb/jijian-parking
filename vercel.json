@@ -3,6 +3,12 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "framework": null,
+  "crons": [
+    {
+      "path": "/api/cron/daily-reminder",
+      "schedule": "0 0 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
