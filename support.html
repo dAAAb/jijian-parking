@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>極簡停車 - Minimal Parking | World Mini App</title>
-    <meta name="description" content="極簡停車 - 最療癒的 3D 停車遊戲。單手操作，挑戰你的停車技術，贏取 $CPK 代幣獎勵！">
-    <meta property="og:title" content="極簡停車 - Minimal Parking">
-    <meta property="og:description" content="最療癒的 3D 停車遊戲。單手操作，挑戰你的停車技術！">
+    <title>Minimal Parking | World Mini App</title>
+    <meta name="description" content="Minimal Parking - The most relaxing 3D parking game. One-hand control, challenge your parking skills, earn $CPK tokens!">
+    <meta property="og:title" content="Minimal Parking">
+    <meta property="og:description" content="The most relaxing 3D parking game. One-hand control, challenge your parking skills!">
     <meta property="og:image" content="https://jijian-car-parking.vercel.app/screenshot-game-start.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -18,18 +18,60 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
             color: #e0e0e0;
             line-height: 1.7;
             overflow-x: hidden;
         }
+        body[data-lang="zh-TW"] {
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body[data-lang="ja"] {
+            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body[data-lang="ko"] {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+        }
+        .lang-btn {
+            background: transparent;
+            border: 2px solid transparent;
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+        .lang-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .lang-btn.active {
+            opacity: 1;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
 
         /* Hero Section */
         .hero {
             text-align: center;
-            padding: 60px 20px 40px;
+            padding: 80px 20px 40px;
             position: relative;
         }
         .hero::before {
@@ -287,6 +329,9 @@
 
         /* Responsive */
         @media (max-width: 600px) {
+            .hero {
+                padding-top: 70px;
+            }
             .hero-title {
                 font-size: 2.2em;
             }
@@ -303,46 +348,62 @@
             .token-name {
                 font-size: 2em;
             }
+            .lang-selector {
+                top: 10px;
+                right: 10px;
+                padding: 6px 10px;
+            }
+            .lang-btn {
+                font-size: 1.1em;
+            }
         }
     </style>
 </head>
-<body>
+<body data-lang="en">
+    <!-- Language Selector -->
+    <div class="lang-selector">
+        <button class="lang-btn" data-lang="en" title="English">🇺🇸</button>
+        <button class="lang-btn" data-lang="zh-TW" title="繁體中文">🇹🇼</button>
+        <button class="lang-btn" data-lang="ja" title="日本語">🇯🇵</button>
+        <button class="lang-btn" data-lang="ko" title="한국어">🇰🇷</button>
+    </div>
+
     <!-- Hero Section -->
     <section class="hero">
         <span class="hero-badge">World Mini App</span>
-        <h1 class="hero-title">極簡停車</h1>
-        <p class="hero-subtitle">最療癒的 3D 停車遊戲</p>
-        <img src="screenshot-game-start.png" alt="極簡停車遊戲畫面" class="hero-image">
+        <h1 class="hero-title" data-i18n="hero.title">Minimal Parking</h1>
+        <p class="hero-subtitle" data-i18n="hero.subtitle">The most relaxing 3D parking game</p>
+        <img src="screenshot-game-start.png" alt="Minimal Parking Game" class="hero-image">
         <a href="https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=" class="cta-button">
             <span class="icon">🌍</span>
-            <span>立即遊玩</span>
+            <span data-i18n="hero.cta">Play Now</span>
         </a>
     </section>
 
     <div class="container">
         <!-- Features Section -->
         <section class="section">
-            <h2 class="section-title">遊戲特色</h2>
+            <h2 class="section-title" data-i18n="features.title">Game Features</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">👆</div>
-                    <h3 class="feature-title">單手操作</h3>
-                    <p class="feature-desc">直覺拖曳控制，輕鬆上手，隨時隨地都能玩</p>
+                    <h3 class="feature-title" data-i18n="features.onehand.title">One-Hand Control</h3>
+                    <p class="feature-desc" data-i18n="features.onehand.desc">Intuitive drag controls, easy to learn, play anytime anywhere</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎮</div>
-                    <h3 class="feature-title">無限關卡</h3>
-                    <p class="feature-desc">難度逐漸提升，挑戰你的停車極限</p>
+                    <h3 class="feature-title" data-i18n="features.levels.title">Endless Levels</h3>
+                    <p class="feature-desc" data-i18n="features.levels.desc">Increasing difficulty, challenge your parking limits</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🪙</div>
-                    <h3 class="feature-title">邊玩邊賺</h3>
-                    <p class="feature-desc">通關獲得 $CPK 代幣，完美停車更有額外獎勵</p>
+                    <h3 class="feature-title" data-i18n="features.earn.title">Play to Earn</h3>
+                    <p class="feature-desc" data-i18n="features.earn.desc">Earn $CPK tokens on completion, bonus for perfect parking</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🏆</div>
-                    <h3 class="feature-title">全球排行</h3>
-                    <p class="feature-desc">與全世界玩家競爭，成為停車大王</p>
+                    <h3 class="feature-title" data-i18n="features.rank.title">Global Ranking</h3>
+                    <p class="feature-desc" data-i18n="features.rank.desc">Compete with players worldwide, become the parking king</p>
                 </div>
             </div>
         </section>
@@ -353,40 +414,40 @@
                 <span class="token-icon">🪙</span>
                 <span class="token-name">$CPK</span>
             </div>
-            <p class="token-desc">
-                Car Parking Token - 極簡停車專屬代幣。玩遊戲賺取，可用於遊戲內購買或鏈上交易。
+            <p class="token-desc" data-i18n="token.desc">
+                Car Parking Token - Exclusive token for Minimal Parking. Earn by playing, use for in-game purchases or on-chain trading.
             </p>
             <div class="token-features">
-                <span class="token-tag">🎮 玩遊戲獲得</span>
-                <span class="token-tag">💰 50% 課金返還</span>
-                <span class="token-tag">⛓️ World Chain</span>
-                <span class="token-tag">🔄 可自由交易</span>
+                <span class="token-tag" data-i18n="token.earn">🎮 Earn by Playing</span>
+                <span class="token-tag" data-i18n="token.cashback">💰 50% Purchase Cashback</span>
+                <span class="token-tag" data-i18n="token.chain">⛓️ World Chain</span>
+                <span class="token-tag" data-i18n="token.trade">🔄 Freely Tradable</span>
             </div>
         </div>
 
         <!-- How to Play -->
         <section class="section">
-            <h2 class="section-title">如何開始</h2>
+            <h2 class="section-title" data-i18n="howto.title">How to Start</h2>
             <div class="steps">
                 <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <h3>下載 World App</h3>
-                        <p>在 App Store 或 Google Play 下載 World App</p>
+                        <h3 data-i18n="howto.step1.title">Download World App</h3>
+                        <p data-i18n="howto.step1.desc">Get World App from App Store or Google Play</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h3>驗證身份</h3>
-                        <p>使用 World ID 驗證你是真人，獲得完整遊戲體驗</p>
+                        <h3 data-i18n="howto.step2.title">Verify Identity</h3>
+                        <p data-i18n="howto.step2.desc">Use World ID to verify you're human for full game experience</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <h3>開始遊戲</h3>
-                        <p>在 World App 中搜尋「極簡停車」或點擊下方按鈕直接遊玩</p>
+                        <h3 data-i18n="howto.step3.title">Start Playing</h3>
+                        <p data-i18n="howto.step3.desc">Search "Minimal Parking" in World App or click the button below</p>
                     </div>
                 </div>
             </div>
@@ -395,22 +456,227 @@
 
     <!-- Footer CTA -->
     <section class="footer-cta">
-        <h2>準備好成為停車大王了嗎？</h2>
-        <p>每天都有新挑戰，每次停車都能賺取 $CPK</p>
+        <h2 data-i18n="cta.title">Ready to become the Parking King?</h2>
+        <p data-i18n="cta.subtitle">New challenges every day, earn $CPK with every park</p>
         <a href="https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=" class="cta-button">
             <span class="icon">🚗</span>
-            <span>開始挑戰</span>
+            <span data-i18n="cta.button">Start Challenge</span>
         </a>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-links">
-            <a href="mailto:minimalparking@proton.me">聯繫我們</a>
-            <a href="https://worldcoin.org/world-id" target="_blank">關於 World ID</a>
-            <a href="https://worldcoin.org/download" target="_blank">下載 World App</a>
+            <a href="mailto:minimalparking@proton.me" data-i18n="footer.contact">Contact Us</a>
+            <a href="https://worldcoin.org/world-id" target="_blank" data-i18n="footer.worldid">About World ID</a>
+            <a href="https://worldcoin.org/download" target="_blank" data-i18n="footer.download">Download World App</a>
         </div>
-        <p class="copyright">© 2026 極簡停車 Minimal Parking. Built on World Chain.</p>
+        <p class="copyright">© 2026 Minimal Parking. Built on World Chain.</p>
     </footer>
+
+    <script>
+        // Translation data
+        const translations = {
+            en: {
+                'hero.title': 'Minimal Parking',
+                'hero.subtitle': 'The most relaxing 3D parking game',
+                'hero.cta': 'Play Now',
+                'features.title': 'Game Features',
+                'features.onehand.title': 'One-Hand Control',
+                'features.onehand.desc': 'Intuitive drag controls, easy to learn, play anytime anywhere',
+                'features.levels.title': 'Endless Levels',
+                'features.levels.desc': 'Increasing difficulty, challenge your parking limits',
+                'features.earn.title': 'Play to Earn',
+                'features.earn.desc': 'Earn $CPK tokens on completion, bonus for perfect parking',
+                'features.rank.title': 'Global Ranking',
+                'features.rank.desc': 'Compete with players worldwide, become the parking king',
+                'token.desc': 'Car Parking Token - Exclusive token for Minimal Parking. Earn by playing, use for in-game purchases or on-chain trading.',
+                'token.earn': '🎮 Earn by Playing',
+                'token.cashback': '💰 50% Purchase Cashback',
+                'token.chain': '⛓️ World Chain',
+                'token.trade': '🔄 Freely Tradable',
+                'howto.title': 'How to Start',
+                'howto.step1.title': 'Download World App',
+                'howto.step1.desc': 'Get World App from App Store or Google Play',
+                'howto.step2.title': 'Verify Identity',
+                'howto.step2.desc': "Use World ID to verify you're human for full game experience",
+                'howto.step3.title': 'Start Playing',
+                'howto.step3.desc': 'Search "Minimal Parking" in World App or click the button below',
+                'cta.title': 'Ready to become the Parking King?',
+                'cta.subtitle': 'New challenges every day, earn $CPK with every park',
+                'cta.button': 'Start Challenge',
+                'footer.contact': 'Contact Us',
+                'footer.worldid': 'About World ID',
+                'footer.download': 'Download World App'
+            },
+            'zh-TW': {
+                'hero.title': '極簡停車',
+                'hero.subtitle': '最療癒的 3D 停車遊戲',
+                'hero.cta': '立即遊玩',
+                'features.title': '遊戲特色',
+                'features.onehand.title': '單手操作',
+                'features.onehand.desc': '直覺拖曳控制，輕鬆上手，隨時隨地都能玩',
+                'features.levels.title': '無限關卡',
+                'features.levels.desc': '難度逐漸提升，挑戰你的停車極限',
+                'features.earn.title': '邊玩邊賺',
+                'features.earn.desc': '通關獲得 $CPK 代幣，完美停車更有額外獎勵',
+                'features.rank.title': '全球排行',
+                'features.rank.desc': '與全世界玩家競爭，成為停車大王',
+                'token.desc': 'Car Parking Token - 極簡停車專屬代幣。玩遊戲賺取，可用於遊戲內購買或鏈上交易。',
+                'token.earn': '🎮 玩遊戲獲得',
+                'token.cashback': '💰 50% 課金返還',
+                'token.chain': '⛓️ World Chain',
+                'token.trade': '🔄 可自由交易',
+                'howto.title': '如何開始',
+                'howto.step1.title': '下載 World App',
+                'howto.step1.desc': '在 App Store 或 Google Play 下載 World App',
+                'howto.step2.title': '驗證身份',
+                'howto.step2.desc': '使用 World ID 驗證你是真人，獲得完整遊戲體驗',
+                'howto.step3.title': '開始遊戲',
+                'howto.step3.desc': '在 World App 中搜尋「極簡停車」或點擊下方按鈕直接遊玩',
+                'cta.title': '準備好成為停車大王了嗎？',
+                'cta.subtitle': '每天都有新挑戰，每次停車都能賺取 $CPK',
+                'cta.button': '開始挑戰',
+                'footer.contact': '聯繫我們',
+                'footer.worldid': '關於 World ID',
+                'footer.download': '下載 World App'
+            },
+            ja: {
+                'hero.title': 'ミニマル駐車',
+                'hero.subtitle': '最も癒される3D駐車ゲーム',
+                'hero.cta': '今すぐプレイ',
+                'features.title': 'ゲームの特徴',
+                'features.onehand.title': '片手操作',
+                'features.onehand.desc': '直感的なドラッグ操作、簡単に習得、いつでもどこでもプレイ',
+                'features.levels.title': '無限レベル',
+                'features.levels.desc': '難易度が徐々に上昇、駐車スキルの限界に挑戦',
+                'features.earn.title': '遊んで稼ぐ',
+                'features.earn.desc': 'クリアで$CPKトークン獲得、完璧な駐車でボーナス',
+                'features.rank.title': 'グローバルランキング',
+                'features.rank.desc': '世界中のプレイヤーと競争、駐車王を目指そう',
+                'token.desc': 'Car Parking Token - ミニマル駐車専用トークン。プレイして獲得、ゲーム内購入やオンチェーン取引に使用可能。',
+                'token.earn': '🎮 プレイして獲得',
+                'token.cashback': '💰 50%キャッシュバック',
+                'token.chain': '⛓️ World Chain',
+                'token.trade': '🔄 自由に取引可能',
+                'howto.title': '始め方',
+                'howto.step1.title': 'World Appをダウンロード',
+                'howto.step1.desc': 'App StoreまたはGoogle PlayからWorld Appを入手',
+                'howto.step2.title': '本人確認',
+                'howto.step2.desc': 'World IDで人間であることを確認し、完全なゲーム体験を',
+                'howto.step3.title': 'プレイ開始',
+                'howto.step3.desc': 'World Appで「ミニマル駐車」を検索するか、下のボタンをクリック',
+                'cta.title': '駐車王になる準備はできましたか？',
+                'cta.subtitle': '毎日新しいチャレンジ、駐車するたびに$CPKを獲得',
+                'cta.button': 'チャレンジ開始',
+                'footer.contact': 'お問い合わせ',
+                'footer.worldid': 'World IDについて',
+                'footer.download': 'World Appをダウンロード'
+            },
+            ko: {
+                'hero.title': '미니멀 주차',
+                'hero.subtitle': '가장 힐링되는 3D 주차 게임',
+                'hero.cta': '지금 플레이',
+                'features.title': '게임 특징',
+                'features.onehand.title': '한 손 조작',
+                'features.onehand.desc': '직관적인 드래그 조작, 쉽게 배우고 언제 어디서나 플레이',
+                'features.levels.title': '무한 레벨',
+                'features.levels.desc': '점점 어려워지는 난이도, 주차 실력의 한계에 도전',
+                'features.earn.title': '플레이하며 수익',
+                'features.earn.desc': '클리어 시 $CPK 토큰 획득, 완벽한 주차 시 보너스',
+                'features.rank.title': '글로벌 랭킹',
+                'features.rank.desc': '전 세계 플레이어와 경쟁, 주차왕이 되어보세요',
+                'token.desc': 'Car Parking Token - 미니멀 주차 전용 토큰. 게임으로 획득하고 인게임 구매나 온체인 거래에 사용 가능.',
+                'token.earn': '🎮 플레이로 획득',
+                'token.cashback': '💰 50% 캐시백',
+                'token.chain': '⛓️ World Chain',
+                'token.trade': '🔄 자유롭게 거래 가능',
+                'howto.title': '시작하기',
+                'howto.step1.title': 'World App 다운로드',
+                'howto.step1.desc': 'App Store 또는 Google Play에서 World App 설치',
+                'howto.step2.title': '신원 인증',
+                'howto.step2.desc': 'World ID로 본인 인증 후 완전한 게임 경험을',
+                'howto.step3.title': '게임 시작',
+                'howto.step3.desc': 'World App에서 "미니멀 주차" 검색 또는 아래 버튼 클릭',
+                'cta.title': '주차왕이 될 준비가 되셨나요?',
+                'cta.subtitle': '매일 새로운 도전, 주차할 때마다 $CPK 획득',
+                'cta.button': '도전 시작',
+                'footer.contact': '문의하기',
+                'footer.worldid': 'World ID 소개',
+                'footer.download': 'World App 다운로드'
+            }
+        };
+
+        // Language detection and initialization
+        function detectLanguage() {
+            // Check saved preference
+            const saved = localStorage.getItem('preferred-lang');
+            if (saved && translations[saved]) {
+                return saved;
+            }
+
+            // Detect from browser
+            const browserLang = navigator.language || navigator.userLanguage;
+
+            // Map browser language to supported languages
+            if (browserLang.startsWith('zh')) {
+                return 'zh-TW';
+            } else if (browserLang.startsWith('ja')) {
+                return 'ja';
+            } else if (browserLang.startsWith('ko')) {
+                return 'ko';
+            }
+
+            // Default to English
+            return 'en';
+        }
+
+        function setLanguage(lang) {
+            if (!translations[lang]) lang = 'en';
+
+            // Save preference
+            localStorage.setItem('preferred-lang', lang);
+
+            // Update body attribute for font
+            document.body.setAttribute('data-lang', lang);
+            document.documentElement.lang = lang;
+
+            // Update all translatable elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+            });
+
+            // Update page title
+            const titleMap = {
+                'en': 'Minimal Parking | World Mini App',
+                'zh-TW': '極簡停車 | World Mini App',
+                'ja': 'ミニマル駐車 | World Mini App',
+                'ko': '미니멀 주차 | World Mini App'
+            };
+            document.title = titleMap[lang] || titleMap['en'];
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const lang = detectLanguage();
+            setLanguage(lang);
+
+            // Language button click handlers
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.getAttribute('data-lang');
+                    setLanguage(lang);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

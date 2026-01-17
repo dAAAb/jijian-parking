@@ -83,14 +83,14 @@ class TokenomicsUI {
           <span class="token-icon">🪙</span>
           <span id="cpk-pending">0</span> <span class="token-symbol">CPK</span>
         </div>
-        <button id="claim-btn" class="claim-btn" disabled>
-          ${window.i18n?.t('btn.claim') || '領取'}
+        <button id="claim-btn" class="claim-btn" disabled data-i18n="btn.claim">
+          ${window.i18n?.t('btn.claim') || 'Claim'}
         </button>
       </div>
 
       <div class="slowdown-section">
         <div class="slowdown-indicator">
-          <span>🐢 ${window.i18n?.t('ui.slowdown') || '降速'}</span>
+          <span>🐢 <span data-i18n="ui.slowdown">${window.i18n?.t('ui.slowdown') || 'Slowdown'}</span></span>
           <span id="slowdown-percent" class="slowdown-value">0%</span>
         </div>
 
@@ -102,7 +102,7 @@ class TokenomicsUI {
       </div>
 
       <div class="promo-hint">
-        🎁 ${window.i18n?.t('ui.promoHint') || '特惠期間：課金享 50% $CPK 返還！'}
+        🎁 <span data-i18n="ui.promoHint">${window.i18n?.t('ui.promoHint') || 'Promo: 50% $CPK cashback on purchases!'}</span>
       </div>
 
       <div class="badge-section">
@@ -121,7 +121,7 @@ class TokenomicsUI {
       </div>
 
       <div class="feature-hint">
-        <small>🐢 ${window.i18n?.t('ui.slowdownHint') || '減速功能讓車子變慢，更容易控制停車'}</small>
+        <small>🐢 <span data-i18n="ui.slowdownHint">${window.i18n?.t('ui.slowdownHint') || 'Slowdown makes your car slower, easier to park'}</span></small>
       </div>
 
       <div id="badge-status" class="badge-status"></div>
@@ -226,7 +226,7 @@ class TokenomicsUI {
 
     // L2 臨時徽章（累計解鎖的）
     if (this.userState.current_session?.l2_temp_active) {
-      badges.push('⚡ L2臨時');
+      badges.push(`⚡ L2 ${window.i18n?.t('ui.tempBadge') || 'Temp'}`);
     }
 
     // L3 徽章
@@ -242,7 +242,7 @@ class TokenomicsUI {
       badges.push(`⚡×${singleSlowdowns}`);
     }
 
-    statusEl.textContent = badges.length > 0 ? badges.join(' | ') : '無啟用效果';
+    statusEl.textContent = badges.length > 0 ? badges.join(' | ') : (window.i18n?.t('ui.noActiveEffects') || 'No active effects');
   }
 
   // 設置事件監聽
@@ -315,14 +315,14 @@ class TokenomicsUI {
     try {
       // 檢查是否在 World App 環境
       if (!window.MiniKit?.isInstalled?.()) {
-        this.showToast('請在 World App 中使用支付功能');
+        this.showToast(window.i18n?.t('purchase.useWorldApp') || 'Please use World App for payment');
         return;
       }
 
       // 生成唯一 reference
       const reference = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      this.showToast('正在發起支付...');
+      this.showToast(window.i18n?.t('purchase.initiating') || 'Initiating payment...');
 
       // 使用 MiniKit 發起支付
       // WLD 使用 18 位小數，token_amount 需要是最小單位的字符串
@@ -337,11 +337,11 @@ class TokenomicsUI {
             token_amount: tokenAmountWei.toString()
           }
         ],
-        description: `極簡停車 - ${this.getPurchaseDescription(type)}`
+        description: `Minimal Parking - ${this.getPurchaseDescription(type)}`
       });
 
       if (finalPayload.status === 'success') {
-        this.showToast('支付成功，處理中...');
+        this.showToast(window.i18n?.t('purchase.processing') || 'Payment successful, processing...');
 
         // 向後端驗證並處理購買
         const response = await fetch(`${this.apiBase}/api/purchase-slowdown`, {
@@ -375,21 +375,22 @@ class TokenomicsUI {
           this.notifyGameSpeedChange();
 
           // 顯示成功提示
-          this.showToast(`✅ ${result.message}\n+${result.cpk_cashback} CPK 返還`);
+          const cashbackText = window.i18n?.t('purchase.cashback') || 'CPK cashback';
+          this.showToast(`✅ ${result.message}\n+${result.cpk_cashback} ${cashbackText}`);
 
           // 震動反饋
           if (window.worldMiniKit?.sendHapticFeedback) {
             window.worldMiniKit.sendHapticFeedback('success');
           }
         } else {
-          this.showToast(`❌ ${result.error || '購買處理失敗'}`);
+          this.showToast(`❌ ${result.error || (window.i18n?.t('purchase.failed') || 'Purchase failed')}`);
         }
       } else {
-        this.showToast('支付已取消');
+        this.showToast(window.i18n?.t('purchase.cancelled') || 'Payment cancelled');
       }
     } catch (error) {
       console.error('Purchase failed:', error);
-      this.showToast('購買失敗，請重試');
+      this.showToast(window.i18n?.t('purchase.error') || 'Purchase failed, please retry');
     }
   }
 
@@ -400,7 +401,7 @@ class TokenomicsUI {
 
       // 如果沒有錢包地址，嘗試獲取
       if (!walletAddress && window.MiniKit?.isInstalled?.()) {
-        this.showToast('正在獲取錢包地址...');
+        this.showToast(window.i18n?.t('claim.gettingWallet') || 'Getting wallet address...');
 
         try {
           const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
@@ -416,7 +417,7 @@ class TokenomicsUI {
       }
 
       if (!walletAddress) {
-        this.showToast('請先連接錢包');
+        this.showToast(window.i18n?.t('claim.connectWallet') || 'Please connect wallet first');
         return;
       }
 
@@ -445,13 +446,17 @@ class TokenomicsUI {
         this.updateUI();
 
         // 顯示領取成功及每日限制資訊
-        let message = `✅ 成功領取 ${result.cpk_claimed.toLocaleString()} CPK！`;
+        const claimedText = window.i18n?.t('claim.success') || 'Successfully claimed';
+        let message = `✅ ${claimedText} ${result.cpk_claimed.toLocaleString()} CPK!`;
         if (result.cpk_remaining > 0) {
-          message += `\n📊 剩餘 ${result.cpk_remaining.toLocaleString()} CPK`;
+          const remainingText = window.i18n?.t('claim.remaining') || 'Remaining';
+          message += `\n📊 ${remainingText}: ${result.cpk_remaining.toLocaleString()} CPK`;
           if (result.daily_remaining > 0) {
-            message += `\n📅 今日還可領 ${result.daily_remaining.toLocaleString()} CPK`;
+            const dailyRemainingText = window.i18n?.t('claim.dailyRemaining') || 'Today can claim';
+            message += `\n📅 ${dailyRemainingText}: ${result.daily_remaining.toLocaleString()} CPK`;
           } else {
-            message += `\n📅 今日額度已用完，明日再來！`;
+            const dailyLimitText = window.i18n?.t('claim.dailyLimitReached') || 'Daily limit reached, come back tomorrow!';
+            message += `\n📅 ${dailyLimitText}`;
           }
         }
 
@@ -463,14 +468,16 @@ class TokenomicsUI {
       } else {
         // 處理每日限制已達的情況
         if (result.error_code === 'DAILY_LIMIT_REACHED') {
-          this.showToast(`⏰ 今日領取額度已用完\n📅 明日可再領取 ${result.daily_limit} CPK`);
+          const dailyLimitText = window.i18n?.t('claim.dailyLimitReachedFull') || 'Daily limit reached';
+          const canClaimText = window.i18n?.t('claim.canClaimTomorrow') || 'Can claim tomorrow';
+          this.showToast(`⏰ ${dailyLimitText}\n📅 ${canClaimText}: ${result.daily_limit} CPK`);
         } else {
-          this.showToast(`❌ ${result.error || '領取失敗'}`);
+          this.showToast(`❌ ${result.error || (window.i18n?.t('claim.failed') || 'Claim failed')}`);
         }
       }
     } catch (error) {
       console.error('Claim failed:', error);
-      this.showToast('領取失敗，請重試');
+      this.showToast(window.i18n?.t('claim.error') || 'Claim failed, please retry');
     }
   }
 
@@ -566,7 +573,9 @@ class TokenomicsUI {
 
         // 如果有損失降速效果，顯示提示
         if (result.slowdowns_lost > 0) {
-          this.showToast(`降速效果已重置 (損失 ${result.slowdowns_lost} 次)`);
+          const resetText = window.i18n?.t('session.slowdownsReset') || 'Slowdowns reset';
+          const lostText = window.i18n?.t('session.lost') || 'lost';
+          this.showToast(`${resetText} (${lostText} ${result.slowdowns_lost})`);
         }
       }
     } catch (error) {
@@ -584,26 +593,29 @@ class TokenomicsUI {
   // 獲取購買描述
   getPurchaseDescription(type) {
     switch (type) {
-      case 'single': return '單次降速 (-20%)';
-      case 'l1_badge': return 'L1 徽章 (3小時)';
-      case 'l2_badge': return 'L2 徽章 (3小時)';
-      case 'l3_badge': return 'L3 徽章 (3小時)';
-      default: return '購買';
+      case 'single': return window.i18n?.t('purchase.desc.single') || 'Single Slowdown (-20%)';
+      case 'l1_badge': return window.i18n?.t('purchase.desc.l1') || 'L1 Badge (3hr)';
+      case 'l2_badge': return window.i18n?.t('purchase.desc.l2') || 'L2 Badge (3hr)';
+      case 'l3_badge': return window.i18n?.t('purchase.desc.l3') || 'L3 Badge (3hr)';
+      default: return window.i18n?.t('purchase.desc.default') || 'Purchase';
     }
   }
 
   // 格式化剩餘時間
   formatTimeRemaining(expiresAt) {
     const remaining = expiresAt - Date.now();
-    if (remaining <= 0) return '已過期';
+    if (remaining <= 0) return window.i18n?.t('time.expired') || 'Expired';
 
     const hours = Math.floor(remaining / (1000 * 60 * 60));
     const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
 
+    const hourText = window.i18n?.t('time.hour') || 'h';
+    const minText = window.i18n?.t('time.min') || 'm';
+
     if (hours > 0) {
-      return `${hours}小時${minutes}分`;
+      return `${hours}${hourText}${minutes}${minText}`;
     }
-    return `${minutes}分鐘`;
+    return `${minutes}${minText}`;
   }
 
   // 獲取徽章圖標（用於排行榜顯示）

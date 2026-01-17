@@ -76,6 +76,45 @@ const translations = {
         'share.copy': 'Copy Link',
         'share.more': 'More Options',
         'share.copied': 'Copied!',
+
+        // Purchase
+        'purchase.useWorldApp': 'Please use World App for payment',
+        'purchase.initiating': 'Initiating payment...',
+        'purchase.processing': 'Payment successful, processing...',
+        'purchase.cashback': 'CPK cashback',
+        'purchase.failed': 'Purchase failed',
+        'purchase.cancelled': 'Payment cancelled',
+        'purchase.error': 'Purchase failed, please retry',
+        'purchase.desc.single': 'Single Slowdown (-20%)',
+        'purchase.desc.l1': 'L1 Badge (3hr)',
+        'purchase.desc.l2': 'L2 Badge (3hr)',
+        'purchase.desc.l3': 'L3 Badge (3hr)',
+        'purchase.desc.default': 'Purchase',
+
+        // Claim
+        'claim.gettingWallet': 'Getting wallet address...',
+        'claim.connectWallet': 'Please connect wallet first',
+        'claim.success': 'Successfully claimed',
+        'claim.remaining': 'Remaining',
+        'claim.dailyRemaining': 'Today can claim',
+        'claim.dailyLimitReached': 'Daily limit reached, come back tomorrow!',
+        'claim.dailyLimitReachedFull': 'Daily limit reached',
+        'claim.canClaimTomorrow': 'Can claim tomorrow',
+        'claim.failed': 'Claim failed',
+        'claim.error': 'Claim failed, please retry',
+
+        // Time
+        'time.expired': 'Expired',
+        'time.hour': 'h',
+        'time.min': 'm',
+
+        // UI Extended
+        'ui.tempBadge': 'Temp',
+        'ui.noActiveEffects': 'No active effects',
+
+        // Session
+        'session.slowdownsReset': 'Slowdowns reset',
+        'session.lost': 'lost',
     },
 
     'zh-TW': {
@@ -146,6 +185,45 @@ const translations = {
         'share.copy': '複製連結',
         'share.more': '更多選項',
         'share.copied': '已複製！',
+
+        // Purchase
+        'purchase.useWorldApp': '請在 World App 中使用支付功能',
+        'purchase.initiating': '正在發起支付...',
+        'purchase.processing': '支付成功，處理中...',
+        'purchase.cashback': 'CPK 返還',
+        'purchase.failed': '購買處理失敗',
+        'purchase.cancelled': '支付已取消',
+        'purchase.error': '購買失敗，請重試',
+        'purchase.desc.single': '單次降速 (-20%)',
+        'purchase.desc.l1': 'L1 徽章 (3小時)',
+        'purchase.desc.l2': 'L2 徽章 (3小時)',
+        'purchase.desc.l3': 'L3 徽章 (3小時)',
+        'purchase.desc.default': '購買',
+
+        // Claim
+        'claim.gettingWallet': '正在獲取錢包地址...',
+        'claim.connectWallet': '請先連接錢包',
+        'claim.success': '成功領取',
+        'claim.remaining': '剩餘',
+        'claim.dailyRemaining': '今日還可領',
+        'claim.dailyLimitReached': '今日額度已用完，明日再來！',
+        'claim.dailyLimitReachedFull': '今日領取額度已用完',
+        'claim.canClaimTomorrow': '明日可再領取',
+        'claim.failed': '領取失敗',
+        'claim.error': '領取失敗，請重試',
+
+        // Time
+        'time.expired': '已過期',
+        'time.hour': '小時',
+        'time.min': '分',
+
+        // UI Extended
+        'ui.tempBadge': '臨時',
+        'ui.noActiveEffects': '無啟用效果',
+
+        // Session
+        'session.slowdownsReset': '降速效果已重置',
+        'session.lost': '損失',
     },
 
     ja: {
@@ -216,6 +294,45 @@ const translations = {
         'share.copy': 'リンクをコピー',
         'share.more': 'その他',
         'share.copied': 'コピーしました！',
+
+        // Purchase
+        'purchase.useWorldApp': 'World Appで決済をご利用ください',
+        'purchase.initiating': '決済を開始しています...',
+        'purchase.processing': '決済成功、処理中...',
+        'purchase.cashback': 'CPKキャッシュバック',
+        'purchase.failed': '購入処理に失敗しました',
+        'purchase.cancelled': '決済がキャンセルされました',
+        'purchase.error': '購入失敗、もう一度お試しください',
+        'purchase.desc.single': '1回減速 (-20%)',
+        'purchase.desc.l1': 'L1バッジ (3時間)',
+        'purchase.desc.l2': 'L2バッジ (3時間)',
+        'purchase.desc.l3': 'L3バッジ (3時間)',
+        'purchase.desc.default': '購入',
+
+        // Claim
+        'claim.gettingWallet': 'ウォレットアドレスを取得中...',
+        'claim.connectWallet': 'まずウォレットを接続してください',
+        'claim.success': '受取成功',
+        'claim.remaining': '残り',
+        'claim.dailyRemaining': '本日受取可能',
+        'claim.dailyLimitReached': '本日の上限に達しました、明日またお越しください！',
+        'claim.dailyLimitReachedFull': '本日の受取上限に達しました',
+        'claim.canClaimTomorrow': '明日受取可能',
+        'claim.failed': '受取失敗',
+        'claim.error': '受取失敗、もう一度お試しください',
+
+        // Time
+        'time.expired': '期限切れ',
+        'time.hour': '時間',
+        'time.min': '分',
+
+        // UI Extended
+        'ui.tempBadge': '一時',
+        'ui.noActiveEffects': '有効な効果なし',
+
+        // Session
+        'session.slowdownsReset': '減速効果がリセットされました',
+        'session.lost': '失った',
     },
 
     ko: {
@@ -286,6 +403,45 @@ const translations = {
         'share.copy': '링크 복사',
         'share.more': '더 보기',
         'share.copied': '복사됨!',
+
+        // Purchase
+        'purchase.useWorldApp': 'World App에서 결제를 이용해 주세요',
+        'purchase.initiating': '결제 시작 중...',
+        'purchase.processing': '결제 성공, 처리 중...',
+        'purchase.cashback': 'CPK 캐시백',
+        'purchase.failed': '구매 처리 실패',
+        'purchase.cancelled': '결제가 취소되었습니다',
+        'purchase.error': '구매 실패, 다시 시도해 주세요',
+        'purchase.desc.single': '1회 감속 (-20%)',
+        'purchase.desc.l1': 'L1 배지 (3시간)',
+        'purchase.desc.l2': 'L2 배지 (3시간)',
+        'purchase.desc.l3': 'L3 배지 (3시간)',
+        'purchase.desc.default': '구매',
+
+        // Claim
+        'claim.gettingWallet': '지갑 주소 가져오는 중...',
+        'claim.connectWallet': '먼저 지갑을 연결해 주세요',
+        'claim.success': '수령 성공',
+        'claim.remaining': '잔여',
+        'claim.dailyRemaining': '오늘 수령 가능',
+        'claim.dailyLimitReached': '오늘의 한도에 도달했습니다, 내일 다시 오세요!',
+        'claim.dailyLimitReachedFull': '오늘의 수령 한도에 도달',
+        'claim.canClaimTomorrow': '내일 수령 가능',
+        'claim.failed': '수령 실패',
+        'claim.error': '수령 실패, 다시 시도해 주세요',
+
+        // Time
+        'time.expired': '만료됨',
+        'time.hour': '시간',
+        'time.min': '분',
+
+        // UI Extended
+        'ui.tempBadge': '임시',
+        'ui.noActiveEffects': '활성화된 효과 없음',
+
+        // Session
+        'session.slowdownsReset': '감속 효과가 초기화되었습니다',
+        'session.lost': '잃음',
     }
 };
 
@@ -330,6 +486,11 @@ class I18n {
             localStorage.setItem('lang', lang);
             this.applyTranslations();
             this.updateLangButtons();
+
+            // 更新 TokenomicsUI 動態內容
+            if (window.tokenomicsUI?.isInitialized) {
+                window.tokenomicsUI.updateBadgeStatus();
+            }
         }
     }
 
