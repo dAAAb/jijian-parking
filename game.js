@@ -1207,12 +1207,13 @@ class MinimalParking {
             if (isTestMode) {
                 // 測試模式：模擬扣除 CPK 並復活
                 console.log('🧪 Test mode: simulating CPK payment');
+                const oldBalance = window.tokenomicsUI?.cpkPending || 0;
+                const newBalance = Math.max(0, oldBalance - 100);
                 if (window.tokenomicsUI) {
-                    const newBalance = Math.max(0, (window.tokenomicsUI.cpkPending || 0) - 100);
                     window.tokenomicsUI.cpkPending = newBalance;
                     window.tokenomicsUI.updateCPKDisplay(newBalance);
-                    console.log(`🧪 CPK balance: ${currentCPK} → ${newBalance}`);
                 }
+                console.log(`🧪 CPK: ${oldBalance} → ${newBalance}`);
                 this.revive();
                 return;
             }
