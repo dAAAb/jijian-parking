@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.10 - 修復 CSS hidden 規則
+// 版本: v2.1.11 - 修復 i18n 空字符串翻譯問題
 
 // 多語言輔助函數
 function getText(key, fallback) {
@@ -113,7 +113,7 @@ function getText(key, fallback) {
 // v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v2.1.10';
+        this.version = 'v2.1.11';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;

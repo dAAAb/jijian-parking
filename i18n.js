@@ -518,9 +518,11 @@ class I18n {
     }
 
     // 取得翻譯
+    // 使用 ?? 而非 ||，讓空字符串 '' 也能正確返回（不被當作 falsy 跳過）
     t(key) {
         const lang = this.translations[this.currentLang];
-        return lang?.[key] || this.translations.en[key] || key;
+        const value = lang?.[key] ?? this.translations.en?.[key];
+        return value !== undefined ? value : key;
     }
 
     // 切換語言
