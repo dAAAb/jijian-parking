@@ -848,41 +848,52 @@ class MinimalParking {
         // 顯示 Game Over 畫面
         document.getElementById('game-over-screen').classList.remove('hidden');
 
-        // 檢查個人最高分（使用 localStorage）
         const currentScore = scoreOverride !== null ? scoreOverride : this.score;
-        const storedHighScore = parseInt(localStorage.getItem('cpk_highscore') || '0', 10);
-        const isNewHighScore = currentScore > storedHighScore && currentScore > 0;
 
-        if (isNewHighScore) {
-            // 更新 localStorage
-            localStorage.setItem('cpk_highscore', currentScore.toString());
-
-            // 顯示新高分
-            if (highscoreSection && highscoreValue) {
-                highscoreValue.textContent = currentScore;
-                highscoreSection.classList.remove('hidden');
-            }
-        }
-
-        // 如果有登入，獲取排名
+        // 如果有登入，從後端獲取真實的最高分和排名
         const nullifierHash = window.tokenomicsUI?.nullifierHash;
-        if (!nullifierHash) return;
+        if (!nullifierHash) {
+            // 未登入用戶：使用 localStorage 作為 fallback
+            const storedHighScore = parseInt(localStorage.getItem('cpk_highscore') || '0', 10);
+            if (currentScore > storedHighScore && currentScore > 0) {
+                localStorage.setItem('cpk_highscore', currentScore.toString());
+                if (highscoreSection && highscoreValue) {
+                    highscoreValue.textContent = currentScore;
+                    highscoreSection.classList.remove('hidden');
+                }
+            }
+            return;
+        }
 
         try {
             // 獲取之前的排名（從 localStorage）
             const previousRank = parseInt(localStorage.getItem('cpk_rank') || '0', 10);
 
-            // 獲取排名
+            // 從後端獲取排行榜數據（包含用戶的真實最高分）
             const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
             const leaderboardResp = await fetch(`${apiBase}/api/leaderboard?nullifier_hash=${nullifierHash}`);
             const leaderboardData = await leaderboardResp.json();
 
             if (leaderboardData.success && leaderboardData.my_rank) {
                 const myRank = leaderboardData.my_rank.rank;
+                const backendHighScore = leaderboardData.my_rank.total_score || 0;
+
+                // 檢查是否為新紀錄（與後端真實紀錄比較）
+                const isNewHighScore = currentScore > backendHighScore && currentScore > 0;
+
+                if (isNewHighScore) {
+                    // 顯示新高分
+                    if (highscoreSection && highscoreValue) {
+                        highscoreValue.textContent = currentScore;
+                        highscoreSection.classList.remove('hidden');
+                    }
+                    console.log(`🏆 新紀錄！${backendHighScore} → ${currentScore}`);
+                }
 
                 // 儲存當前排名
                 localStorage.setItem('cpk_rank', myRank.toString());
 
+                // 顯示排名
                 if (rankSection && rankValue) {
                     rankValue.textContent = `#${myRank}`;
                     rankSection.classList.remove('hidden');
