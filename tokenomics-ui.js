@@ -465,6 +465,9 @@ class TokenomicsUI {
         if (window.worldMiniKit?.sendHapticFeedback) {
           window.worldMiniKit.sendHapticFeedback('success');
         }
+
+        // 顯示評分提醒（首次 claim 成功後）
+        this.showRatingPrompt();
       } else {
         // 處理每日限制已達的情況
         if (result.error_code === 'DAILY_LIMIT_REACHED') {
@@ -677,6 +680,62 @@ class TokenomicsUI {
         overlay.classList.add('hidden');
       }
     }
+  }
+
+  // 顯示評分提醒彈窗
+  showRatingPrompt() {
+    // 檢查是否已經顯示過（用 localStorage 追蹤）
+    const hasShownRating = localStorage.getItem('cpk_rating_shown');
+    if (hasShownRating) {
+      return;
+    }
+
+    // 延遲一點顯示，讓 claim 成功的 toast 先消失
+    setTimeout(() => {
+      const overlay = document.createElement('div');
+      overlay.id = 'rating-overlay';
+      overlay.className = 'rating-overlay';
+
+      const title = window.i18n?.t('rating.title') || 'Enjoying CarParKing?';
+      const message = window.i18n?.t('rating.message') || 'If you like our game, please give us a 5-star rating! Your support helps us improve.';
+      const rateBtn = window.i18n?.t('rating.rateNow') || '⭐ Rate Now';
+      const laterBtn = window.i18n?.t('rating.later') || 'Later';
+
+      overlay.innerHTML = `
+        <div class="rating-content">
+          <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+          <div class="rating-title">${title}</div>
+          <div class="rating-message">${message}</div>
+          <div class="rating-buttons">
+            <button class="rating-btn rating-btn-secondary" id="rating-later">${laterBtn}</button>
+            <button class="rating-btn rating-btn-primary" id="rating-now">${rateBtn}</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      // 「稍後再說」按鈕
+      document.getElementById('rating-later').addEventListener('click', () => {
+        overlay.remove();
+      });
+
+      // 「立即評分」按鈕
+      document.getElementById('rating-now').addEventListener('click', () => {
+        // 標記已顯示過
+        localStorage.setItem('cpk_rating_shown', 'true');
+        overlay.remove();
+
+        // 顯示感謝訊息
+        const thanksMsg = window.i18n?.t('rating.thanks') || 'Thank you for your support! 💛';
+        this.showToast(thanksMsg);
+
+        // 嘗試發送觸覺反饋
+        if (window.worldMiniKit?.sendHapticFeedback) {
+          window.worldMiniKit.sendHapticFeedback('success');
+        }
+      });
+    }, 1500);
   }
 
   // 顯示獲得獎勵的彈出效果

@@ -105,6 +105,13 @@ const translations = {
         'claim.failed': 'Claim failed',
         'claim.error': 'Claim failed, please retry',
 
+        // Rating
+        'rating.title': 'Enjoying CarParKing?',
+        'rating.message': 'If you like our game, please give us a 5-star rating! Your support helps us improve.',
+        'rating.rateNow': '⭐ Rate Now',
+        'rating.later': 'Later',
+        'rating.thanks': 'Thank you for your support! 💛',
+
         // Time
         'time.expired': 'Expired',
         'time.hour': 'h',
@@ -215,6 +222,13 @@ const translations = {
         'claim.canClaimTomorrow': '明日可再領取',
         'claim.failed': '領取失敗',
         'claim.error': '領取失敗，請重試',
+
+        // Rating
+        'rating.title': '喜歡極簡停車嗎？',
+        'rating.message': '如果你喜歡我們的遊戲，請給我們五星好評！你的支持是我們進步的動力。',
+        'rating.rateNow': '⭐ 立即評分',
+        'rating.later': '稍後再說',
+        'rating.thanks': '感謝你的支持！💛',
 
         // Time
         'time.expired': '已過期',
@@ -327,6 +341,13 @@ const translations = {
         'claim.failed': '受取失敗',
         'claim.error': '受取失敗、もう一度お試しください',
 
+        // Rating
+        'rating.title': 'CarParKingを楽しんでいますか？',
+        'rating.message': 'ゲームを気に入っていただけたら、5つ星評価をお願いします！皆様のサポートが私たちの励みになります。',
+        'rating.rateNow': '⭐ 今すぐ評価',
+        'rating.later': '後で',
+        'rating.thanks': 'ご支援ありがとうございます！💛',
+
         // Time
         'time.expired': '期限切れ',
         'time.hour': '時間',
@@ -437,6 +458,13 @@ const translations = {
         'claim.canClaimTomorrow': '내일 수령 가능',
         'claim.failed': '수령 실패',
         'claim.error': '수령 실패, 다시 시도해 주세요',
+
+        // Rating
+        'rating.title': 'CarParKing 재미있으신가요?',
+        'rating.message': '저희 게임이 마음에 드셨다면 별 5개 평가 부탁드립니다! 여러분의 지원이 저희에게 큰 힘이 됩니다.',
+        'rating.rateNow': '⭐ 지금 평가',
+        'rating.later': '나중에',
+        'rating.thanks': '응원해 주셔서 감사합니다! 💛',
 
         // Time
         'time.expired': '만료됨',

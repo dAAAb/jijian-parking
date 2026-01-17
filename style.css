@@ -887,6 +887,95 @@ body {
     font-weight: bold;
 }
 
+/* 評分提醒彈窗 */
+.rating-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.rating-overlay.hidden {
+    display: none;
+}
+
+.rating-content {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 320px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.rating-stars {
+    font-size: 2.5em;
+    margin: 15px 0;
+    letter-spacing: 5px;
+}
+
+.rating-title {
+    color: #ffd700;
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.rating-message {
+    color: #ccc;
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.rating-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.rating-btn {
+    padding: 12px 24px;
+    border-radius: 25px;
+    border: none;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rating-btn-primary {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000;
+}
+
+.rating-btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+}
+
+.rating-btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #aaa;
+}
+
+.rating-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 /* 獎勵彈出效果 */
 .reward-popup {
     position: fixed;
