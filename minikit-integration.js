@@ -113,7 +113,7 @@ function getText(key, fallback) {
 // v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v1.7.7';
+        this.version = 'v2.1.8';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
