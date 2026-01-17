@@ -1103,15 +1103,20 @@ class MinimalParking {
             const isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
 
             if (isTestMode) {
-                // 測試模式：直接復活
-                console.log('🧪 Test mode: skipping WLD payment');
+                // 測試模式：模擬 WLD 支付並復活
+                console.log('🧪 Test mode: simulating WLD payment');
+                if (window.tokenomicsUI?.showToast) {
+                    window.tokenomicsUI.showToast('🧪 Test mode: WLD payment simulated');
+                }
                 this.revive();
                 return;
             }
 
-            // 檢查 MiniKit 是否可用
-            if (typeof MiniKit === 'undefined' || !MiniKit.isInstalled()) {
-                alert('Please use World App to make payment');
+            // 檢查 MiniKit 是否可用（與 purchaseSlowdown 一致的檢測方式）
+            if (!window.MiniKit?.isInstalled?.()) {
+                if (window.tokenomicsUI?.showToast) {
+                    window.tokenomicsUI.showToast(window.i18n?.t('purchase.useWorldApp') || 'Please use World App for payment');
+                }
                 return;
             }
 
@@ -1150,7 +1155,9 @@ class MinimalParking {
                     this.revive();
                 } else {
                     console.error('Revive API error:', data.error);
-                    alert(data.error || 'Revive failed');
+                    if (window.tokenomicsUI?.showToast) {
+                        window.tokenomicsUI.showToast(`❌ ${data.error || 'Revive failed'}`);
+                    }
                 }
             } else {
                 console.log('Payment cancelled or failed');
@@ -1158,7 +1165,9 @@ class MinimalParking {
 
         } catch (error) {
             console.error('Revive WLD error:', error);
-            alert('Payment failed');
+            if (window.tokenomicsUI?.showToast) {
+                window.tokenomicsUI.showToast(`❌ ${window.i18n?.t('purchase.error') || 'Payment failed'}`);
+            }
         } finally {
             if (btn) {
                 btn.disabled = false;

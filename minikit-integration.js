@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.6 - 簡化復活功能（只用 CPK）
+// 版本: v2.1.7 - 恢復 WLD 復活選項
 
 // 多語言輔助函數
 function getText(key, fallback) {
