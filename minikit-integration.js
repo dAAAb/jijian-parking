@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.3 - 使用 DEX swap 即時價格計算 CPK 返還
+// 版本: v2.1.4 - 新增停車精準度顯示
 
 // 多語言輔助函數
 function getText(key, fallback) {

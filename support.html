@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - Minimal Parking</title>
+    <title>極簡停車 - Minimal Parking | World Mini App</title>
+    <meta name="description" content="極簡停車 - 最療癒的 3D 停車遊戲。單手操作，挑戰你的停車技術，贏取 $CPK 代幣獎勵！">
+    <meta property="og:title" content="極簡停車 - Minimal Parking">
+    <meta property="og:description" content="最療癒的 3D 停車遊戲。單手操作，挑戰你的停車技術！">
+    <meta property="og:image" content="https://jijian-car-parking.vercel.app/screenshot-game-start.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,158 +18,399 @@
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
             color: #e0e0e0;
-            line-height: 1.6;
+            line-height: 1.7;
+            overflow-x: hidden;
         }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .hero-title {
+            font-size: 3em;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        .hero-subtitle {
+            font-size: 1.3em;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .hero-image {
+            max-width: 350px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(102, 126, 234, 0.2);
+            margin-bottom: 30px;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 700;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.5);
+        }
+        .cta-button .icon {
+            font-size: 1.5em;
+        }
+
+        /* Container */
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 0 20px;
         }
-        .header {
+
+        /* Section */
+        .section {
+            padding: 60px 0;
+        }
+        .section-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: white;
             text-align: center;
             margin-bottom: 40px;
         }
-        .logo {
-            font-size: 48px;
-            margin-bottom: 10px;
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
         }
-        h1 {
-            font-size: 1.8em;
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(102, 126, 234, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .feature-title {
+            font-size: 1.2em;
+            font-weight: 600;
             color: white;
             margin-bottom: 10px;
         }
-        .subtitle {
+        .feature-desc {
             color: #888;
             font-size: 0.95em;
         }
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        /* Token Section */
+        .token-section {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.05));
+            border-radius: 30px;
+            padding: 50px 30px;
+            margin: 40px 0;
+            border: 1px solid rgba(255, 215, 0, 0.2);
         }
-        .card h2 {
-            font-size: 1.1em;
-            color: white;
-            margin-bottom: 15px;
+        .token-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-        .card p {
-            color: #aaa;
-            margin-bottom: 15px;
-        }
-        .contact-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 12px 20px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 10px;
-            transition: all 0.2s;
-        }
-        .contact-link:hover {
-            background: rgba(102, 126, 234, 0.2);
-            transform: translateY(-1px);
-        }
-        .faq-item {
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 20px;
         }
-        .faq-item:last-child {
-            margin-bottom: 0;
+        .token-icon {
+            font-size: 3em;
         }
-        .faq-question {
+        .token-name {
+            font-size: 2.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .token-desc {
+            text-align: center;
+            color: #bbb;
+            font-size: 1.1em;
+            max-width: 500px;
+            margin: 0 auto 30px;
+        }
+        .token-features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        .token-tag {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: #ffd700;
+            font-weight: 500;
+        }
+
+        /* How to Play */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: 700;
             color: white;
-            font-weight: 600;
-            margin-bottom: 8px;
+            flex-shrink: 0;
         }
-        .faq-answer {
-            color: #999;
+        .step-content h3 {
+            color: white;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .step-content p {
+            color: #888;
             font-size: 0.95em;
         }
-        .back-link {
-            display: inline-block;
-            margin-top: 30px;
+
+        /* Footer CTA */
+        .footer-cta {
+            text-align: center;
+            padding: 60px 20px 80px;
+            background: linear-gradient(180deg, transparent, rgba(102, 126, 234, 0.1));
+        }
+        .footer-cta h2 {
+            font-size: 2em;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .footer-cta p {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .footer-links {
+            margin-bottom: 20px;
+        }
+        .footer-links a {
             color: #667eea;
             text-decoration: none;
-            font-size: 0.9em;
+            margin: 0 15px;
+            font-size: 0.95em;
         }
-        .back-link:hover {
+        .footer-links a:hover {
             text-decoration: underline;
         }
-        .version {
-            text-align: center;
+        .copyright {
             color: #555;
-            font-size: 0.8em;
-            margin-top: 40px;
+            font-size: 0.85em;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero-title {
+                font-size: 2.2em;
+            }
+            .hero-subtitle {
+                font-size: 1.1em;
+            }
+            .section-title {
+                font-size: 1.6em;
+            }
+            .cta-button {
+                padding: 15px 30px;
+                font-size: 1em;
+            }
+            .token-name {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <span class="hero-badge">World Mini App</span>
+        <h1 class="hero-title">極簡停車</h1>
+        <p class="hero-subtitle">最療癒的 3D 停車遊戲</p>
+        <img src="screenshot-game-start.png" alt="極簡停車遊戲畫面" class="hero-image">
+        <a href="https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=" class="cta-button">
+            <span class="icon">🌍</span>
+            <span>立即遊玩</span>
+        </a>
+    </section>
+
     <div class="container">
-        <div class="header">
-            <div class="logo">🚗</div>
-            <h1>Minimal Parking Support</h1>
-            <p class="subtitle">We're here to help</p>
-        </div>
-
-        <div class="card">
-            <h2>📧 Contact Us</h2>
-            <p>Have questions, feedback, or need assistance? We'd love to hear from you.</p>
-            <a href="mailto:minimalparking@proton.me" class="contact-link">
-                <span>minimalparking@proton.me</span>
-            </a>
-        </div>
-
-        <div class="card">
-            <h2>❓ Frequently Asked Questions</h2>
-
-            <div class="faq-item">
-                <div class="faq-question">What is World ID verification?</div>
-                <div class="faq-answer">World ID is a privacy-preserving identity protocol that verifies you're a unique human without revealing your personal information. It helps prevent bot abuse and ensures fair play.</div>
+        <!-- Features Section -->
+        <section class="section">
+            <h2 class="section-title">遊戲特色</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">👆</div>
+                    <h3 class="feature-title">單手操作</h3>
+                    <p class="feature-desc">直覺拖曳控制，輕鬆上手，隨時隨地都能玩</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3 class="feature-title">無限關卡</h3>
+                    <p class="feature-desc">難度逐漸提升，挑戰你的停車極限</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🪙</div>
+                    <h3 class="feature-title">邊玩邊賺</h3>
+                    <p class="feature-desc">通關獲得 $CPK 代幣，完美停車更有額外獎勵</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3 class="feature-title">全球排行</h3>
+                    <p class="feature-desc">與全世界玩家競爭，成為停車大王</p>
+                </div>
             </div>
+        </section>
 
-            <div class="faq-item">
-                <div class="faq-question">How do I verify my identity?</div>
-                <div class="faq-answer">Tap the "Verify with World ID" button on the start screen. If you're using World App, verification happens automatically. On other devices, you'll see a QR code to scan with World App.</div>
+        <!-- Token Section -->
+        <div class="token-section">
+            <div class="token-header">
+                <span class="token-icon">🪙</span>
+                <span class="token-name">$CPK</span>
             </div>
-
-            <div class="faq-item">
-                <div class="faq-question">Is my data safe?</div>
-                <div class="faq-answer">Yes! World ID uses zero-knowledge proofs, meaning we never see your personal data. We only receive a cryptographic proof that you're a verified human.</div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question">Can I play without verification?</div>
-                <div class="faq-answer">Yes, you can play the game without verification. However, verified users may be eligible for special rewards and features in future updates.</div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question">How do I report a bug?</div>
-                <div class="faq-answer">Please email us with details about what happened, your device type, and any error messages you saw. Screenshots are helpful!</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>🔗 Useful Links</h2>
-            <p>
-                <a href="https://worldcoin.org/world-id" target="_blank" style="color: #667eea;">Learn more about World ID</a><br><br>
-                <a href="https://worldcoin.org/download" target="_blank" style="color: #667eea;">Download World App</a>
+            <p class="token-desc">
+                Car Parking Token - 極簡停車專屬代幣。玩遊戲賺取，可用於遊戲內購買或鏈上交易。
             </p>
+            <div class="token-features">
+                <span class="token-tag">🎮 玩遊戲獲得</span>
+                <span class="token-tag">💰 50% 課金返還</span>
+                <span class="token-tag">⛓️ World Chain</span>
+                <span class="token-tag">🔄 可自由交易</span>
+            </div>
         </div>
 
-        <a href="index.html" class="back-link">← Back to Game</a>
-
-        <div class="version">Minimal Parking v1.7.8</div>
+        <!-- How to Play -->
+        <section class="section">
+            <h2 class="section-title">如何開始</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>下載 World App</h3>
+                        <p>在 App Store 或 Google Play 下載 World App</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>驗證身份</h3>
+                        <p>使用 World ID 驗證你是真人，獲得完整遊戲體驗</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>開始遊戲</h3>
+                        <p>在 World App 中搜尋「極簡停車」或點擊下方按鈕直接遊玩</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
+
+    <!-- Footer CTA -->
+    <section class="footer-cta">
+        <h2>準備好成為停車大王了嗎？</h2>
+        <p>每天都有新挑戰，每次停車都能賺取 $CPK</p>
+        <a href="https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=" class="cta-button">
+            <span class="icon">🚗</span>
+            <span>開始挑戰</span>
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="mailto:minimalparking@proton.me">聯繫我們</a>
+            <a href="https://worldcoin.org/world-id" target="_blank">關於 World ID</a>
+            <a href="https://worldcoin.org/download" target="_blank">下載 World App</a>
+        </div>
+        <p class="copyright">© 2026 極簡停車 Minimal Parking. Built on World Chain.</p>
+    </footer>
 </body>
 </html>

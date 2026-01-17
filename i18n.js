@@ -24,6 +24,7 @@ const translations = {
         'complete.bonus': 'Time Bonus',
         'complete.total': 'Total Score',
         'complete.perfect': 'Perfect Parking',
+        'complete.accuracy': 'Accuracy',
         'btn.next': 'Next Level',
         'btn.share': '📤 Share',
 
@@ -96,6 +97,7 @@ const translations = {
         'complete.bonus': '時間獎勵',
         'complete.total': '總分',
         'complete.perfect': '完美停車',
+        'complete.accuracy': '精準度',
         'btn.next': '下一關',
         'btn.share': '📤 分享',
 
@@ -165,6 +167,7 @@ const translations = {
         'complete.bonus': 'タイムボーナス',
         'complete.total': '合計スコア',
         'complete.perfect': 'パーフェクト',
+        'complete.accuracy': '精度',
         'btn.next': '次のレベル',
         'btn.share': '📤 シェア',
 
@@ -234,6 +237,7 @@ const translations = {
         'complete.bonus': '시간 보너스',
         'complete.total': '총점',
         'complete.perfect': '퍼펙트 주차',
+        'complete.accuracy': '정확도',
         'btn.next': '다음 레벨',
         'btn.share': '📤 공유',
 

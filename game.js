@@ -506,10 +506,46 @@ class MinimalParking {
 
         // 放寬停車判定（v2.1: 速度從 0.02 放寬到 0.05，讓彈窗更快出現）
         if (distance < 2.0 && speed < 0.05) {
-            // 計算停車精度
-            const isPerfectPark = this.checkPerfectParking(distance);
-            this.levelComplete(isPerfectPark);
+            // 計算停車精準度百分比
+            const accuracy = this.calculateParkingAccuracy(distance);
+            const isPerfectPark = accuracy >= 95; // 95% 以上算完美停車
+            this.levelComplete(isPerfectPark, accuracy);
         }
+    }
+
+    // 計算停車精準度百分比
+    calculateParkingAccuracy(distance) {
+        if (!this.car || !this.parkingSpot) return 0;
+
+        // 距離精準度（0-2 範圍，越小越好）
+        // 距離 0 = 100%，距離 2 = 0%
+        const distanceAccuracy = Math.max(0, (2 - distance) / 2) * 100;
+
+        // 角度精準度
+        const carRotation = this.car.rotation || 0;
+        let normalizedRotation = carRotation % (Math.PI * 2);
+        if (normalizedRotation > Math.PI) normalizedRotation -= Math.PI * 2;
+        if (normalizedRotation < -Math.PI) normalizedRotation += Math.PI * 2;
+
+        // 計算與 0 度或 180 度的最小差距
+        const absRotation = Math.abs(normalizedRotation);
+        const angleError = Math.min(absRotation, Math.abs(absRotation - Math.PI));
+
+        // 角度 0 = 100%，角度 PI/2 (90度) = 0%
+        const angleAccuracy = Math.max(0, (Math.PI / 2 - angleError) / (Math.PI / 2)) * 100;
+
+        // 綜合精準度（距離佔 60%，角度佔 40%）
+        const totalAccuracy = distanceAccuracy * 0.6 + angleAccuracy * 0.4;
+
+        console.log('📊 停車精準度:', {
+            distance: distance.toFixed(3),
+            distanceAcc: distanceAccuracy.toFixed(1),
+            angleError: (angleError * 180 / Math.PI).toFixed(1) + '°',
+            angleAcc: angleAccuracy.toFixed(1),
+            total: totalAccuracy.toFixed(1)
+        });
+
+        return Math.round(totalAccuracy);
     }
 
     // 檢查是否為完美停車
@@ -537,7 +573,7 @@ class MinimalParking {
         return angleOK;
     }
 
-    levelComplete(isPerfectPark = false) {
+    levelComplete(isPerfectPark = false, accuracy = 0) {
         this.isPlaying = false;
         const elapsedTime = ((Date.now() - this.startTime) / 1000).toFixed(1);
 
@@ -559,6 +595,22 @@ class MinimalParking {
         document.getElementById('complete-time').textContent = elapsedTime + 's';
         document.getElementById('time-bonus').textContent = '+' + timeBonus;
         document.getElementById('total-score').textContent = this.score;
+
+        // 顯示停車精準度
+        const accuracyDisplay = document.getElementById('parking-accuracy');
+        if (accuracyDisplay) {
+            accuracyDisplay.textContent = accuracy + '%';
+            // 根據精準度設定顏色
+            if (accuracy >= 95) {
+                accuracyDisplay.style.color = '#f1c40f'; // 金色
+            } else if (accuracy >= 80) {
+                accuracyDisplay.style.color = '#2ecc71'; // 綠色
+            } else if (accuracy >= 60) {
+                accuracyDisplay.style.color = '#3498db'; // 藍色
+            } else {
+                accuracyDisplay.style.color = '#e74c3c'; // 紅色
+            }
+        }
 
         // 顯示完美停車標籤（如果有）
         const perfectLabel = document.getElementById('perfect-park-label');
