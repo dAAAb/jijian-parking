@@ -518,3 +518,90 @@ https://jijian-car-parking.vercel.app/?test=1
 3. ~~**test-swap.js**~~：✅ 已移除（2026-01-12）
 
 4. **REWARD_WALLET 白名單**：確認已加入 Developer Portal
+
+---
+
+## 📋 工作日誌
+
+### 2026-01-17：修復復活功能 + 高分顯示 (v2.1.10)
+
+#### 問題 1：CPK 復活 API 呼叫失敗 (405 錯誤)
+
+**根本原因**：前端用相對路徑 `/api/revive`，在 GitHub Pages 上解析成錯誤的 URL
+```
+錯誤：https://daaab.github.io/api/revive → 405
+正確：https://jijian-car-parking.vercel.app/api/revive → 200
+```
+
+**修復**（game.js）：
+```javascript
+// 之前（錯誤）
+const response = await fetch('/api/revive', {...});
+
+// 之後（正確）
+const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
+const response = await fetch(`${apiBase}/api/revive`, {...});
+```
+
+**修復的 API 呼叫**：
+- `handleReviveWithWLD()` 中的 `/api/revive`
+- `handleReviveWithCPK()` 中的 `/api/revive`
+- `showGameOverScreen()` 中的 `/api/leaderboard`
+
+#### 問題 2：「新紀錄」顯示錯誤（排名第 4 卻顯示新紀錄 0 分）
+
+**根本原因 A**：用 localStorage 存高分，換裝置/清快取後歸零
+```javascript
+// 之前：用本地 localStorage
+const storedHighScore = localStorage.getItem('cpk_highscore') || 0;
+const isNewHighScore = currentScore > storedHighScore;
+
+// 之後：從後端取得真實紀錄
+const leaderboardData = await fetch(`${apiBase}/api/leaderboard?nullifier_hash=${nullifierHash}`);
+const backendHighScore = leaderboardData.my_rank.total_score;
+const isNewHighScore = currentScore > backendHighScore && currentScore > 0;
+```
+
+**根本原因 B**：CSS 缺少 `.highscore-section.hidden` 規則
+```css
+/* 之前：沒有這個規則，hidden class 無效 */
+
+/* 之後：新增規則 */
+.highscore-section.hidden { display: none; }
+.rank-section.hidden { display: none; }
+```
+
+#### 問題 3：WLD 復活按鈕
+
+**修復**：
+- 在 index.html 加回 WLD 復活按鈕
+- 更新 `handleReviveWithWLD()` 使用與 `purchaseSlowdown` 一致的 MiniKit 檢測
+- 改用 toast 提示取代 alert
+
+#### CSS hidden 規則檢查清單
+
+當新增需要隱藏的元素時，確保 CSS 有對應規則：
+```css
+.新元素.hidden { display: none; }
+```
+
+已有 hidden 規則的元素：
+- `.screen.hidden`
+- `#game-ui.hidden`
+- `.verification-badge.hidden`
+- `.token-panel.hidden`
+- `.claiming-overlay.hidden`
+- `.rating-overlay.hidden`
+- `.perfect-park-label.hidden`
+- `.leaderboard-panel.hidden`
+- `.highscore-section.hidden` ✅ 新增
+- `.rank-section.hidden` ✅ 新增
+
+#### 版本更新
+
+| 版本 | 修復內容 |
+|------|----------|
+| v2.1.7 | 恢復 WLD 復活選項 |
+| v2.1.8 | 修復 API URL（使用 apiBase） |
+| v2.1.9 | 修復高分顯示（從後端取得真實紀錄比較） |
+| v2.1.10 | 修復 CSS hidden 規則 |
