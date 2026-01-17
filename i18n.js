@@ -31,6 +31,8 @@ const translations = {
         // Game Over
         'gameover.title': '💥 Crashed!',
         'gameover.message': 'Drive carefully, avoid obstacles',
+        'gameover.newHighscore': 'New High Score!',
+        'gameover.yourRank': 'Your Rank',
         'btn.retry': 'Try Again',
 
         // Badge
@@ -151,6 +153,8 @@ const translations = {
 
         'gameover.title': '💥 撞車了！',
         'gameover.message': '小心駕駛，避開障礙物',
+        'gameover.newHighscore': '新紀錄！',
+        'gameover.yourRank': '你的排名',
         'btn.retry': '再試一次',
 
         'badge.verified': '真人驗證',
@@ -269,6 +273,8 @@ const translations = {
 
         'gameover.title': '💥 クラッシュ！',
         'gameover.message': '障害物に注意して運転',
+        'gameover.newHighscore': '新記録！',
+        'gameover.yourRank': 'あなたの順位',
         'btn.retry': 'もう一度',
 
         'badge.verified': '認証済み',
@@ -387,6 +393,8 @@ const translations = {
 
         'gameover.title': '💥 충돌!',
         'gameover.message': '장애물을 피해서 운전하세요',
+        'gameover.newHighscore': '새 기록!',
+        'gameover.yourRank': '내 순위',
         'btn.retry': '다시 시도',
 
         'badge.verified': '인증된 사람',

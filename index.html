@@ -121,9 +121,25 @@
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="screen hidden">
-        <div class="content">
+        <div class="content gameover-content">
             <h2 class="fail-title" data-i18n="gameover.title">💥 Crashed!</h2>
             <p class="message" data-i18n="gameover.message">Drive carefully, avoid obstacles</p>
+
+            <!-- 個人最高分區塊（動態顯示） -->
+            <div id="highscore-section" class="highscore-section hidden">
+                <div class="highscore-badge">🏆 <span data-i18n="gameover.newHighscore">New High Score!</span></div>
+                <div class="highscore-value" id="highscore-value">0</div>
+            </div>
+
+            <!-- 排名區塊 -->
+            <div id="rank-section" class="rank-section hidden">
+                <div class="rank-info">
+                    <span data-i18n="gameover.yourRank">Your Rank</span>:
+                    <span id="rank-value" class="rank-value">#--</span>
+                    <span id="rank-change" class="rank-change"></span>
+                </div>
+            </div>
+
             <button id="retry-btn" class="main-btn" data-i18n="btn.retry">Try Again</button>
         </div>
     </div>
@@ -136,11 +152,6 @@
             <p class="revive-message" data-i18n="revive.message">Don't give up! You're so close!</p>
 
             <div class="revive-options">
-                <button id="revive-wld-btn" class="revive-btn wld">
-                    <span class="revive-icon">🌍</span>
-                    <span class="revive-price">1 WLD</span>
-                    <span class="revive-label" data-i18n="revive.continue">Continue</span>
-                </button>
                 <button id="revive-cpk-btn" class="revive-btn cpk">
                     <span class="revive-icon">🪙</span>
                     <span class="revive-price">100 CPK</span>
@@ -154,7 +165,7 @@
 
     <!-- Version & Settings -->
     <div class="version-container">
-        <span class="version">v2.1.5</span>
+        <span class="version">v2.1.6</span>
         <button class="settings-btn" id="settings-btn">⚙️</button>
     </div>
 

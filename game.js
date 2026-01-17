@@ -824,12 +824,86 @@ class MinimalParking {
         } else {
             // 普通 Game Over
             this.reviveAvailable = false;
-            document.getElementById('game-over-screen').classList.remove('hidden');
+            this.showGameOverScreen();
 
             // Token-nomics: 重置當局狀態（單次降速失效）
             if (window.tokenomicsUI?.nullifierHash) {
                 window.tokenomicsUI.resetSession();
             }
+        }
+    }
+
+    // 顯示 Game Over 畫面（含高分和排名）
+    async showGameOverScreen(scoreOverride = null) {
+        const highscoreSection = document.getElementById('highscore-section');
+        const rankSection = document.getElementById('rank-section');
+        const highscoreValue = document.getElementById('highscore-value');
+        const rankValue = document.getElementById('rank-value');
+        const rankChange = document.getElementById('rank-change');
+
+        // 重置顯示
+        highscoreSection?.classList.add('hidden');
+        rankSection?.classList.add('hidden');
+
+        // 顯示 Game Over 畫面
+        document.getElementById('game-over-screen').classList.remove('hidden');
+
+        // 檢查個人最高分（使用 localStorage）
+        const currentScore = scoreOverride !== null ? scoreOverride : this.score;
+        const storedHighScore = parseInt(localStorage.getItem('cpk_highscore') || '0', 10);
+        const isNewHighScore = currentScore > storedHighScore && currentScore > 0;
+
+        if (isNewHighScore) {
+            // 更新 localStorage
+            localStorage.setItem('cpk_highscore', currentScore.toString());
+
+            // 顯示新高分
+            if (highscoreSection && highscoreValue) {
+                highscoreValue.textContent = currentScore;
+                highscoreSection.classList.remove('hidden');
+            }
+        }
+
+        // 如果有登入，獲取排名
+        const nullifierHash = window.tokenomicsUI?.nullifierHash;
+        if (!nullifierHash) return;
+
+        try {
+            // 獲取之前的排名（從 localStorage）
+            const previousRank = parseInt(localStorage.getItem('cpk_rank') || '0', 10);
+
+            // 獲取排名
+            const leaderboardResp = await fetch(`/api/leaderboard?nullifier_hash=${nullifierHash}`);
+            const leaderboardData = await leaderboardResp.json();
+
+            if (leaderboardData.success && leaderboardData.my_rank) {
+                const myRank = leaderboardData.my_rank.rank;
+
+                // 儲存當前排名
+                localStorage.setItem('cpk_rank', myRank.toString());
+
+                if (rankSection && rankValue) {
+                    rankValue.textContent = `#${myRank}`;
+                    rankSection.classList.remove('hidden');
+
+                    // 顯示排名變化
+                    if (rankChange && previousRank > 0 && previousRank !== myRank) {
+                        const diff = previousRank - myRank;
+                        if (diff > 0) {
+                            rankChange.textContent = `↑${diff}`;
+                            rankChange.className = 'rank-change up';
+                        } else {
+                            rankChange.textContent = `↓${Math.abs(diff)}`;
+                            rankChange.className = 'rank-change down';
+                        }
+                    } else if (rankChange) {
+                        rankChange.textContent = '';
+                        rankChange.className = 'rank-change';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching rank:', error);
         }
     }
 
@@ -1131,8 +1205,14 @@ class MinimalParking {
             const isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
 
             if (isTestMode) {
-                // 測試模式：直接復活
-                console.log('🧪 Test mode: skipping CPK payment');
+                // 測試模式：模擬扣除 CPK 並復活
+                console.log('🧪 Test mode: simulating CPK payment');
+                if (window.tokenomicsUI) {
+                    const newBalance = Math.max(0, (window.tokenomicsUI.cpkPending || 0) - 100);
+                    window.tokenomicsUI.cpkPending = newBalance;
+                    window.tokenomicsUI.updateCPKDisplay(newBalance);
+                    console.log(`🧪 CPK balance: ${currentCPK} → ${newBalance}`);
+                }
                 this.revive();
                 return;
             }
@@ -1189,6 +1269,12 @@ class MinimalParking {
         // 隱藏復活畫面
         document.getElementById('revive-screen')?.classList.add('hidden');
 
+        // 保存當前分數（用於高分顯示）
+        const finalScore = this.score;
+
+        // 顯示 Game Over 畫面（含高分和排名）
+        this.showGameOverScreen(finalScore);
+
         // 重置分數和關卡（放棄 = 結束這局遊戲）
         this.score = 0;
         this.level = 1;
@@ -1196,9 +1282,6 @@ class MinimalParking {
         // 重置死亡記錄
         this.deathHistory = [];
         this.levelDeathCount = {};
-
-        // 顯示普通 Game Over 畫面
-        document.getElementById('game-over-screen').classList.remove('hidden');
 
         // 重置 tokenomics session
         if (window.tokenomicsUI?.nullifierHash) {
