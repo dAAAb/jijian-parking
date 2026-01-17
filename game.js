@@ -29,6 +29,13 @@ class MinimalParking {
         // Token-nomics 速度乘數（1.0 = 正常速度，0.5 = 半速）
         this.speedMultiplier = 1.0;
 
+        // 復活系統 - 死亡追蹤
+        this.deathHistory = [];           // 死亡記錄 [{time, level, distanceToGoal}]
+        this.levelDeathCount = {};        // 每關死亡次數 {level: count}
+        this.sessionStartTime = Date.now(); // 本次遊戲開始時間
+        this.lastDeathPosition = null;    // 上次死亡位置
+        this.reviveAvailable = false;     // 是否可以復活
+
         this.init();
         this.setupEventListeners();
     }
@@ -119,6 +126,7 @@ class MinimalParking {
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.3;
         body.castShadow = true;
+        body.userData.originalColor = 0xe74c3c; // 保存原始顏色供復活使用
         this.car.group.add(body);
 
         // 車頂
@@ -127,6 +135,7 @@ class MinimalParking {
         const roof = new THREE.Mesh(roofGeometry, roofMaterial);
         roof.position.y = 0.85;
         roof.castShadow = true;
+        roof.userData.originalColor = 0xc0392b;
         this.car.group.add(roof);
 
         // 車窗（前）
@@ -134,12 +143,13 @@ class MinimalParking {
         const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x34495e });
         const frontWindow = new THREE.Mesh(windowGeometry, windowMaterial);
         frontWindow.position.set(0, 0.85, 0.65);
+        frontWindow.userData.originalColor = 0x34495e;
         this.car.group.add(frontWindow);
 
         // 車輪
         const wheelGeometry = new THREE.BoxGeometry(0.25, 0.25, 0.3);
         const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
-        
+
         const wheelPositions = [
             [-0.6, 0.15, 0.7],
             [0.6, 0.15, 0.7],
@@ -151,6 +161,7 @@ class MinimalParking {
             const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
             wheel.position.set(...pos);
             wheel.castShadow = true;
+            wheel.userData.originalColor = 0x2c3e50;
             this.car.group.add(wheel);
         });
 
@@ -297,6 +308,21 @@ class MinimalParking {
         // 重試按鈕
         document.getElementById('retry-btn').addEventListener('click', () => {
             this.restartLevel();
+        });
+
+        // 復活按鈕 - WLD 支付
+        document.getElementById('revive-wld-btn')?.addEventListener('click', () => {
+            this.handleReviveWithWLD();
+        });
+
+        // 復活按鈕 - CPK 支付
+        document.getElementById('revive-cpk-btn')?.addEventListener('click', () => {
+            this.handleReviveWithCPK();
+        });
+
+        // 復活 - 放棄按鈕
+        document.getElementById('revive-skip-btn')?.addEventListener('click', () => {
+            this.skipRevive();
         });
 
         // 觸控控制
@@ -562,7 +588,27 @@ class MinimalParking {
 
     gameOver() {
         this.isPlaying = false;
-        document.getElementById('game-over-screen').classList.remove('hidden');
+
+        // 記錄死亡位置和距離
+        const distanceToGoal = this.calculateDistanceToGoal();
+        this.lastDeathPosition = this.car ? {
+            x: this.car.group.position.x,
+            z: this.car.group.position.z,
+            rotation: this.car.group.rotation.y
+        } : null;
+
+        // 記錄死亡歷史
+        this.deathHistory.push({
+            time: Date.now(),
+            level: this.level,
+            distanceToGoal: distanceToGoal
+        });
+
+        // 更新本關死亡次數
+        this.levelDeathCount[this.level] = (this.levelDeathCount[this.level] || 0) + 1;
+
+        // AI 判斷是否顯示復活選項
+        const shouldOfferRevive = this.checkFrustrationLevel(distanceToGoal);
 
         // 車輛爆炸效果
         if (this.car) {
@@ -573,15 +619,386 @@ class MinimalParking {
             });
         }
 
-        // Token-nomics: 重置當局狀態（單次降速失效）
-        if (window.tokenomicsUI?.nullifierHash) {
-            window.tokenomicsUI.resetSession();
-        }
-
         // 發送震動反饋
         if (window.worldMiniKit) {
             window.worldMiniKit.sendHapticFeedback('error');
         }
+
+        if (shouldOfferRevive && window.tokenomicsUI?.nullifierHash) {
+            // 顯示復活選項
+            this.reviveAvailable = true;
+            this.showReviveOption();
+        } else {
+            // 普通 Game Over
+            this.reviveAvailable = false;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+
+            // Token-nomics: 重置當局狀態（單次降速失效）
+            if (window.tokenomicsUI?.nullifierHash) {
+                window.tokenomicsUI.resetSession();
+            }
+        }
+    }
+
+    // 計算到停車位的距離（0-1，0 表示很近）
+    calculateDistanceToGoal() {
+        if (!this.car || !this.parkingSpot) return 1;
+
+        const dx = this.car.group.position.x - this.parkingSpot.x;
+        const dz = this.car.group.position.z - this.parkingSpot.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        // 正規化：假設地圖對角線約 20 單位
+        const maxDistance = 20;
+        return Math.min(distance / maxDistance, 1);
+    }
+
+    // AI 挫折感判斷
+    checkFrustrationLevel(distanceToGoal) {
+        // 條件 1：高關卡死亡（第 3 關以上）
+        if (this.level >= 3) {
+            console.log('🎯 復活條件觸發：高關卡死亡 (Level ' + this.level + ')');
+            return true;
+        }
+
+        // 條件 2：差一點成功（距離停車位 < 30%）且關卡 >= 2
+        if (distanceToGoal < 0.3 && this.level >= 2) {
+            console.log('🎯 復活條件觸發：差一點成功 (距離 ' + Math.round(distanceToGoal * 100) + '%)');
+            return true;
+        }
+
+        // 條件 3：同一關死亡 2 次以上
+        if ((this.levelDeathCount[this.level] || 0) >= 2) {
+            console.log('🎯 復活條件觸發：同關多次失敗 (' + this.levelDeathCount[this.level] + ' 次)');
+            return true;
+        }
+
+        // 條件 4：短時間內連續死亡（3 分鐘內死 2 次以上）
+        const recentDeaths = this.deathHistory.filter(d =>
+            Date.now() - d.time < 3 * 60 * 1000
+        );
+        if (recentDeaths.length >= 2) {
+            console.log('🎯 復活條件觸發：短時間連死 (' + recentDeaths.length + ' 次/3分鐘)');
+            return true;
+        }
+
+        return false;
+    }
+
+    // 顯示復活選項
+    showReviveOption() {
+        const reviveScreen = document.getElementById('revive-screen');
+        if (reviveScreen) {
+            // 更新顯示的關卡資訊
+            const levelInfo = reviveScreen.querySelector('.revive-level-info');
+            if (levelInfo) {
+                levelInfo.textContent = `Level ${this.level} · ${window.i18n?.t('ui.score') || '分數'} ${this.score}`;
+            }
+            reviveScreen.classList.remove('hidden');
+        } else {
+            // 如果 UI 不存在，退回普通 Game Over
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            if (window.tokenomicsUI?.nullifierHash) {
+                window.tokenomicsUI.resetSession();
+            }
+        }
+    }
+
+    // 執行復活
+    revive() {
+        const safePosition = this.findSafeRespawnPoint();
+
+        if (this.car && safePosition) {
+            // 移動車輛到安全位置
+            this.car.group.position.x = safePosition.x;
+            this.car.group.position.z = safePosition.z;
+            this.car.group.rotation.y = safePosition.rotation;
+
+            // 重置車輛速度
+            this.car.speed = { x: 0, z: 0 };
+
+            // 恢復車輛顏色
+            this.car.group.children.forEach(child => {
+                if (child instanceof THREE.Mesh && child.userData.originalColor) {
+                    child.material.color.setHex(child.userData.originalColor);
+                }
+            });
+
+            // 隱藏復活畫面
+            document.getElementById('revive-screen')?.classList.add('hidden');
+
+            // 繼續遊戲
+            this.isPlaying = true;
+            this.reviveAvailable = false;
+            this.animate();
+
+            console.log('🔄 復活成功！位置:', safePosition);
+        }
+    }
+
+    // 找到安全的重生點
+    findSafeRespawnPoint() {
+        if (!this.lastDeathPosition) {
+            // 如果沒有死亡位置記錄，使用關卡起始點
+            return { x: 0, z: 6, rotation: 0 };
+        }
+
+        // 嘗試在死亡點附近找安全位置
+        const searchOffsets = [
+            { x: 0, z: -3 },   // 後退
+            { x: -2, z: -2 },  // 左後
+            { x: 2, z: -2 },   // 右後
+            { x: -3, z: 0 },   // 左邊
+            { x: 3, z: 0 },    // 右邊
+            { x: 0, z: -5 },   // 更後面
+        ];
+
+        for (const offset of searchOffsets) {
+            const testX = this.lastDeathPosition.x + offset.x;
+            const testZ = this.lastDeathPosition.z + offset.z;
+
+            if (this.isPositionSafe(testX, testZ)) {
+                // 計算朝向停車位的角度
+                const angleToGoal = Math.atan2(
+                    this.parkingSpot.x - testX,
+                    this.parkingSpot.z - testZ
+                );
+
+                return {
+                    x: testX,
+                    z: testZ,
+                    rotation: angleToGoal
+                };
+            }
+        }
+
+        // 都不安全的話，回到起始點
+        return { x: 0, z: 6, rotation: 0 };
+    }
+
+    // 檢查位置是否安全（不與障礙物重疊）
+    isPositionSafe(x, z) {
+        const carHalfWidth = this.car ? this.car.width / 2 : 0.8;
+        const carHalfLength = this.car ? this.car.length / 2 : 1.2;
+        const margin = 0.5; // 額外安全邊距
+
+        const carBox = {
+            minX: x - carHalfWidth - margin,
+            maxX: x + carHalfWidth + margin,
+            minZ: z - carHalfLength - margin,
+            maxZ: z + carHalfLength + margin
+        };
+
+        // 檢查是否在地圖邊界內
+        if (x < -8 || x > 8 || z < -8 || z > 8) {
+            return false;
+        }
+
+        // 檢查是否與障礙物重疊
+        for (const obstacle of this.obstacles) {
+            const obsBox = {
+                minX: obstacle.x - obstacle.width / 2,
+                maxX: obstacle.x + obstacle.width / 2,
+                minZ: obstacle.z - obstacle.length / 2,
+                maxZ: obstacle.z + obstacle.length / 2
+            };
+
+            if (this.boxIntersects(carBox, obsBox)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // 復活 - WLD 支付
+    async handleReviveWithWLD() {
+        if (!this.reviveAvailable) return;
+
+        const nullifierHash = window.tokenomicsUI?.nullifierHash;
+        if (!nullifierHash) {
+            console.error('No nullifier hash for revive');
+            return;
+        }
+
+        const btn = document.getElementById('revive-wld-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.querySelector('.revive-label').textContent = '...';
+        }
+
+        try {
+            // 使用 MiniKit 進行 WLD 支付
+            const reference = `revive_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const treasuryAddress = window.CONFIG?.TREASURY_ADDRESS || '0xD32e7a4Ee499D9bbdE0D1A2F33eEd758932bC54c';
+
+            // 檢查是否在測試模式
+            const isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
+
+            if (isTestMode) {
+                // 測試模式：直接復活
+                console.log('🧪 Test mode: skipping WLD payment');
+                this.revive();
+                return;
+            }
+
+            // 檢查 MiniKit 是否可用
+            if (typeof MiniKit === 'undefined' || !MiniKit.isInstalled()) {
+                alert('Please use World App to make payment');
+                return;
+            }
+
+            const payResult = await MiniKit.commandsAsync.pay({
+                reference,
+                to: treasuryAddress,
+                tokens: [{
+                    symbol: 'WLD',
+                    token_amount: '1000000000000000000' // 1 WLD (18 decimals)
+                }],
+                description: 'Revive - Continue Game'
+            });
+
+            if (payResult.status === 'success' && payResult.finalPayload?.transaction_id) {
+                // 呼叫後端 API 記錄復活
+                const response = await fetch('/api/revive', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nullifier_hash: nullifierHash,
+                        payment_type: 'wld',
+                        transaction_id: payResult.finalPayload.transaction_id,
+                        reference
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // 更新 CPK 餘額（如果有返還）
+                    if (data.cpk_cashback && window.tokenomicsUI) {
+                        window.tokenomicsUI.updateCPKDisplay(data.cpk_pending);
+                    }
+
+                    // 執行復活
+                    this.revive();
+                } else {
+                    console.error('Revive API error:', data.error);
+                    alert(data.error || 'Revive failed');
+                }
+            } else {
+                console.log('Payment cancelled or failed');
+            }
+
+        } catch (error) {
+            console.error('Revive WLD error:', error);
+            alert('Payment failed');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.querySelector('.revive-label').textContent = window.i18n?.t('revive.continue') || 'Continue';
+            }
+        }
+    }
+
+    // 復活 - CPK 支付
+    async handleReviveWithCPK() {
+        if (!this.reviveAvailable) return;
+
+        const nullifierHash = window.tokenomicsUI?.nullifierHash;
+        if (!nullifierHash) {
+            console.error('No nullifier hash for revive');
+            return;
+        }
+
+        // 檢查 CPK 餘額
+        const currentCPK = window.tokenomicsUI?.cpkPending || 0;
+        if (currentCPK < 100) {
+            const cpkBtn = document.getElementById('revive-cpk-btn');
+            if (cpkBtn) {
+                cpkBtn.classList.add('disabled');
+                cpkBtn.querySelector('.revive-label').textContent = window.i18n?.t('revive.notEnoughCPK') || 'Not enough CPK';
+            }
+            return;
+        }
+
+        const btn = document.getElementById('revive-cpk-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.querySelector('.revive-label').textContent = '...';
+        }
+
+        try {
+            // 檢查是否在測試模式
+            const isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
+
+            if (isTestMode) {
+                // 測試模式：直接復活
+                console.log('🧪 Test mode: skipping CPK payment');
+                this.revive();
+                return;
+            }
+
+            // 呼叫後端 API 扣除 CPK
+            const response = await fetch('/api/revive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nullifier_hash: nullifierHash,
+                    payment_type: 'cpk'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // 更新 CPK 餘額
+                if (window.tokenomicsUI) {
+                    window.tokenomicsUI.updateCPKDisplay(data.cpk_pending);
+                }
+
+                // 執行復活
+                this.revive();
+            } else {
+                console.error('Revive API error:', data.error);
+
+                if (data.error === 'Insufficient CPK balance') {
+                    const cpkBtn = document.getElementById('revive-cpk-btn');
+                    if (cpkBtn) {
+                        cpkBtn.classList.add('disabled');
+                        cpkBtn.querySelector('.revive-label').textContent = window.i18n?.t('revive.notEnoughCPK') || 'Not enough CPK';
+                    }
+                } else {
+                    alert(data.error || 'Revive failed');
+                }
+            }
+
+        } catch (error) {
+            console.error('Revive CPK error:', error);
+            alert('Revive failed');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                if (!btn.classList.contains('disabled')) {
+                    btn.querySelector('.revive-label').textContent = window.i18n?.t('revive.continue') || 'Continue';
+                }
+            }
+        }
+    }
+
+    // 放棄復活
+    skipRevive() {
+        // 隱藏復活畫面
+        document.getElementById('revive-screen')?.classList.add('hidden');
+
+        // 顯示普通 Game Over 畫面
+        document.getElementById('game-over-screen').classList.remove('hidden');
+
+        // 重置 tokenomics session
+        if (window.tokenomicsUI?.nullifierHash) {
+            window.tokenomicsUI.resetSession();
+        }
+
+        this.reviveAvailable = false;
     }
 
     // Token-nomics: 從外部更新速度乘數

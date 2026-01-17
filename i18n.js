@@ -58,6 +58,13 @@ const translations = {
         'leaderboard.yourRank': 'Your Rank',
         'leaderboard.youAreDriver': 'You are Driver',
         'leaderboard.driver': '',
+
+        // Revive
+        'revive.title': 'Continue?',
+        'revive.message': "Don't give up! You're so close!",
+        'revive.continue': 'Continue',
+        'revive.giveUp': 'Give Up',
+        'revive.notEnoughCPK': 'Not enough CPK',
     },
 
     'zh-TW': {
@@ -110,6 +117,13 @@ const translations = {
         'leaderboard.yourRank': '你的排名',
         'leaderboard.youAreDriver': '你是第',
         'leaderboard.driver': '位司機',
+
+        // Revive
+        'revive.title': '要繼續嗎？',
+        'revive.message': '別放棄！你快成功了！',
+        'revive.continue': '繼續',
+        'revive.giveUp': '放棄',
+        'revive.notEnoughCPK': 'CPK 不足',
     },
 
     ja: {
@@ -162,6 +176,13 @@ const translations = {
         'leaderboard.yourRank': 'あなたの順位',
         'leaderboard.youAreDriver': 'あなたはドライバー',
         'leaderboard.driver': '番です',
+
+        // Revive
+        'revive.title': '続けますか？',
+        'revive.message': '諦めないで！もう少しです！',
+        'revive.continue': '続ける',
+        'revive.giveUp': '諦める',
+        'revive.notEnoughCPK': 'CPKが不足',
     },
 
     ko: {
@@ -214,6 +235,13 @@ const translations = {
         'leaderboard.yourRank': '내 순위',
         'leaderboard.youAreDriver': '당신은 드라이버',
         'leaderboard.driver': '번입니다',
+
+        // Revive
+        'revive.title': '계속할까요?',
+        'revive.message': '포기하지 마세요! 거의 다 왔어요!',
+        'revive.continue': '계속',
+        'revive.giveUp': '포기',
+        'revive.notEnoughCPK': 'CPK 부족',
     }
 };
 

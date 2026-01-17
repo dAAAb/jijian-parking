@@ -1055,3 +1055,134 @@ body {
     }
 }
 
+/* ========================================
+   復活彈窗樣式
+   ======================================== */
+
+.revive-content {
+    text-align: center;
+}
+
+.revive-title {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #ffd700;
+}
+
+.revive-level-info {
+    font-size: 1.1em;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.revive-message {
+    font-size: 1em;
+    color: #ccc;
+    margin-bottom: 25px;
+}
+
+.revive-options {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.revive-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 25px;
+    border-radius: 16px;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    font-family: inherit;
+}
+
+.revive-btn.wld {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+    border-color: rgba(59, 130, 246, 0.5);
+    color: white;
+}
+
+.revive-btn.wld:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(59, 130, 246, 0.2));
+    border-color: #3b82f6;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.revive-btn.cpk {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.1));
+    border-color: rgba(255, 215, 0, 0.5);
+    color: white;
+}
+
+.revive-btn.cpk:hover {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 140, 0, 0.2));
+    border-color: #ffd700;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+.revive-btn.cpk.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.revive-icon {
+    font-size: 2em;
+}
+
+.revive-price {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.revive-label {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.skip-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #888;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95em;
+    transition: all 0.2s;
+}
+
+.skip-btn:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #aaa;
+}
+
+/* 響應式 - 復活彈窗 */
+@media (max-width: 480px) {
+    .revive-options {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .revive-btn {
+        min-width: auto;
+        width: 100%;
+        padding: 15px 20px;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .revive-icon {
+        font-size: 1.5em;
+    }
+}
+

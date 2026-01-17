@@ -178,6 +178,30 @@ class TokenomicsUI {
     this.updateBadgeStatus();
   }
 
+  // 更新 CPK 餘額顯示（供外部調用，如復活功能）
+  updateCPKDisplay(newAmount) {
+    if (this.userState) {
+      this.userState.cpk_pending = newAmount;
+    }
+
+    const cpkDisplay = document.getElementById('cpk-pending');
+    const cpkMini = document.getElementById('cpk-mini');
+
+    if (cpkDisplay) cpkDisplay.textContent = newAmount.toLocaleString();
+    if (cpkMini) cpkMini.textContent = this.formatNumber(newAmount);
+
+    // 更新領取按鈕狀態
+    const claimBtn = document.getElementById('claim-btn');
+    if (claimBtn) {
+      claimBtn.disabled = newAmount < 100;
+    }
+  }
+
+  // 獲取當前 CPK 餘額（供外部檢查）
+  get cpkPending() {
+    return this.userState?.cpk_pending || 0;
+  }
+
   // 更新徽章狀態顯示
   updateBadgeStatus() {
     const statusEl = document.getElementById('badge-status');
