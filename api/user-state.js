@@ -38,9 +38,17 @@ export default async function handler(req, res) {
 
     // 如果用戶不存在，創建新用戶
     if (!userData) {
-      userData = createNewUser(nullifier_hash);
+      // 獲取並遞增全域玩家計數器
+      const playerNumber = await kv.incr('global:player_count');
+      userData = createNewUser(nullifier_hash, playerNumber);
       await kv.set(userKey, userData);
-      console.log(`Created new user: ${nullifier_hash.substring(0, 10)}...`);
+      console.log(`Created new user #${playerNumber}: ${nullifier_hash.substring(0, 10)}...`);
+    } else if (!userData.player_number) {
+      // 舊用戶沒有 player_number，幫他補上
+      const playerNumber = await kv.incr('global:player_count');
+      userData.player_number = playerNumber;
+      await kv.set(userKey, userData);
+      console.log(`Assigned player number #${playerNumber} to existing user: ${nullifier_hash.substring(0, 10)}...`);
     }
 
     // 檢查並更新徽章狀態
@@ -58,7 +66,8 @@ export default async function handler(req, res) {
         total_score: userData.total_score,
         highest_level: userData.highest_level,
         current_session: userData.current_session,
-        badges: userData.badges
+        badges: userData.badges,
+        player_number: userData.player_number
       },
       speed_multiplier: speedMultiplier,
       effective_slowdown: Math.round((1 - speedMultiplier) * 100)

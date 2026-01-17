@@ -580,6 +580,150 @@ class TokenomicsUI {
 
     setTimeout(() => popup.remove(), 2000);
   }
+
+  // ===== 排行榜功能 =====
+
+  // 顯示排行榜
+  async showLeaderboard() {
+    // 建立排行榜容器
+    let leaderboard = document.getElementById('leaderboard-panel');
+    if (!leaderboard) {
+      leaderboard = document.createElement('div');
+      leaderboard.id = 'leaderboard-panel';
+      leaderboard.className = 'leaderboard-panel';
+      document.body.appendChild(leaderboard);
+    }
+
+    // 顯示載入中
+    leaderboard.innerHTML = `
+      <div class="leaderboard-header">
+        <h2>🏆 ${window.i18n?.t('leaderboard.title') || '停車大王真人榜'}</h2>
+        <button id="close-leaderboard" class="close-panel-btn">×</button>
+      </div>
+      <div class="leaderboard-loading">
+        ${window.i18n?.t('leaderboard.loading') || '載入中...'}
+      </div>
+    `;
+    leaderboard.classList.remove('hidden');
+
+    // 綁定關閉按鈕
+    document.getElementById('close-leaderboard')?.addEventListener('click', () => {
+      this.hideLeaderboard();
+    });
+
+    try {
+      // 獲取排行榜資料
+      const response = await fetch(
+        `${this.apiBase}/api/leaderboard?nullifier_hash=${this.nullifierHash || ''}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        this.renderLeaderboard(leaderboard, data);
+      } else {
+        leaderboard.querySelector('.leaderboard-loading').textContent =
+          window.i18n?.t('leaderboard.error') || '載入失敗';
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      leaderboard.querySelector('.leaderboard-loading').textContent =
+        window.i18n?.t('leaderboard.error') || '載入失敗';
+    }
+  }
+
+  // 渲染排行榜內容
+  renderLeaderboard(container, data) {
+    const { leaderboard, total_players, total_drivers, my_rank } = data;
+
+    // 我的司機編號
+    const myDriverNumber = my_rank?.player_number || this.userState?.player_number;
+
+    let html = `
+      <div class="leaderboard-header">
+        <h2>🏆 ${window.i18n?.t('leaderboard.title') || '停車大王真人榜'}</h2>
+        <button id="close-leaderboard" class="close-panel-btn">×</button>
+      </div>
+    `;
+
+    // 顯示「你是第 XX 位停車司機」
+    if (myDriverNumber) {
+      html += `
+        <div class="leaderboard-driver-number">
+          🚗 ${window.i18n?.t('leaderboard.youAreDriver') || '你是第'} <strong>#${myDriverNumber}</strong> ${window.i18n?.t('leaderboard.driver') || '位停車司機'}
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="leaderboard-subtitle">
+        ${window.i18n?.t('leaderboard.totalPlayers') || '共'} ${total_drivers || total_players} ${window.i18n?.t('leaderboard.players') || '位玩家'}
+      </div>
+      <div class="leaderboard-list">
+    `;
+
+    // 前 10 名
+    if (leaderboard.length === 0) {
+      html += `<div class="leaderboard-empty">${window.i18n?.t('leaderboard.empty') || '暫無資料'}</div>`;
+    } else {
+      leaderboard.forEach(player => {
+        const isMe = my_rank && player.rank === my_rank.rank;
+        const rankIcon = player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : `${player.rank}.`;
+        html += `
+          <div class="leaderboard-row ${isMe ? 'is-me' : ''}">
+            <span class="rank">${rankIcon}</span>
+            <span class="player-id">${isMe ? (window.i18n?.t('leaderboard.you') || '你') : player.display_id}</span>
+            <span class="score">${player.total_score.toLocaleString()}</span>
+          </div>
+        `;
+      });
+    }
+
+    // 如果自己不在前 10 名
+    if (my_rank && !my_rank.is_in_top10 && my_rank.neighbors) {
+      html += `
+        <div class="leaderboard-separator">
+          <span>···</span>
+        </div>
+      `;
+
+      my_rank.neighbors.forEach(player => {
+        html += `
+          <div class="leaderboard-row ${player.is_me ? 'is-me' : ''}">
+            <span class="rank">${player.rank}.</span>
+            <span class="player-id">${player.is_me ? (window.i18n?.t('leaderboard.you') || '你') : player.display_id}</span>
+            <span class="score">${player.total_score.toLocaleString()}</span>
+          </div>
+        `;
+      });
+    }
+
+    html += '</div>';
+
+    // 顯示自己的排名摘要
+    if (my_rank) {
+      html += `
+        <div class="leaderboard-my-rank">
+          ${window.i18n?.t('leaderboard.yourRank') || '你的排名'}:
+          <strong>#${my_rank.rank}</strong> / ${total_players}
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+
+    // 重新綁定關閉按鈕
+    document.getElementById('close-leaderboard')?.addEventListener('click', () => {
+      this.hideLeaderboard();
+    });
+  }
+
+  // 隱藏排行榜
+  hideLeaderboard() {
+    const leaderboard = document.getElementById('leaderboard-panel');
+    if (leaderboard) {
+      leaderboard.classList.add('hidden');
+    }
+  }
 }
 
 // 全域實例

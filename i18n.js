@@ -46,6 +46,18 @@ const translations = {
         'ui.slowdown': 'Slowdown',
         'ui.promoHint': 'Promo: 50% $CPK cashback on purchases!',
         'ui.slowdownHint': 'Slowdown makes your car slower, easier to park',
+
+        // Leaderboard
+        'leaderboard.title': 'Parking Champions',
+        'leaderboard.totalPlayers': '',
+        'leaderboard.players': 'players',
+        'leaderboard.loading': 'Loading...',
+        'leaderboard.error': 'Failed to load',
+        'leaderboard.empty': 'No data yet',
+        'leaderboard.you': 'You',
+        'leaderboard.yourRank': 'Your Rank',
+        'leaderboard.youAreDriver': 'You are Driver',
+        'leaderboard.driver': '',
     },
 
     'zh-TW': {
@@ -86,6 +98,18 @@ const translations = {
         'ui.slowdown': '降速',
         'ui.promoHint': '特惠期間：課金享 50% $CPK 返還！',
         'ui.slowdownHint': '減速功能讓車子變慢，更容易控制停車',
+
+        // Leaderboard
+        'leaderboard.title': '停車大王真人榜',
+        'leaderboard.totalPlayers': '共',
+        'leaderboard.players': '位玩家',
+        'leaderboard.loading': '載入中...',
+        'leaderboard.error': '載入失敗',
+        'leaderboard.empty': '暫無資料',
+        'leaderboard.you': '你',
+        'leaderboard.yourRank': '你的排名',
+        'leaderboard.youAreDriver': '你是第',
+        'leaderboard.driver': '位司機',
     },
 
     ja: {
@@ -126,6 +150,18 @@ const translations = {
         'ui.slowdown': '減速',
         'ui.promoHint': 'プロモ：購入で50% $CPKキャッシュバック！',
         'ui.slowdownHint': '減速機能で車がゆっくりに、駐車しやすく',
+
+        // Leaderboard
+        'leaderboard.title': '駐車王ランキング',
+        'leaderboard.totalPlayers': '',
+        'leaderboard.players': '人のプレイヤー',
+        'leaderboard.loading': '読み込み中...',
+        'leaderboard.error': '読み込み失敗',
+        'leaderboard.empty': 'データなし',
+        'leaderboard.you': 'あなた',
+        'leaderboard.yourRank': 'あなたの順位',
+        'leaderboard.youAreDriver': 'あなたはドライバー',
+        'leaderboard.driver': '番です',
     },
 
     ko: {
@@ -166,6 +202,18 @@ const translations = {
         'ui.slowdown': '감속',
         'ui.promoHint': '프로모: 구매 시 50% $CPK 캐시백!',
         'ui.slowdownHint': '감속 기능으로 차가 느려져 주차가 쉬워져요',
+
+        // Leaderboard
+        'leaderboard.title': '주차왕 랭킹',
+        'leaderboard.totalPlayers': '',
+        'leaderboard.players': '명의 플레이어',
+        'leaderboard.loading': '로딩 중...',
+        'leaderboard.error': '로딩 실패',
+        'leaderboard.empty': '데이터 없음',
+        'leaderboard.you': '나',
+        'leaderboard.yourRank': '내 순위',
+        'leaderboard.youAreDriver': '당신은 드라이버',
+        'leaderboard.driver': '번입니다',
     }
 };
 

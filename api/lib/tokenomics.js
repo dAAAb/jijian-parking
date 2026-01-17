@@ -28,11 +28,15 @@ export const SLOWDOWN_CONFIG = {
 };
 
 // 創建新用戶（只有通過 World ID 驗證後才會調用）
-export function createNewUser(nullifierHash) {
+// 注意：player_number 需要在調用處設置
+export function createNewUser(nullifierHash, playerNumber = null) {
   return {
     nullifier_hash: nullifierHash,
     created_at: Date.now(),
     last_active: Date.now(),
+
+    // 司機編號（第幾位加入的玩家）
+    player_number: playerNumber,
 
     // World ID 驗證狀態
     verified: true,  // 用戶通過驗證後才會創建，所以默認為 true

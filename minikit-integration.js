@@ -478,6 +478,17 @@ class WorldMiniKit {
                     badge.querySelector('.badge-tooltip').textContent = level === 'orb' ? 'Orb Verified' : 'Verified Human';
                 }
 
+                // 綁定點擊事件打開排行榜（確保只綁定一次）
+                if (!badge.dataset.leaderboardBound) {
+                    badge.addEventListener('click', () => {
+                        if (window.tokenomicsUI) {
+                            window.tokenomicsUI.showLeaderboard();
+                        }
+                    });
+                    badge.dataset.leaderboardBound = 'true';
+                    console.log('🏆 排行榜點擊事件已綁定');
+                }
+
                 console.log('🔵 藍勾勾徽章已顯示');
             } else {
                 badge.classList.add('hidden');
