@@ -297,6 +297,44 @@ KV_REST_API_TOKEN=<Token>
 
 ## 📋 工作日誌
 
+### 2026-01-17：Boost.xyz 推廣設定 + 多語言完善 ✅
+
+**Boost.xyz Lift 推廣活動**：
+
+1. **研究 Boost.xyz 平台**
+   - Lift MiniApp 機制：追蹤鏈上行為給予獎勵
+   - 兩種獎勵類型：固定金額 / 百分比返現
+   - 限制：只能追蹤鏈上活動
+
+2. **設定 CarParKing Action**
+   - App name: CarParKing
+   - Reward base URL: jijian-car-parking.vercel.app
+   - 參考交易: 10 WLD 購買降速徽章
+   - 獎勵類型: Variable (20% 購買返現)
+   - 狀態: Pending（等待審核 24-48 小時）
+
+3. **存入推廣資金**
+   - 存入 50 WLD 到 Boost 平台
+   - 地址: `0x3570b0d3fa9f6e755ef8ff0f560e0e70644bba4e`
+
+**多語言完善**：
+
+4. **support.html 國際化** (v2.1.5)
+   - 預設語言改為英文
+   - 偵測瀏覽器語言自動切換
+   - 右上角語言選擇器 (🇺🇸 🇹🇼 🇯🇵 🇰🇷)
+   - 儲存語言偏好到 localStorage
+
+5. **課金窗口多語言修復**
+   - tokenomics-ui.js: 所有 Toast 訊息改用 `i18n.t()`
+   - 添加 `data-i18n` 屬性讓靜態元素隨語言切換更新
+   - i18n.js: 新增約 40 個翻譯 key (purchase/claim/time/session)
+   - 語言切換時自動更新課金窗口動態內容
+
+**版本**: v2.1.5
+
+---
+
 ### 2026-01-12：修復支付驗證 + CPK 獎勵 ✅
 
 **問題與修復**：

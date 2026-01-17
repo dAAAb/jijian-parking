@@ -70,6 +70,8 @@ const translations = {
         'revive.continue': 'Continue',
         'revive.giveUp': 'Give Up',
         'revive.notEnoughCPK': 'Not enough CPK',
+        'revive.needCPK': 'Need 100 CPK',
+        'revive.current': 'Current',
 
         // Share
         'share.title': 'Share Score',
@@ -179,6 +181,8 @@ const translations = {
         'revive.continue': '繼續',
         'revive.giveUp': '放棄',
         'revive.notEnoughCPK': 'CPK 不足',
+        'revive.needCPK': '需要 100 CPK',
+        'revive.current': '目前',
 
         // Share
         'share.title': '分享成績',
@@ -288,6 +292,8 @@ const translations = {
         'revive.continue': '続ける',
         'revive.giveUp': '諦める',
         'revive.notEnoughCPK': 'CPKが不足',
+        'revive.needCPK': '100 CPKが必要',
+        'revive.current': '現在',
 
         // Share
         'share.title': 'スコアをシェア',
@@ -397,6 +403,8 @@ const translations = {
         'revive.continue': '계속',
         'revive.giveUp': '포기',
         'revive.notEnoughCPK': 'CPK 부족',
+        'revive.needCPK': '100 CPK 필요',
+        'revive.current': '현재',
 
         // Share
         'share.title': '점수 공유',

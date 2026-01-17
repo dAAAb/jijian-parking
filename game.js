@@ -413,8 +413,11 @@ class MinimalParking {
 
     restartLevel() {
         document.getElementById('game-over-screen').classList.add('hidden');
-        
+
+        // 重新創建整個關卡場景（因為 Give Up 後 level 會重置為 1）
         this.createCar();
+        this.createParkingSpot();
+        this.createObstacles();
         this.startLevel();
     }
 
@@ -1048,7 +1051,7 @@ class MinimalParking {
                 description: 'Revive - Continue Game'
             });
 
-            if (payResult.status === 'success' && payResult.finalPayload?.transaction_id) {
+            if (payResult.finalPayload?.status === 'success' && payResult.finalPayload?.transaction_id) {
                 // 呼叫後端 API 記錄復活
                 const response = await fetch('/api/revive', {
                     method: 'POST',
@@ -1107,6 +1110,12 @@ class MinimalParking {
             if (cpkBtn) {
                 cpkBtn.classList.add('disabled');
                 cpkBtn.querySelector('.revive-label').textContent = window.i18n?.t('revive.notEnoughCPK') || 'Not enough CPK';
+            }
+            // 顯示 toast 提示用戶
+            if (window.tokenomicsUI?.showToast) {
+                window.tokenomicsUI.showToast(
+                    `❌ ${window.i18n?.t('revive.needCPK') || 'Need 100 CPK'} (${window.i18n?.t('revive.current') || 'Current'}: ${currentCPK})`
+                );
             }
             return;
         }
@@ -1179,6 +1188,14 @@ class MinimalParking {
     skipRevive() {
         // 隱藏復活畫面
         document.getElementById('revive-screen')?.classList.add('hidden');
+
+        // 重置分數和關卡（放棄 = 結束這局遊戲）
+        this.score = 0;
+        this.level = 1;
+
+        // 重置死亡記錄
+        this.deathHistory = [];
+        this.levelDeathCount = {};
 
         // 顯示普通 Game Over 畫面
         document.getElementById('game-over-screen').classList.remove('hidden');
