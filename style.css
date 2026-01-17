@@ -1295,6 +1295,10 @@ body {
     animation: pulse-gold 2s ease-in-out infinite;
 }
 
+.highscore-section.hidden {
+    display: none;
+}
+
 @keyframes pulse-gold {
     0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
     50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
@@ -1319,6 +1323,10 @@ body {
     padding: 12px 20px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
+}
+
+.rank-section.hidden {
+    display: none;
 }
 
 .rank-info {
