@@ -17,7 +17,7 @@ const LOCALISATIONS = [
     message: 'Hey ${username}, you have unclaimed CPK points waiting! Come play and claim your rewards.'
   },
   {
-    language: 'zh',
+    language: 'zh_TW',
     title: '🪙 CPK 積分待領取！',
     message: '嗨 ${username}，你有未領取的 CPK 積分！快來玩遊戲並領取獎勵吧。'
   },
