@@ -63,18 +63,45 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    const cpkToClaim = userData.cpk_pending;
+    const cpkPending = userData.cpk_pending;
 
-    if (cpkToClaim <= 0) {
+    if (cpkPending <= 0) {
       return res.status(400).json({ success: false, error: 'No rewards to claim' });
     }
 
+    // 每日領取上限：10%
+    const DAILY_CLAIM_PERCENTAGE = 0.10;
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 格式
+
+    // 檢查是否是新的一天
+    const lastClaimDate = userData.last_claim_date || null;
+    const dailyClaimed = lastClaimDate === today ? (userData.daily_claimed || 0) : 0;
+
+    // 計算今日可領取的最大金額（pending 的 10%）
+    const maxDailyAmount = Math.floor(cpkPending * DAILY_CLAIM_PERCENTAGE);
+    const remainingToday = maxDailyAmount - dailyClaimed;
+
+    if (remainingToday <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Daily claim limit reached',
+        error_code: 'DAILY_LIMIT_REACHED',
+        next_claim_date: getNextDay(today),
+        daily_limit: maxDailyAmount,
+        daily_claimed: dailyClaimed
+      });
+    }
+
+    // 實際領取金額（不超過今日剩餘額度）
+    const cpkToClaim = Math.min(remainingToday, cpkPending);
+
     // 最小領取門檻（防止小額交易浪費 Gas）
-    const MIN_CLAIM_AMOUNT = 100;
+    const MIN_CLAIM_AMOUNT = 10;  // 降低門檻配合每日 10% 限制
     if (cpkToClaim < MIN_CLAIM_AMOUNT) {
       return res.status(400).json({
         success: false,
-        error: `Minimum claim amount is ${MIN_CLAIM_AMOUNT} CPK`
+        error: `Minimum claim amount is ${MIN_CLAIM_AMOUNT} CPK`,
+        available: cpkToClaim
       });
     }
 
@@ -89,26 +116,42 @@ export default async function handler(req, res) {
     }
 
     // 更新用戶狀態
-    userData.cpk_pending = 0;
-    userData.cpk_claimed_total += cpkToClaim;
+    userData.cpk_pending = cpkPending - cpkToClaim;  // 扣除已領取的部分
+    userData.cpk_claimed_total = (userData.cpk_claimed_total || 0) + cpkToClaim;
     userData.last_claim_at = Date.now();
+    userData.last_claim_date = today;
+    userData.daily_claimed = dailyClaimed + cpkToClaim;
     userData.wallet_address = wallet_address;
 
     await kv.set(userKey, userData);
 
     console.log(`Claimed ${cpkToClaim} CPK to ${wallet_address} - TX: ${txResult.txHash}`);
 
+    // 計算剩餘可領取額度
+    const newRemainingToday = maxDailyAmount - userData.daily_claimed;
+
     return res.status(200).json({
       success: true,
       cpk_claimed: cpkToClaim,
       tx_hash: txResult.txHash,
-      cpk_claimed_total: userData.cpk_claimed_total
+      cpk_claimed_total: userData.cpk_claimed_total,
+      cpk_remaining: userData.cpk_pending,
+      daily_limit: maxDailyAmount,
+      daily_claimed: userData.daily_claimed,
+      daily_remaining: Math.max(0, newRemainingToday)
     });
 
   } catch (error) {
     console.error('Error claiming rewards:', error);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
+}
+
+// 取得明天的日期（YYYY-MM-DD 格式）
+function getNextDay(todayStr) {
+  const today = new Date(todayStr);
+  today.setDate(today.getDate() + 1);
+  return today.toISOString().split('T')[0];
 }
 
 async function sendCPKTokens(toAddress, amount) {

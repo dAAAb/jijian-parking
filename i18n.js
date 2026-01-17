@@ -23,6 +23,7 @@ const translations = {
         'complete.time': 'Time',
         'complete.bonus': 'Time Bonus',
         'complete.total': 'Total Score',
+        'complete.perfect': 'Perfect Parking',
         'btn.next': 'Next Level',
         'btn.share': '📤 Share',
 
@@ -46,6 +47,9 @@ const translations = {
         'ui.slowdown': 'Slowdown',
         'ui.promoHint': 'Promo: 50% $CPK cashback on purchases!',
         'ui.slowdownHint': 'Slowdown makes your car slower, easier to park',
+        'ui.claimingWait': 'Confirming, please wait...',
+        'ui.dailyLimitReached': 'Daily limit reached',
+        'ui.dailyRemaining': 'Today you can claim',
 
         // Leaderboard
         'leaderboard.title': 'Parking Champions',
@@ -65,6 +69,12 @@ const translations = {
         'revive.continue': 'Continue',
         'revive.giveUp': 'Give Up',
         'revive.notEnoughCPK': 'Not enough CPK',
+
+        // Share
+        'share.title': 'Share Score',
+        'share.copy': 'Copy Link',
+        'share.more': 'More Options',
+        'share.copied': 'Copied!',
     },
 
     'zh-TW': {
@@ -85,6 +95,7 @@ const translations = {
         'complete.time': '耗時',
         'complete.bonus': '時間獎勵',
         'complete.total': '總分',
+        'complete.perfect': '完美停車',
         'btn.next': '下一關',
         'btn.share': '📤 分享',
 
@@ -105,6 +116,9 @@ const translations = {
         'ui.slowdown': '降速',
         'ui.promoHint': '特惠期間：課金享 50% $CPK 返還！',
         'ui.slowdownHint': '減速功能讓車子變慢，更容易控制停車',
+        'ui.claimingWait': '確認中，請稍候...',
+        'ui.dailyLimitReached': '今日額度已達上限',
+        'ui.dailyRemaining': '今日還可領取',
 
         // Leaderboard
         'leaderboard.title': '停車大王真人榜',
@@ -124,6 +138,12 @@ const translations = {
         'revive.continue': '繼續',
         'revive.giveUp': '放棄',
         'revive.notEnoughCPK': 'CPK 不足',
+
+        // Share
+        'share.title': '分享成績',
+        'share.copy': '複製連結',
+        'share.more': '更多選項',
+        'share.copied': '已複製！',
     },
 
     ja: {
@@ -144,6 +164,7 @@ const translations = {
         'complete.time': 'タイム',
         'complete.bonus': 'タイムボーナス',
         'complete.total': '合計スコア',
+        'complete.perfect': 'パーフェクト',
         'btn.next': '次のレベル',
         'btn.share': '📤 シェア',
 
@@ -164,6 +185,9 @@ const translations = {
         'ui.slowdown': '減速',
         'ui.promoHint': 'プロモ：購入で50% $CPKキャッシュバック！',
         'ui.slowdownHint': '減速機能で車がゆっくりに、駐車しやすく',
+        'ui.claimingWait': '確認中、お待ちください...',
+        'ui.dailyLimitReached': '本日の上限に達しました',
+        'ui.dailyRemaining': '本日の残り受取可能',
 
         // Leaderboard
         'leaderboard.title': '駐車王ランキング',
@@ -183,6 +207,12 @@ const translations = {
         'revive.continue': '続ける',
         'revive.giveUp': '諦める',
         'revive.notEnoughCPK': 'CPKが不足',
+
+        // Share
+        'share.title': 'スコアをシェア',
+        'share.copy': 'リンクをコピー',
+        'share.more': 'その他',
+        'share.copied': 'コピーしました！',
     },
 
     ko: {
@@ -203,6 +233,7 @@ const translations = {
         'complete.time': '시간',
         'complete.bonus': '시간 보너스',
         'complete.total': '총점',
+        'complete.perfect': '퍼펙트 주차',
         'btn.next': '다음 레벨',
         'btn.share': '📤 공유',
 
@@ -223,6 +254,9 @@ const translations = {
         'ui.slowdown': '감속',
         'ui.promoHint': '프로모: 구매 시 50% $CPK 캐시백!',
         'ui.slowdownHint': '감속 기능으로 차가 느려져 주차가 쉬워져요',
+        'ui.claimingWait': '확인 중, 잠시만 기다려주세요...',
+        'ui.dailyLimitReached': '오늘의 한도에 도달했습니다',
+        'ui.dailyRemaining': '오늘 수령 가능한',
 
         // Leaderboard
         'leaderboard.title': '주차왕 랭킹',
@@ -242,6 +276,12 @@ const translations = {
         'revive.continue': '계속',
         'revive.giveUp': '포기',
         'revive.notEnoughCPK': 'CPK 부족',
+
+        // Share
+        'share.title': '점수 공유',
+        'share.copy': '링크 복사',
+        'share.more': '더 보기',
+        'share.copied': '복사됨!',
     }
 };
 

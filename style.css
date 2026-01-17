@@ -825,6 +825,52 @@ body {
     }
 }
 
+/* 領取等待確認提示 */
+.claiming-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+}
+
+.claiming-overlay.hidden {
+    display: none;
+}
+
+.claiming-content {
+    background: rgba(30, 30, 30, 0.95);
+    padding: 30px 50px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.claiming-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 215, 0, 0.3);
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: claimSpin 1s linear infinite;
+}
+
+@keyframes claimSpin {
+    to { transform: rotate(360deg); }
+}
+
+.claiming-text {
+    color: white;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
 /* 獎勵彈出效果 */
 .reward-popup {
     position: fixed;
@@ -877,6 +923,78 @@ body {
     100% {
         opacity: 0;
         transform: translateX(-50%) translateY(-50px);
+    }
+}
+
+/* 完美停車獎勵彈出 */
+.reward-popup.perfect-bonus {
+    flex-direction: column;
+    background: linear-gradient(135deg, rgba(255, 50, 100, 0.95), rgba(255, 100, 0, 0.95), rgba(255, 215, 0, 0.95));
+    animation: perfectPop 2.5s ease-out forwards;
+    box-shadow: 0 10px 60px rgba(255, 100, 0, 0.7);
+}
+
+.reward-popup.perfect-bonus .perfect-text {
+    font-size: 0.9em;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-top: 5px;
+}
+
+@keyframes perfectPop {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.3) rotate(-10deg);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.3) rotate(5deg);
+    }
+    25% {
+        transform: translateX(-50%) scale(1) rotate(0deg);
+    }
+    35%, 45% {
+        transform: translateX(-50%) scale(1.05);
+    }
+    40%, 50% {
+        transform: translateX(-50%) scale(0.98);
+    }
+    75% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-80px);
+    }
+}
+
+/* 完美停車標籤 */
+.perfect-park-label {
+    background: linear-gradient(135deg, #ff6600, #ffd700);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 100, 0, 0.5);
+    animation: perfectLabelPulse 1s ease-in-out infinite;
+    margin-bottom: 15px;
+}
+
+.perfect-park-label.hidden {
+    display: none;
+}
+
+@keyframes perfectLabelPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 20px rgba(255, 100, 0, 0.5);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 30px rgba(255, 100, 0, 0.7);
     }
 }
 
@@ -1183,6 +1301,136 @@ body {
 
     .revive-icon {
         font-size: 1.5em;
+    }
+}
+
+
+
+/* ================================
+   分享菜單樣式
+   ================================ */
+
+.share-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 10001;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.share-menu-content {
+    background: rgba(30, 30, 40, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.share-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.share-menu-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: white;
+}
+
+.share-menu-header .close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.share-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.share-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.share-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+.share-option:active {
+    transform: scale(0.98);
+}
+
+.share-icon {
+    font-size: 1.5em;
+    width: 35px;
+    text-align: center;
+}
+
+/* 複製成功提示 */
+.copy-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 200, 100, 0.95);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+    z-index: 10002;
+    animation: toastPop 2s ease-out forwards;
+}
+
+@keyframes toastPop {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    85% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
     }
 }
 

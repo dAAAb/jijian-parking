@@ -49,7 +49,8 @@ export default async function handler(req, res) {
         total_score: user.total_score || 0,
         highest_level: user.highest_level || 1,
         total_games: user.total_games || 0,
-        player_number: user.player_number || null
+        player_number: user.player_number || null,
+        active_badge: getActiveBadge(user.badges) // 當前有效徽章
       }))
       .sort((a, b) => b.total_score - a.total_score);
 
@@ -119,4 +120,24 @@ export default async function handler(req, res) {
     console.error('Error fetching leaderboard:', error);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
+}
+
+// 獲取用戶當前有效的最高等級徽章
+function getActiveBadge(badges) {
+  if (!badges) return null;
+
+  const now = Date.now();
+
+  // 按優先級檢查：L3 > L2 > L1
+  if (badges.l3?.active && badges.l3.expires_at > now) {
+    return 'l3';
+  }
+  if (badges.l2?.active && badges.l2.expires_at > now) {
+    return 'l2';
+  }
+  if (badges.l1?.active && badges.l1.expires_at > now) {
+    return 'l1';
+  }
+
+  return null;
 }

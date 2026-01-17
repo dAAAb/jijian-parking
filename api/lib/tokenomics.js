@@ -21,10 +21,10 @@ export const RATE_LIMIT_CONFIG = {
 // 降速配置
 export const SLOWDOWN_CONFIG = {
   single: { cost: 1, percent: 20 },          // 單次：1 WLD, 20%
-  l1_badge: { cost: 10, percent: 20, duration: 3 * 24 * 60 * 60 * 1000 },  // L1：10 WLD, 20%, 3天
-  l2_badge: { cost: 15, percent: 40, duration: 3 * 24 * 60 * 60 * 1000 },  // L2：15 WLD, 40%, 3天
+  l1_badge: { cost: 10, percent: 20, duration: 3 * 60 * 60 * 1000 },  // L1：10 WLD, 20%, 3小時
+  l2_badge: { cost: 15, percent: 40, duration: 3 * 60 * 60 * 1000 },  // L2：15 WLD, 40%, 3小時
   l2_temp: { threshold: 3, percent: 40 },    // L2 臨時：累計 3 WLD, 40%（與購買的 L2 不累加）
-  l3_badge: { cost: 30, percent: 80, duration: 3 * 24 * 60 * 60 * 1000 }   // L3：30 WLD, 80%, 3天
+  l3_badge: { cost: 30, percent: 80, duration: 3 * 60 * 60 * 1000 }   // L3：30 WLD, 80%, 3小時
 };
 
 // 創建新用戶（只有通過 World ID 驗證後才會調用）

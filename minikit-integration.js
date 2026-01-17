@@ -1393,32 +1393,108 @@ class WorldMiniKit {
     async shareScore() {
         try {
             const score = document.getElementById('total-score')?.textContent || '0';
-            const level = document.getElementById('level-display')?.textContent || '1';
-            
-            if (this.isWorldApp && MiniKit.isInstalled()) {
-                // 使用 World App 的分享功能
-                await MiniKit.commands.share({
-                    title: '極簡停車 🚗',
-                    text: `我在極簡停車達到第 ${level} 關，總分 ${score} 分！來挑戰我吧！`,
-                    url: 'worldapp://mini-app?app_id=' + this.appId,
-                });
-                
-                this.sendHapticFeedback('medium');
-            } else {
-                // 降級到 Web Share API
-                if (navigator.share) {
-                    await navigator.share({
-                        title: '極簡停車 🚗',
-                        text: `我在極簡停車達到第 ${level} 關，總分 ${score} 分！`,
-                        url: window.location.href,
-                    });
-                } else {
-                    alert('分享功能在此環境中不可用');
-                }
-            }
+            const level = window.parkingGame?.level || '1';
+            const gameUrl = 'https://jijian-car-parking.vercel.app';
+
+            // 構建分享文本
+            const shareText = window.i18n?.t('share.text') ||
+                `🚗 極簡停車 | 第 ${level} 關 | 分數 ${score}\n來挑戰我吧！`;
+
+            // 顯示分享選項菜單
+            this.showShareMenu(shareText, gameUrl, score, level);
+
         } catch (error) {
             console.error('分享失敗:', error);
         }
+    }
+
+    // 顯示分享選項菜單
+    showShareMenu(shareText, gameUrl, score, level) {
+        // 移除已存在的菜單
+        document.getElementById('share-menu')?.remove();
+
+        const menu = document.createElement('div');
+        menu.id = 'share-menu';
+        menu.className = 'share-menu';
+        menu.innerHTML = `
+            <div class="share-menu-content">
+                <div class="share-menu-header">
+                    <h3>${window.i18n?.t('share.title') || '分享成績'}</h3>
+                    <button id="close-share-menu" class="close-btn">×</button>
+                </div>
+                <div class="share-options">
+                    <button class="share-option" data-platform="x">
+                        <span class="share-icon">𝕏</span>
+                        <span>X (Twitter)</span>
+                    </button>
+                    <button class="share-option" data-platform="copy">
+                        <span class="share-icon">📋</span>
+                        <span>${window.i18n?.t('share.copy') || '複製連結'}</span>
+                    </button>
+                    ${navigator.share ? `
+                    <button class="share-option" data-platform="native">
+                        <span class="share-icon">📤</span>
+                        <span>${window.i18n?.t('share.more') || '更多選項'}</span>
+                    </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(menu);
+
+        // 綁定事件
+        document.getElementById('close-share-menu')?.addEventListener('click', () => {
+            menu.remove();
+        });
+
+        // 點擊背景關閉
+        menu.addEventListener('click', (e) => {
+            if (e.target === menu) menu.remove();
+        });
+
+        // 分享選項點擊
+        menu.querySelectorAll('.share-option').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const platform = btn.dataset.platform;
+
+                if (platform === 'x') {
+                    // 分享到 X (Twitter)
+                    const tweetText = encodeURIComponent(`🚗 極簡停車 | Lv.${level} | ${score}分\n來挑戰我！\n${gameUrl}`);
+                    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
+                    this.sendHapticFeedback('medium');
+                } else if (platform === 'copy') {
+                    // 複製到剪貼板
+                    const fullText = `🚗 極簡停車 | Lv.${level} | ${score}分\n來挑戰我！\n${gameUrl}`;
+                    await navigator.clipboard.writeText(fullText);
+                    this.showCopyToast();
+                    this.sendHapticFeedback('light');
+                } else if (platform === 'native') {
+                    // 使用原生分享
+                    try {
+                        await navigator.share({
+                            title: '極簡停車 🚗',
+                            text: `極簡停車 | Lv.${level} | ${score}分\n來挑戰我！`,
+                            url: gameUrl,
+                        });
+                        this.sendHapticFeedback('medium');
+                    } catch (e) {
+                        console.log('分享取消或失敗');
+                    }
+                }
+
+                menu.remove();
+            });
+        });
+    }
+
+    // 顯示複製成功提示
+    showCopyToast() {
+        const toast = document.createElement('div');
+        toast.className = 'copy-toast';
+        toast.textContent = window.i18n?.t('share.copied') || '已複製！';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
     }
 
     async sendNotification(title, message) {

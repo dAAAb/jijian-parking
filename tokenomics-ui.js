@@ -108,15 +108,15 @@ class TokenomicsUI {
       <div class="badge-section">
         <button id="buy-l1" class="badge-btn l1">
           🥉 L1<br>
-          <small>10 WLD | -20% | 3天</small>
+          <small>10 WLD | -20% | 3hr</small>
         </button>
         <button id="buy-l2" class="badge-btn l2">
           🥈 L2<br>
-          <small>15 WLD | -40% | 3天</small>
+          <small>15 WLD | -40% | 3hr</small>
         </button>
         <button id="buy-l3" class="badge-btn l3">
           🥇 L3<br>
-          <small>30 WLD | -80% | 3天</small>
+          <small>30 WLD | -80% | 3hr</small>
         </button>
       </div>
 
@@ -420,7 +420,8 @@ class TokenomicsUI {
         return;
       }
 
-      this.showToast('正在領取 CPK...');
+      // 顯示等待確認提示
+      this.showClaimingOverlay(true);
 
       const response = await fetch(`${this.apiBase}/api/claim-rewards`, {
         method: 'POST',
@@ -431,22 +432,41 @@ class TokenomicsUI {
         })
       });
 
+      // 隱藏等待確認提示
+      this.showClaimingOverlay(false);
+
       const result = await response.json();
 
       if (result.success) {
-        this.userState.cpk_pending = 0;
+        this.userState.cpk_pending = result.cpk_remaining || 0;
         this.userState.cpk_claimed_total = result.cpk_claimed_total;
         this.userState.wallet_address = walletAddress;
 
         this.updateUI();
 
-        this.showToast(`✅ 成功領取 ${result.cpk_claimed.toLocaleString()} CPK！\nTX: ${result.tx_hash.substring(0, 10)}...`);
+        // 顯示領取成功及每日限制資訊
+        let message = `✅ 成功領取 ${result.cpk_claimed.toLocaleString()} CPK！`;
+        if (result.cpk_remaining > 0) {
+          message += `\n📊 剩餘 ${result.cpk_remaining.toLocaleString()} CPK`;
+          if (result.daily_remaining > 0) {
+            message += `\n📅 今日還可領 ${result.daily_remaining.toLocaleString()} CPK`;
+          } else {
+            message += `\n📅 今日額度已用完，明日再來！`;
+          }
+        }
+
+        this.showToast(message);
 
         if (window.worldMiniKit?.sendHapticFeedback) {
           window.worldMiniKit.sendHapticFeedback('success');
         }
       } else {
-        this.showToast(`❌ ${result.error || '領取失敗'}`);
+        // 處理每日限制已達的情況
+        if (result.error_code === 'DAILY_LIMIT_REACHED') {
+          this.showToast(`⏰ 今日領取額度已用完\n📅 明日可再領取 ${result.daily_limit} CPK`);
+        } else {
+          this.showToast(`❌ ${result.error || '領取失敗'}`);
+        }
       }
     } catch (error) {
       console.error('Claim failed:', error);
@@ -455,8 +475,8 @@ class TokenomicsUI {
   }
 
   // 過關時新增獎勵
-  async addReward(score, level) {
-    console.log('🎮 addReward called:', { score, level, nullifierHash: this.nullifierHash?.substring(0, 10) });
+  async addReward(score, level, isPerfectBonus = false) {
+    console.log('🎮 addReward called:', { score, level, isPerfectBonus, nullifierHash: this.nullifierHash?.substring(0, 10) });
 
     if (!this.nullifierHash) {
       console.warn('⚠️ addReward: nullifierHash is empty, skipping');
@@ -470,7 +490,8 @@ class TokenomicsUI {
         body: JSON.stringify({
           nullifier_hash: this.nullifierHash,
           score: score,
-          level: level
+          level: level,
+          is_perfect_bonus: isPerfectBonus
         })
       });
 
@@ -481,15 +502,34 @@ class TokenomicsUI {
         this.userState.cpk_pending = result.cpk_pending_total;
         this.updateUI();
 
-        // 顯示獲得的 CPK
-        this.showRewardPopup(result.cpk_earned);
-        console.log('✅ CPK reward added:', result.cpk_earned);
+        // 顯示獲得的 CPK（完美停車獎勵有特別提示）
+        if (isPerfectBonus) {
+          this.showPerfectBonusPopup(result.cpk_earned);
+        } else {
+          this.showRewardPopup(result.cpk_earned);
+        }
+        console.log('✅ CPK reward added:', result.cpk_earned, isPerfectBonus ? '(Perfect Bonus!)' : '');
       } else {
         console.error('❌ addReward failed:', result.error);
       }
     } catch (error) {
       console.error('❌ Failed to add reward:', error);
     }
+  }
+
+  // 顯示完美停車獎勵彈出效果
+  showPerfectBonusPopup(cpkEarned) {
+    const popup = document.createElement('div');
+    popup.className = 'reward-popup perfect-bonus';
+    popup.innerHTML = `
+      <span class="reward-icon">🎯</span>
+      <span class="reward-amount">+${cpkEarned}</span>
+      <span class="reward-label">CPK</span>
+      <span class="perfect-text">${window.i18n?.t('complete.perfect') || '完美停車'}</span>
+    `;
+    document.body.appendChild(popup);
+
+    setTimeout(() => popup.remove(), 2500);
   }
 
   // 死亡時重置當局狀態
@@ -545,9 +585,9 @@ class TokenomicsUI {
   getPurchaseDescription(type) {
     switch (type) {
       case 'single': return '單次降速 (-20%)';
-      case 'l1_badge': return 'L1 徽章 (3天)';
-      case 'l2_badge': return 'L2 徽章 (3天)';
-      case 'l3_badge': return 'L3 徽章 (3天)';
+      case 'l1_badge': return 'L1 徽章 (3小時)';
+      case 'l2_badge': return 'L2 徽章 (3小時)';
+      case 'l3_badge': return 'L3 徽章 (3小時)';
       default: return '購買';
     }
   }
@@ -558,13 +598,24 @@ class TokenomicsUI {
     if (remaining <= 0) return '已過期';
 
     const hours = Math.floor(remaining / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (days > 0) {
-      return `${days}天${remainingHours}時`;
+    if (hours > 0) {
+      return `${hours}小時${minutes}分`;
     }
-    return `${hours}小時`;
+    return `${minutes}分鐘`;
+  }
+
+  // 獲取徽章圖標（用於排行榜顯示）
+  getBadgeIcon(badgeType) {
+    if (!badgeType) return '';
+
+    switch (badgeType) {
+      case 'l1': return ' <span class="badge-icon l1" title="L1">🥉</span>';
+      case 'l2': return ' <span class="badge-icon l2" title="L2">🥈</span>';
+      case 'l3': return ' <span class="badge-icon l3" title="L3">🥇</span>';
+      default: return '';
+    }
   }
 
   // 格式化數字
@@ -589,6 +640,31 @@ class TokenomicsUI {
     document.body.appendChild(toast);
 
     setTimeout(() => toast.remove(), 3000);
+  }
+
+  // 顯示/隱藏領取等待確認提示
+  showClaimingOverlay(show) {
+    let overlay = document.getElementById('claiming-overlay');
+
+    if (show) {
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'claiming-overlay';
+        overlay.className = 'claiming-overlay';
+        overlay.innerHTML = `
+          <div class="claiming-content">
+            <div class="claiming-spinner"></div>
+            <div class="claiming-text">${window.i18n?.t('ui.claimingWait') || '確認中，請稍候...'}</div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+      overlay.classList.remove('hidden');
+    } else {
+      if (overlay) {
+        overlay.classList.add('hidden');
+      }
+    }
   }
 
   // 顯示獲得獎勵的彈出效果
@@ -692,10 +768,11 @@ class TokenomicsUI {
       leaderboard.forEach(player => {
         const isMe = my_rank && player.rank === my_rank.rank;
         const rankIcon = player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : `${player.rank}.`;
+        const badgeIcon = this.getBadgeIcon(player.active_badge);
         html += `
           <div class="leaderboard-row ${isMe ? 'is-me' : ''}">
             <span class="rank">${rankIcon}</span>
-            <span class="player-id">${isMe ? (window.i18n?.t('leaderboard.you') || '你') : player.display_id}</span>
+            <span class="player-id">${isMe ? (window.i18n?.t('leaderboard.you') || '你') : player.display_id}${badgeIcon}</span>
             <span class="score">${player.total_score.toLocaleString()}</span>
           </div>
         `;
@@ -711,10 +788,11 @@ class TokenomicsUI {
       `;
 
       my_rank.neighbors.forEach(player => {
+        const badgeIcon = this.getBadgeIcon(player.active_badge);
         html += `
           <div class="leaderboard-row ${player.is_me ? 'is-me' : ''}">
             <span class="rank">${player.rank}.</span>
-            <span class="player-id">${player.is_me ? (window.i18n?.t('leaderboard.you') || '你') : player.display_id}</span>
+            <span class="player-id">${player.is_me ? (window.i18n?.t('leaderboard.you') || '你') : player.display_id}${badgeIcon}</span>
             <span class="score">${player.total_score.toLocaleString()}</span>
           </div>
         `;

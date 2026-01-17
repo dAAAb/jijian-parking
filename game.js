@@ -504,13 +504,40 @@ class MinimalParking {
         // 車輛速度要夠慢才能停車
         const speed = Math.sqrt(this.car.speed.x ** 2 + this.car.speed.z ** 2);
 
-        // 放寬停車判定（v2.0: 從 1.5 改為 2.0）
-        if (distance < 2.0 && speed < 0.02) {
-            this.levelComplete();
+        // 放寬停車判定（v2.1: 速度從 0.02 放寬到 0.05，讓彈窗更快出現）
+        if (distance < 2.0 && speed < 0.05) {
+            // 計算停車精度
+            const isPerfectPark = this.checkPerfectParking(distance);
+            this.levelComplete(isPerfectPark);
         }
     }
 
-    levelComplete() {
+    // 檢查是否為完美停車
+    checkPerfectParking(distance) {
+        if (!this.car || !this.parkingSpot) return false;
+
+        // 距離條件：必須非常接近（< 0.5）
+        if (distance > 0.5) return false;
+
+        // 角度條件：車頭要對準停車格方向
+        // 計算車頭朝向與停車格的夾角
+        const carRotation = this.car.rotation || 0;
+
+        // 正規化角度到 -PI 到 PI
+        let normalizedRotation = carRotation % (Math.PI * 2);
+        if (normalizedRotation > Math.PI) normalizedRotation -= Math.PI * 2;
+        if (normalizedRotation < -Math.PI) normalizedRotation += Math.PI * 2;
+
+        // 接受 0 度或 180 度（車頭向前或向後都可以）
+        const absRotation = Math.abs(normalizedRotation);
+        const angleOK = absRotation < 0.3 || Math.abs(absRotation - Math.PI) < 0.3;
+
+        console.log('🎯 完美停車檢測:', { distance: distance.toFixed(3), rotation: normalizedRotation.toFixed(3), angleOK });
+
+        return angleOK;
+    }
+
+    levelComplete(isPerfectPark = false) {
         this.isPlaying = false;
         const elapsedTime = ((Date.now() - this.startTime) / 1000).toFixed(1);
 
@@ -519,10 +546,31 @@ class MinimalParking {
         const levelScore = 100 + timeBonus;
         this.score += levelScore;
 
+        // 完美停車獎勵
+        const PERFECT_BONUS_CPK = 100;
+        let perfectBonusEarned = 0;
+
+        if (isPerfectPark) {
+            perfectBonusEarned = PERFECT_BONUS_CPK;
+            console.log('🎉 完美停車！額外獎勵 ' + PERFECT_BONUS_CPK + ' CPK');
+        }
+
         // 顯示完成畫面
         document.getElementById('complete-time').textContent = elapsedTime + 's';
         document.getElementById('time-bonus').textContent = '+' + timeBonus;
         document.getElementById('total-score').textContent = this.score;
+
+        // 顯示完美停車標籤（如果有）
+        const perfectLabel = document.getElementById('perfect-park-label');
+        if (perfectLabel) {
+            if (isPerfectPark) {
+                perfectLabel.classList.remove('hidden');
+                perfectLabel.textContent = '🎯 ' + (window.i18n?.t('complete.perfect') || '完美停車') + ' +' + PERFECT_BONUS_CPK + ' CPK';
+            } else {
+                perfectLabel.classList.add('hidden');
+            }
+        }
+
         document.getElementById('level-complete-screen').classList.remove('hidden');
 
         // Token-nomics: 向後端報告得分，獲取 CPK 獎勵
@@ -530,43 +578,68 @@ class MinimalParking {
             hasTokenomicsUI: !!window.tokenomicsUI,
             nullifierHash: window.tokenomicsUI?.nullifierHash?.substring(0, 10),
             levelScore,
-            level: this.level
+            level: this.level,
+            isPerfectPark,
+            perfectBonus: perfectBonusEarned
         });
         if (window.tokenomicsUI?.nullifierHash) {
+            // 普通分數獎勵
             window.tokenomicsUI.addReward(levelScore, this.level);
+
+            // 完美停車額外獎勵
+            if (perfectBonusEarned > 0) {
+                window.tokenomicsUI.addReward(perfectBonusEarned, this.level, true); // true = isPerfectBonus
+            }
         } else {
             console.warn('⚠️ tokenomicsUI not ready, CPK reward skipped');
         }
 
-        // 添加完成特效
-        this.addCompleteEffect();
+        // 添加完成特效（完美停車有更華麗的煙火）
+        this.addCompleteEffect(isPerfectPark);
 
         // 發送震動反饋
         if (window.worldMiniKit) {
-            window.worldMiniKit.sendHapticFeedback('success');
+            window.worldMiniKit.sendHapticFeedback(isPerfectPark ? 'heavy' : 'success');
         }
     }
 
-    addCompleteEffect() {
+    addCompleteEffect(isPerfectPark = false) {
+        // 完美停車：更多、更大、更華麗的粒子
+        const particleCount = isPerfectPark ? 60 : 20;
+        const particleSize = isPerfectPark ? 0.3 : 0.2;
+        const velocityMultiplier = isPerfectPark ? 1.5 : 1;
+
         // 創建慶祝粒子效果
-        for (let i = 0; i < 20; i++) {
-            const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-            const material = new THREE.MeshLambertMaterial({ 
-                color: Math.random() * 0xffffff 
+        for (let i = 0; i < particleCount; i++) {
+            const geometry = new THREE.BoxGeometry(particleSize, particleSize, particleSize);
+
+            // 完美停車使用金色系
+            let color;
+            if (isPerfectPark) {
+                const goldColors = [0xffd700, 0xffaa00, 0xffffff, 0xff6600, 0xff0066];
+                color = goldColors[Math.floor(Math.random() * goldColors.length)];
+            } else {
+                color = Math.random() * 0xffffff;
+            }
+
+            const material = new THREE.MeshLambertMaterial({
+                color: color,
+                emissive: isPerfectPark ? color : 0x000000,
+                emissiveIntensity: isPerfectPark ? 0.5 : 0
             });
             const particle = new THREE.Mesh(geometry, material);
-            
+
             particle.position.copy(this.car.group.position);
-            particle.position.y = 2;
-            
+            particle.position.y = isPerfectPark ? 3 : 2;
+
             particle.velocity = {
-                x: (Math.random() - 0.5) * 0.3,
-                y: Math.random() * 0.3 + 0.2,
-                z: (Math.random() - 0.5) * 0.3
+                x: (Math.random() - 0.5) * 0.3 * velocityMultiplier,
+                y: Math.random() * 0.3 * velocityMultiplier + 0.2,
+                z: (Math.random() - 0.5) * 0.3 * velocityMultiplier
             };
-            
+
             this.scene.add(particle);
-            
+
             // 動畫粒子
             const animateParticle = () => {
                 particle.position.x += particle.velocity.x;
@@ -575,7 +648,7 @@ class MinimalParking {
                 particle.velocity.y -= 0.01;
                 particle.rotation.x += 0.1;
                 particle.rotation.y += 0.1;
-                
+
                 if (particle.position.y > 0) {
                     requestAnimationFrame(animateParticle);
                 } else {
@@ -583,6 +656,71 @@ class MinimalParking {
                 }
             };
             animateParticle();
+        }
+
+        // 完美停車額外的煙火爆發效果
+        if (isPerfectPark) {
+            this.addFireworkBurst();
+        }
+    }
+
+    // 煙火爆發效果
+    addFireworkBurst() {
+        const burstCount = 3; // 三波煙火
+
+        for (let burst = 0; burst < burstCount; burst++) {
+            setTimeout(() => {
+                const burstX = this.car.group.position.x + (Math.random() - 0.5) * 4;
+                const burstZ = this.car.group.position.z + (Math.random() - 0.5) * 4;
+                const burstY = 4 + Math.random() * 2;
+
+                // 每波 15 個粒子
+                for (let i = 0; i < 15; i++) {
+                    const geometry = new THREE.SphereGeometry(0.15, 8, 8);
+                    const hue = Math.random();
+                    const color = new THREE.Color().setHSL(hue, 1, 0.6);
+
+                    const material = new THREE.MeshBasicMaterial({
+                        color: color,
+                        transparent: true,
+                        opacity: 1
+                    });
+                    const spark = new THREE.Mesh(geometry, material);
+
+                    spark.position.set(burstX, burstY, burstZ);
+
+                    // 球形擴散
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.random() * Math.PI;
+                    const speed = 0.1 + Math.random() * 0.1;
+
+                    spark.velocity = {
+                        x: Math.sin(phi) * Math.cos(theta) * speed,
+                        y: Math.cos(phi) * speed,
+                        z: Math.sin(phi) * Math.sin(theta) * speed
+                    };
+
+                    this.scene.add(spark);
+
+                    let life = 1;
+                    const animateSpark = () => {
+                        spark.position.x += spark.velocity.x;
+                        spark.position.y += spark.velocity.y;
+                        spark.position.z += spark.velocity.z;
+                        spark.velocity.y -= 0.005; // 重力
+
+                        life -= 0.02;
+                        spark.material.opacity = life;
+
+                        if (life > 0) {
+                            requestAnimationFrame(animateSpark);
+                        } else {
+                            this.scene.remove(spark);
+                        }
+                    };
+                    animateSpark();
+                }
+            }, burst * 300); // 每波間隔 300ms
         }
     }
 
@@ -1197,8 +1335,8 @@ class MinimalParking {
 
         const speed = Math.sqrt(this.car.speed.x ** 2 + this.car.speed.z ** 2);
 
-        // 放寬停車判定
-        if (distance < 2.0 && speed < 0.02) {
+        // 放寬停車判定（v2.1: 速度從 0.02 放寬到 0.05）
+        if (distance < 2.0 && speed < 0.05) {
             // Demo 模式：停車成功後靜默重置
             this.resetDemo();
         }
