@@ -45,6 +45,44 @@
 - 後端驗證 URL: `/api/verify-world-id`
 - 版本號需同時更新：`minikit-integration.js` 頂部註解 + constructor + `index.html`
 
+## ⚠️ 前後端分離架構（重要！）
+
+### 部署位置
+
+| 用途 | URL | 說明 |
+|------|-----|------|
+| **Mini App 前端** | `https://daaab.github.io/jijian-parking/` | 靜態檔案（HTML/JS/CSS），在 Developer Portal 設定 |
+| **後端 API** | `https://jijian-car-parking.vercel.app` | Vercel Serverless Functions |
+
+### API 呼叫規則（必讀！）
+
+**絕對不能用相對路徑 `/api/...`！** 在 GitHub Pages 上會解析成錯誤的 URL。
+
+✅ **正確做法**：
+```javascript
+const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
+const response = await fetch(`${apiBase}/api/revive`, { ... });
+```
+
+❌ **錯誤做法**：
+```javascript
+const response = await fetch('/api/revive', { ... });
+// 在 GitHub Pages 上會變成 https://daaab.github.io/api/revive → 404/405 錯誤！
+```
+
+### 已確認使用正確 API URL 的檔案
+
+| 檔案 | API 呼叫 | 狀態 |
+|------|----------|------|
+| `tokenomics-ui.js` | `${this.apiBase}/api/...` | ✅ |
+| `minikit-integration.js` | `${this.backendUrl}/api/...` | ✅ |
+| `game.js` | `${apiBase}/api/...` | ✅ (v2.1.7 修復) |
+
+### 新增 API 時的檢查清單
+1. 前端呼叫必須用 `${apiBase}/api/xxx`
+2. 測試時用 Chrome DevTools 檢查 Network 面板確認 URL 正確
+3. 相對路徑只能在 Vercel 直接訪問時使用（如 `?test=1` 模式）
+
 ## World ID 驗證 - 平台分流邏輯（重要！）
 
 ### 三個平台的檢測與驗證方式

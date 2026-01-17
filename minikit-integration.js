@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.7 - 恢復 WLD 復活選項
+// 版本: v2.1.8 - 修復 API URL（使用 apiBase 避免 GitHub Pages 問題）
 
 // 多語言輔助函數
 function getText(key, fallback) {

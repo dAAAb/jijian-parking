@@ -873,7 +873,8 @@ class MinimalParking {
             const previousRank = parseInt(localStorage.getItem('cpk_rank') || '0', 10);
 
             // 獲取排名
-            const leaderboardResp = await fetch(`/api/leaderboard?nullifier_hash=${nullifierHash}`);
+            const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
+            const leaderboardResp = await fetch(`${apiBase}/api/leaderboard?nullifier_hash=${nullifierHash}`);
             const leaderboardData = await leaderboardResp.json();
 
             if (leaderboardData.success && leaderboardData.my_rank) {
@@ -1132,7 +1133,8 @@ class MinimalParking {
 
             if (payResult.finalPayload?.status === 'success' && payResult.finalPayload?.transaction_id) {
                 // 呼叫後端 API 記錄復活
-                const response = await fetch('/api/revive', {
+                const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
+                const response = await fetch(`${apiBase}/api/revive`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1228,7 +1230,8 @@ class MinimalParking {
             }
 
             // 呼叫後端 API 扣除 CPK
-            const response = await fetch('/api/revive', {
+            const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
+            const response = await fetch(`${apiBase}/api/revive`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
