@@ -1143,33 +1143,54 @@ class MinimalParking {
             });
 
             if (payResult.finalPayload?.status === 'success' && payResult.finalPayload?.transaction_id) {
-                // 呼叫後端 API 記錄復活
-                const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
-                const response = await fetch(`${apiBase}/api/revive`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nullifier_hash: nullifierHash,
-                        payment_type: 'wld',
-                        transaction_id: payResult.finalPayload.transaction_id,
-                        reference
-                    })
-                });
+                // 顯示 loading overlay（後端驗證可能需要較長時間）
+                if (window.tokenomicsUI?.showLoadingOverlay) {
+                    window.tokenomicsUI.showLoadingOverlay(true, window.i18n?.t('revive.processing') || 'Processing revival...');
+                }
 
-                const data = await response.json();
+                try {
+                    // 呼叫後端 API 記錄復活
+                    const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
+                    const response = await fetch(`${apiBase}/api/revive`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            nullifier_hash: nullifierHash,
+                            payment_type: 'wld',
+                            transaction_id: payResult.finalPayload.transaction_id,
+                            reference
+                        })
+                    });
 
-                if (data.success) {
-                    // 更新 CPK 餘額（如果有返還）
-                    if (data.cpk_cashback && window.tokenomicsUI) {
-                        window.tokenomicsUI.updateCPKDisplay(data.cpk_pending);
+                    const data = await response.json();
+
+                    // 隱藏 loading overlay
+                    if (window.tokenomicsUI?.showLoadingOverlay) {
+                        window.tokenomicsUI.showLoadingOverlay(false);
                     }
 
-                    // 執行復活
-                    this.revive();
-                } else {
-                    console.error('Revive API error:', data.error);
+                    if (data.success) {
+                        // 更新 CPK 餘額（如果有返還）
+                        if (data.cpk_cashback && window.tokenomicsUI) {
+                            window.tokenomicsUI.updateCPKDisplay(data.cpk_pending);
+                        }
+
+                        // 執行復活
+                        this.revive();
+                    } else {
+                        console.error('Revive API error:', data.error);
+                        if (window.tokenomicsUI?.showToast) {
+                            window.tokenomicsUI.showToast(`❌ ${data.error || 'Revive failed'}`);
+                        }
+                    }
+                } catch (verifyError) {
+                    // 確保隱藏 loading overlay
+                    if (window.tokenomicsUI?.showLoadingOverlay) {
+                        window.tokenomicsUI.showLoadingOverlay(false);
+                    }
+                    console.error('Revive verify error:', verifyError);
                     if (window.tokenomicsUI?.showToast) {
-                        window.tokenomicsUI.showToast(`❌ ${data.error || 'Revive failed'}`);
+                        window.tokenomicsUI.showToast(`❌ ${window.i18n?.t('purchase.error') || 'Payment failed'}`);
                     }
                 }
             } else {
@@ -1177,6 +1198,10 @@ class MinimalParking {
             }
 
         } catch (error) {
+            // 確保隱藏 loading overlay
+            if (window.tokenomicsUI?.showLoadingOverlay) {
+                window.tokenomicsUI.showLoadingOverlay(false);
+            }
             console.error('Revive WLD error:', error);
             if (window.tokenomicsUI?.showToast) {
                 window.tokenomicsUI.showToast(`❌ ${window.i18n?.t('purchase.error') || 'Payment failed'}`);
@@ -1240,6 +1265,11 @@ class MinimalParking {
                 return;
             }
 
+            // 顯示 loading overlay
+            if (window.tokenomicsUI?.showLoadingOverlay) {
+                window.tokenomicsUI.showLoadingOverlay(true, window.i18n?.t('revive.processing') || 'Processing revival...');
+            }
+
             // 呼叫後端 API 扣除 CPK
             const apiBase = window.tokenomicsUI?.apiBase || window.LOCAL_CONFIG?.BACKEND_URL || '';
             const response = await fetch(`${apiBase}/api/revive`, {
@@ -1252,6 +1282,11 @@ class MinimalParking {
             });
 
             const data = await response.json();
+
+            // 隱藏 loading overlay
+            if (window.tokenomicsUI?.showLoadingOverlay) {
+                window.tokenomicsUI.showLoadingOverlay(false);
+            }
 
             if (data.success) {
                 // 更新 CPK 餘額
@@ -1270,14 +1305,20 @@ class MinimalParking {
                         cpkBtn.classList.add('disabled');
                         cpkBtn.querySelector('.revive-label').textContent = window.i18n?.t('revive.notEnoughCPK') || 'Not enough CPK';
                     }
-                } else {
-                    alert(data.error || 'Revive failed');
+                } else if (window.tokenomicsUI?.showToast) {
+                    window.tokenomicsUI.showToast(`❌ ${data.error || 'Revive failed'}`);
                 }
             }
 
         } catch (error) {
+            // 確保隱藏 loading overlay
+            if (window.tokenomicsUI?.showLoadingOverlay) {
+                window.tokenomicsUI.showLoadingOverlay(false);
+            }
             console.error('Revive CPK error:', error);
-            alert('Revive failed');
+            if (window.tokenomicsUI?.showToast) {
+                window.tokenomicsUI.showToast(`❌ ${window.i18n?.t('purchase.error') || 'Revive failed'}`);
+            }
         } finally {
             if (btn) {
                 btn.disabled = false;

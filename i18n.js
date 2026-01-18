@@ -74,6 +74,7 @@ const translations = {
         'revive.notEnoughCPK': 'Not enough CPK',
         'revive.needCPK': 'Need 100 CPK',
         'revive.current': 'Current',
+        'revive.processing': 'Processing revival...',
 
         // Share
         'share.title': 'Share Score',
@@ -85,6 +86,7 @@ const translations = {
         'purchase.useWorldApp': 'Please use World App for payment',
         'purchase.initiating': 'Initiating payment...',
         'purchase.processing': 'Payment successful, processing...',
+        'purchase.verifying': 'Verifying transaction...',
         'purchase.cashback': 'CPK cashback',
         'purchase.failed': 'Purchase failed',
         'purchase.cancelled': 'Payment cancelled',
@@ -194,6 +196,7 @@ const translations = {
         'revive.notEnoughCPK': 'CPK 不足',
         'revive.needCPK': '需要 100 CPK',
         'revive.current': '目前',
+        'revive.processing': '正在處理復活...',
 
         // Share
         'share.title': '分享成績',
@@ -205,6 +208,7 @@ const translations = {
         'purchase.useWorldApp': '請在 World App 中使用支付功能',
         'purchase.initiating': '正在發起支付...',
         'purchase.processing': '支付成功，處理中...',
+        'purchase.verifying': '正在驗證交易...',
         'purchase.cashback': 'CPK 返還',
         'purchase.failed': '購買處理失敗',
         'purchase.cancelled': '支付已取消',
@@ -253,7 +257,7 @@ const translations = {
         'game.subtitle': '片手操作 · 簡単プレイ',
         'btn.verify': '🌍 World IDで認証',
         'btn.start': 'ゲーム開始',
-        'status.unverified': '⚠️ 未認証',
+        'status.unverified': '🎁 認証して$CPKエアドロップを獲得！',
         'status.verified': '✅ 認証済み',
         'hint.instruction': 'ドラッグで運転 · 駐車で勝利',
 
@@ -373,7 +377,7 @@ const translations = {
         'game.subtitle': '한 손 조작 · 쉬운 플레이',
         'btn.verify': '🌍 World ID로 인증',
         'btn.start': '게임 시작',
-        'status.unverified': '⚠️ 미인증',
+        'status.unverified': '🎁 인증하고 $CPK 에어드롭 받기!',
         'status.verified': '✅ 인증됨',
         'hint.instruction': '드래그로 운전 · 주차해서 승리',
 

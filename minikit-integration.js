@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.12 - 未驗證訊息改為鼓勵領取空投 + 顯示 CPK/WLD 匯率
+// 版本: v2.1.14 - NASDAQ 風格跑馬燈顯示 CPK/WLD 即時匯率
 
 // 多語言輔助函數
 function getText(key, fallback) {
@@ -113,7 +113,7 @@ function getText(key, fallback) {
 // v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v2.1.12';
+        this.version = 'v2.1.14';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -457,9 +457,9 @@ class WorldMiniKit {
                 statusDiv.innerHTML = `<span class="status-verified">✅ Verified (${levelText})${testLabel}</span>${userIdDisplay}`;
             } else {
                 const unverifiedText = window.i18n ? window.i18n.t('status.unverified') : '🎁 Verify to collect $CPK airdrop!';
-                statusDiv.innerHTML = `<span class="status-unverified">${unverifiedText}</span><br><small id="cpk-rate-hint" style="color: #888; font-size: 0.75em;">Loading rate...</small>`;
+                statusDiv.innerHTML = `<span class="status-unverified">${unverifiedText}</span>`;
 
-                // 異步獲取 CPK/WLD 匯率
+                // 異步獲取 CPK/WLD 匯率並顯示跑馬燈
                 this.fetchAndDisplayRate();
             }
         }
@@ -502,7 +502,7 @@ class WorldMiniKit {
     }
 
     /**
-     * 異步獲取 CPK/WLD 匯率並顯示
+     * 異步獲取 CPK/WLD 匯率並顯示 NASDAQ 風格跑馬燈
      */
     async fetchAndDisplayRate() {
         try {
@@ -510,19 +510,28 @@ class WorldMiniKit {
             const response = await fetch(`${apiBase}/api/pool-status`);
             const data = await response.json();
 
-            const rateHint = document.getElementById('cpk-rate-hint');
-            if (rateHint && data.success) {
-                // 顯示 100 CPK ≈ ? WLD
-                rateHint.textContent = `100 $CPK ≈ ${data.cpk100ToWLD} $WLD`;
-                rateHint.style.color = '#4CAF50';  // 綠色突顯價值
-            } else if (rateHint) {
-                rateHint.textContent = '';  // 失敗時隱藏
+            const ticker = document.getElementById('price-ticker');
+            const tickerContent = document.getElementById('ticker-content');
+
+            if (ticker && tickerContent && data.success) {
+                // 華爾街風格：1 CPK = ? WLD
+                const price = parseFloat(data.rateCPKtoWLD);
+                const priceDisplay = price < 0.0001 ? price.toExponential(2) : price.toFixed(6);
+
+                // 建立跑馬燈內容（重複多次以確保連續滾動）
+                const tickerText = `<span class="symbol">$CPK</span> <span class="price">${priceDisplay}</span> <span class="symbol">$WLD</span><span class="separator">•</span>`;
+                tickerContent.innerHTML = tickerText.repeat(4);
+
+                // 顯示跑馬燈
+                ticker.classList.remove('hidden');
+            } else if (ticker) {
+                ticker.classList.add('hidden');
             }
         } catch (error) {
             console.warn('Failed to fetch CPK rate:', error);
-            const rateHint = document.getElementById('cpk-rate-hint');
-            if (rateHint) {
-                rateHint.textContent = '';  // 失敗時隱藏
+            const ticker = document.getElementById('price-ticker');
+            if (ticker) {
+                ticker.classList.add('hidden');
             }
         }
     }

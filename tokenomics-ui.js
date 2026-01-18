@@ -341,54 +341,63 @@ class TokenomicsUI {
       });
 
       if (finalPayload.status === 'success') {
-        this.showToast(window.i18n?.t('purchase.processing') || 'Payment successful, processing...');
+        // 顯示 loading overlay（後端驗證可能需要較長時間）
+        this.showLoadingOverlay(true, window.i18n?.t('purchase.verifying') || 'Verifying transaction...');
 
-        // 向後端驗證並處理購買
-        const response = await fetch(`${this.apiBase}/api/purchase-slowdown`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nullifier_hash: this.nullifierHash,
-            purchase_type: type,
-            transaction_id: finalPayload.transaction_id,
-            reference: reference
-          })
-        });
+        try {
+          // 向後端驗證並處理購買
+          const response = await fetch(`${this.apiBase}/api/purchase-slowdown`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nullifier_hash: this.nullifierHash,
+              purchase_type: type,
+              transaction_id: finalPayload.transaction_id,
+              reference: reference
+            })
+          });
 
-        const result = await response.json();
+          const result = await response.json();
+          this.showLoadingOverlay(false);
 
-        if (result.success) {
-          // 更新本地狀態
-          this.userState = {
-            ...this.userState,
-            cpk_pending: result.cpk_pending_total,
-            current_session: {
-              ...this.userState.current_session,
-              l2_temp_active: result.l2_temp_active
-            },
-            badges: result.badges
-          };
-          this.speedMultiplier = result.speed_multiplier;
-          this.effectiveSlowdown = result.effective_slowdown;
+          if (result.success) {
+            // 更新本地狀態
+            this.userState = {
+              ...this.userState,
+              cpk_pending: result.cpk_pending_total,
+              current_session: {
+                ...this.userState.current_session,
+                l2_temp_active: result.l2_temp_active
+              },
+              badges: result.badges
+            };
+            this.speedMultiplier = result.speed_multiplier;
+            this.effectiveSlowdown = result.effective_slowdown;
 
-          this.updateUI();
-          this.notifyGameSpeedChange();
+            this.updateUI();
+            this.notifyGameSpeedChange();
 
-          // 顯示成功提示
-          const cashbackText = window.i18n?.t('purchase.cashback') || 'CPK cashback';
-          this.showToast(`✅ ${result.message}\n+${result.cpk_cashback} ${cashbackText}`);
+            // 顯示成功提示
+            const cashbackText = window.i18n?.t('purchase.cashback') || 'CPK cashback';
+            this.showToast(`✅ ${result.message}\n+${result.cpk_cashback} ${cashbackText}`);
 
-          // 震動反饋
-          if (window.worldMiniKit?.sendHapticFeedback) {
-            window.worldMiniKit.sendHapticFeedback('success');
+            // 震動反饋
+            if (window.worldMiniKit?.sendHapticFeedback) {
+              window.worldMiniKit.sendHapticFeedback('success');
+            }
+          } else {
+            this.showToast(`❌ ${result.error || (window.i18n?.t('purchase.failed') || 'Purchase failed')}`);
           }
-        } else {
-          this.showToast(`❌ ${result.error || (window.i18n?.t('purchase.failed') || 'Purchase failed')}`);
+        } catch (verifyError) {
+          this.showLoadingOverlay(false);
+          console.error('Verification failed:', verifyError);
+          this.showToast(window.i18n?.t('purchase.error') || 'Purchase failed, please retry');
         }
       } else {
         this.showToast(window.i18n?.t('purchase.cancelled') || 'Payment cancelled');
       }
     } catch (error) {
+      this.showLoadingOverlay(false);
       console.error('Purchase failed:', error);
       this.showToast(window.i18n?.t('purchase.error') || 'Purchase failed, please retry');
     }
@@ -657,8 +666,17 @@ class TokenomicsUI {
     setTimeout(() => toast.remove(), 3000);
   }
 
-  // 顯示/隱藏領取等待確認提示
+  // 顯示/隱藏領取等待確認提示（向後兼容）
   showClaimingOverlay(show) {
+    this.showLoadingOverlay(show, window.i18n?.t('ui.claimingWait') || '確認中，請稍候...');
+  }
+
+  /**
+   * 通用 loading overlay
+   * @param {boolean} show - 顯示或隱藏
+   * @param {string} message - 顯示的訊息文字
+   */
+  showLoadingOverlay(show, message = '') {
     let overlay = document.getElementById('claiming-overlay');
 
     if (show) {
@@ -666,14 +684,14 @@ class TokenomicsUI {
         overlay = document.createElement('div');
         overlay.id = 'claiming-overlay';
         overlay.className = 'claiming-overlay';
-        overlay.innerHTML = `
-          <div class="claiming-content">
-            <div class="claiming-spinner"></div>
-            <div class="claiming-text">${window.i18n?.t('ui.claimingWait') || '確認中，請稍候...'}</div>
-          </div>
-        `;
         document.body.appendChild(overlay);
       }
+      overlay.innerHTML = `
+        <div class="claiming-content">
+          <div class="claiming-spinner"></div>
+          <div class="claiming-text">${message}</div>
+        </div>
+      `;
       overlay.classList.remove('hidden');
     } else {
       if (overlay) {

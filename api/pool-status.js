@@ -27,16 +27,16 @@ export default async function handler(req, res) {
       });
     }
 
-    // 計算 100 CPK = ? WLD
+    // 計算匯率
     // rateWLDtoCPK 是 1 WLD = ? CPK
-    // 所以 100 CPK = 100 / rateWLDtoCPK WLD
+    // rateCPKtoWLD 是 1 CPK = ? WLD = 1 / rateWLDtoCPK
     const rate = parseFloat(poolData.rateWLDtoCPK);
-    const cpk100ToWLD = rate > 0 ? (100 / rate).toFixed(4) : '0';
+    const rateCPKtoWLD = rate > 0 ? (1 / rate) : 0;
 
     return res.status(200).json({
       success: true,
       rateWLDtoCPK: poolData.rateWLDtoCPK,  // 1 WLD = ? CPK
-      cpk100ToWLD: cpk100ToWLD,              // 100 CPK = ? WLD
+      rateCPKtoWLD: rateCPKtoWLD.toFixed(6), // 1 CPK = ? WLD (華爾街風格)
       reserveWLD: poolData.reserveWLD,
       reserveCPK: poolData.reserveCPK,
       pair: poolData.pair
