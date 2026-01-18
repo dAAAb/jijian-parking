@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.11 - 修復 i18n 空字符串翻譯問題
+// 版本: v2.1.12 - 未驗證訊息改為鼓勵領取空投 + 顯示 CPK/WLD 匯率
 
 // 多語言輔助函數
 function getText(key, fallback) {
@@ -113,7 +113,7 @@ function getText(key, fallback) {
 // v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v2.1.11';
+        this.version = 'v2.1.12';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -456,7 +456,11 @@ class WorldMiniKit {
                     : '';
                 statusDiv.innerHTML = `<span class="status-verified">✅ Verified (${levelText})${testLabel}</span>${userIdDisplay}`;
             } else {
-                statusDiv.innerHTML = `<span class="status-unverified">⚠️ Not Verified</span>`;
+                const unverifiedText = window.i18n ? window.i18n.t('status.unverified') : '🎁 Verify to collect $CPK airdrop!';
+                statusDiv.innerHTML = `<span class="status-unverified">${unverifiedText}</span><br><small id="cpk-rate-hint" style="color: #888; font-size: 0.75em;">Loading rate...</small>`;
+
+                // 異步獲取 CPK/WLD 匯率
+                this.fetchAndDisplayRate();
             }
         }
 
@@ -493,6 +497,32 @@ class WorldMiniKit {
             } else {
                 badge.classList.add('hidden');
                 badge.classList.remove('orb-verified', 'test-mode');
+            }
+        }
+    }
+
+    /**
+     * 異步獲取 CPK/WLD 匯率並顯示
+     */
+    async fetchAndDisplayRate() {
+        try {
+            const apiBase = this.backendUrl || window.LOCAL_CONFIG?.BACKEND_URL || '';
+            const response = await fetch(`${apiBase}/api/pool-status`);
+            const data = await response.json();
+
+            const rateHint = document.getElementById('cpk-rate-hint');
+            if (rateHint && data.success) {
+                // 顯示 100 CPK ≈ ? WLD
+                rateHint.textContent = `100 $CPK ≈ ${data.cpk100ToWLD} $WLD`;
+                rateHint.style.color = '#4CAF50';  // 綠色突顯價值
+            } else if (rateHint) {
+                rateHint.textContent = '';  // 失敗時隱藏
+            }
+        } catch (error) {
+            console.warn('Failed to fetch CPK rate:', error);
+            const rateHint = document.getElementById('cpk-rate-hint');
+            if (rateHint) {
+                rateHint.textContent = '';  // 失敗時隱藏
             }
         }
     }

@@ -8,7 +8,7 @@ const translations = {
         'game.subtitle': 'One-hand control · Easy to play',
         'btn.verify': '🌍 Verify with World ID',
         'btn.start': 'Start Game',
-        'status.unverified': '⚠️ Not Verified',
+        'status.unverified': '🎁 Verify to collect $CPK airdrop!',
         'status.verified': '✅ Verified',
         'hint.instruction': 'Drag to drive · Park to win',
 
@@ -133,7 +133,7 @@ const translations = {
         'game.subtitle': '單手操作 · 輕鬆上手',
         'btn.verify': '🌍 使用 World ID 驗證',
         'btn.start': '開始遊戲',
-        'status.unverified': '⚠️ 尚未驗證',
+        'status.unverified': '🎁 驗證即可領取 $CPK 空投！',
         'status.verified': '✅ 已驗證',
         'hint.instruction': '拖曳駕駛 · 停好即贏',
 
