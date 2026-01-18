@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.16 - 跑馬燈無縫滾動 + 減少上方間距
+// 版本: v2.1.17 - 修復跑馬燈初始載入
 
 // 多語言輔助函數
 function getText(key, fallback) {
@@ -113,7 +113,7 @@ function getText(key, fallback) {
 // v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v2.1.16';
+        this.version = 'v2.1.17';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -320,6 +320,9 @@ class WorldMiniKit {
 
         // 仍然設置驗證按鈕的點擊事件
         this.setupVerificationButton();
+
+        // 載入價格跑馬燈
+        this.fetchAndDisplayRate();
     }
 
     // 預載入 IDKit，讓用戶點擊時能即時響應
@@ -352,6 +355,9 @@ class WorldMiniKit {
         if (shareBtn) {
             shareBtn.addEventListener('click', () => this.shareScore());
         }
+
+        // 載入價格跑馬燈
+        this.fetchAndDisplayRate();
     }
 
     setupVerificationButton() {
