@@ -10,6 +10,7 @@ const translations = {
         'btn.start': 'Start Game',
         'status.unverified': '🎁 Verify to collect $CPK airdrop!',
         'status.verified': '✅ Verified',
+        'ticker.airdrop': 'Verify to collect $CPK airdrop',
         'hint.instruction': 'Drag to drive · Park to win',
 
         // Game UI
@@ -137,6 +138,7 @@ const translations = {
         'btn.start': '開始遊戲',
         'status.unverified': '🎁 驗證即可領取 $CPK 空投！',
         'status.verified': '✅ 已驗證',
+        'ticker.airdrop': '驗證領取 $CPK 空投',
         'hint.instruction': '拖曳駕駛 · 停好即贏',
 
         'ui.level': '關卡',
@@ -259,6 +261,7 @@ const translations = {
         'btn.start': 'ゲーム開始',
         'status.unverified': '🎁 認証して$CPKエアドロップを獲得！',
         'status.verified': '✅ 認証済み',
+        'ticker.airdrop': '認証して$CPKエアドロップ獲得',
         'hint.instruction': 'ドラッグで運転 · 駐車で勝利',
 
         'ui.level': 'レベル',
@@ -379,6 +382,7 @@ const translations = {
         'btn.start': '게임 시작',
         'status.unverified': '🎁 인증하고 $CPK 에어드롭 받기!',
         'status.verified': '✅ 인증됨',
+        'ticker.airdrop': '인증하고 $CPK 에어드롭 받기',
         'hint.instruction': '드래그로 운전 · 주차해서 승리',
 
         'ui.level': '레벨',
@@ -540,6 +544,11 @@ class I18n {
             // 更新 TokenomicsUI 動態內容
             if (window.tokenomicsUI?.isInitialized) {
                 window.tokenomicsUI.updateBadgeStatus();
+            }
+
+            // 更新跑馬燈內容（多語言）
+            if (window.worldMiniKit?.fetchAndDisplayRate) {
+                window.worldMiniKit.fetchAndDisplayRate();
             }
         }
     }
