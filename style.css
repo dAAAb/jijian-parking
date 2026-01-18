@@ -182,7 +182,7 @@ body {
 }
 
 .verification-status {
-    margin: 15px 0 25px 0;
+    margin: 15px 0 8px 0;
     padding: 12px 20px;
     border-radius: 25px;
     text-align: center;
@@ -218,12 +218,11 @@ body {
 
 /* NASDAQ-style Price Ticker */
 .price-ticker {
-    width: 100%;
-    max-width: 280px;
-    margin: 0 auto 15px auto;
+    width: calc(100% + 50px);
+    margin: 0 -25px 15px -25px;
     background: linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
-    border: 1px solid #0f3460;
-    border-radius: 4px;
+    border-top: 1px solid #0f3460;
+    border-bottom: 1px solid #0f3460;
     overflow: hidden;
     position: relative;
 }
@@ -233,7 +232,7 @@ body {
     content: '';
     position: absolute;
     top: 0;
-    width: 20px;
+    width: 15px;
     height: 100%;
     z-index: 2;
     pointer-events: none;
@@ -256,18 +255,20 @@ body {
 .ticker-track {
     display: flex;
     white-space: nowrap;
-    animation: tickerScroll 12s linear infinite;
+    animation: tickerScroll 20s linear infinite;
 }
 
 .ticker-content {
-    display: inline-block;
-    padding: 8px 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 0;
     font-family: 'Courier New', monospace;
     font-size: 0.85em;
     font-weight: bold;
     color: #00ff88;
     text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
     letter-spacing: 1px;
+    flex-shrink: 0;
 }
 
 .ticker-content .symbol {
@@ -280,15 +281,20 @@ body {
 
 .ticker-content .separator {
     color: #666;
-    margin: 0 15px;
+    margin: 0 12px;
+}
+
+.ticker-content .ticker-airdrop {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 @keyframes tickerScroll {
     0% {
-        transform: translateX(100%);
+        transform: translateX(0);
     }
     100% {
-        transform: translateX(-100%);
+        transform: translateX(-50%);
     }
 }
 

@@ -1,5 +1,5 @@
 // World MiniKit 整合
-// 版本: v2.1.14 - NASDAQ 風格跑馬燈顯示 CPK/WLD 即時匯率
+// 版本: v2.1.16 - 跑馬燈無縫滾動 + 減少上方間距
 
 // 多語言輔助函數
 function getText(key, fallback) {
@@ -113,7 +113,7 @@ function getText(key, fallback) {
 // v1.7.7: 將所有用戶可見文字改為英文
 class WorldMiniKit {
     constructor() {
-        this.version = 'v2.1.14';
+        this.version = 'v2.1.16';
         this.isInitialized = false;
         this.walletAddress = null;
         this.isWorldApp = false;
@@ -456,10 +456,11 @@ class WorldMiniKit {
                     : '';
                 statusDiv.innerHTML = `<span class="status-verified">✅ Verified (${levelText})${testLabel}</span>${userIdDisplay}`;
             } else {
+                // 先顯示靜態文字，等跑馬燈載入後會隱藏
                 const unverifiedText = window.i18n ? window.i18n.t('status.unverified') : '🎁 Verify to collect $CPK airdrop!';
-                statusDiv.innerHTML = `<span class="status-unverified">${unverifiedText}</span>`;
+                statusDiv.innerHTML = `<span class="status-unverified" id="unverified-text">${unverifiedText}</span>`;
 
-                // 異步獲取 CPK/WLD 匯率並顯示跑馬燈
+                // 異步獲取 CPK/WLD 匯率並顯示跑馬燈（會隱藏上面的文字）
                 this.fetchAndDisplayRate();
             }
         }
@@ -511,16 +512,19 @@ class WorldMiniKit {
             const data = await response.json();
 
             const ticker = document.getElementById('price-ticker');
-            const tickerContent = document.getElementById('ticker-content');
+            const tickerTrack = document.querySelector('.ticker-track');
 
-            if (ticker && tickerContent && data.success) {
-                // 華爾街風格：1 CPK = ? WLD
+            if (ticker && tickerTrack && data.success) {
+                // 華爾街風格：1 CPK = ? WLD（使用小數點格式）
                 const price = parseFloat(data.rateCPKtoWLD);
-                const priceDisplay = price < 0.0001 ? price.toExponential(2) : price.toFixed(6);
+                const priceDisplay = price.toFixed(8);
 
-                // 建立跑馬燈內容（重複多次以確保連續滾動）
-                const tickerText = `<span class="symbol">$CPK</span> <span class="price">${priceDisplay}</span> <span class="symbol">$WLD</span><span class="separator">•</span>`;
-                tickerContent.innerHTML = tickerText.repeat(4);
+                // 建立單一跑馬燈內容單元（重複多次填滿一半寬度）
+                const singleUnit = `<span class="symbol">$CPK</span> <span class="price">${priceDisplay}</span> <span class="symbol">$WLD</span><span class="separator">•</span>`;
+
+                // 建立兩份完全相同的內容（各 6 個單元），當滾動 50% 時會無縫銜接
+                const halfContent = singleUnit.repeat(6);
+                tickerTrack.innerHTML = `<span class="ticker-content">${halfContent}</span><span class="ticker-content">${halfContent}</span>`;
 
                 // 顯示跑馬燈
                 ticker.classList.remove('hidden');
