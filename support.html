@@ -17,6 +17,9 @@
             padding: 0;
             box-sizing: border-box;
         }
+        html {
+            background-color: #0f0f1a;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
@@ -126,6 +129,11 @@
         }
 
         /* CTA Button */
+        .cta-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
         .cta-button {
             display: inline-flex;
             align-items: center;
@@ -374,10 +382,12 @@
         <h1 class="hero-title" data-i18n="hero.title">Minimal Parking</h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle">The most relaxing 3D parking game</p>
         <img src="screenshot-game-start.png" alt="Minimal Parking Game" class="hero-image">
-        <a href="https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=" class="cta-button">
-            <span class="icon">🌍</span>
-            <span data-i18n="hero.cta">Play Now</span>
-        </a>
+        <div class="cta-wrapper">
+            <a href="https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=" class="cta-button">
+                <span class="icon">🌍</span>
+                <span data-i18n="hero.cta">Play Now</span>
+            </a>
+        </div>
     </section>
 
     <div class="container">
@@ -399,11 +409,6 @@
                     <div class="feature-icon">🪙</div>
                     <h3 class="feature-title" data-i18n="features.earn.title">Play & Collect</h3>
                     <p class="feature-desc" data-i18n="features.earn.desc">Collect $CPK points on completion, bonus for perfect parking</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3 class="feature-title" data-i18n="features.rank.title">Global Ranking</h3>
-                    <p class="feature-desc" data-i18n="features.rank.desc">Compete with players worldwide, become the parking king</p>
                 </div>
             </div>
         </section>
