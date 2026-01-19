@@ -1439,6 +1439,54 @@ body {
     color: #9ca3af;
 }
 
+/* Game Over 驗證提示區塊 */
+.gameover-verify-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.1));
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+}
+
+.gameover-verify-section.hidden {
+    display: none;
+}
+
+.gameover-verify-section .verify-hint {
+    color: #bbb;
+    font-size: 0.9em;
+    margin-bottom: 12px;
+}
+
+.gameover-verify-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.gameover-verify-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.gameover-verify-btn:active {
+    transform: translateY(0);
+}
+
+.gameover-verify-btn .verify-icon {
+    font-size: 1.2em;
+}
+
 /* ========================================
    復活彈窗樣式
    ======================================== */

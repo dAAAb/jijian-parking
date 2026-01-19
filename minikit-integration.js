@@ -447,6 +447,15 @@ class WorldMiniKit {
         } else {
             console.warn('⚠️ 找不到驗證按鈕元素');
         }
+
+        // 設置 Game Over 畫面的驗證按鈕
+        const gameoverVerifyBtn = document.getElementById('gameover-verify-btn');
+        if (gameoverVerifyBtn) {
+            gameoverVerifyBtn.addEventListener('click', () => {
+                console.log('🖱️ Game Over 驗證按鈕被點擊！');
+                this.verifyWorldID();
+            });
+        }
     }
 
     updateVerificationStatus(isVerified, level = null, isTestMode = false, nullifierHash = null) {
@@ -1386,6 +1395,12 @@ class WorldMiniKit {
             verifyBtn.style.display = 'none';
         }
 
+        // 隱藏 Game Over 畫面的驗證區塊
+        const gameoverVerifySection = document.getElementById('gameover-verify-section');
+        if (gameoverVerifySection) {
+            gameoverVerifySection.classList.add('hidden');
+        }
+
         // 如果不是測試模式，發送成功震動
         if (!isTestMode) {
             this.sendHapticFeedback('success');
@@ -1443,7 +1458,7 @@ class WorldMiniKit {
         try {
             const score = document.getElementById('total-score')?.textContent || '0';
             const level = window.parkingGame?.level || '1';
-            const gameUrl = 'https://jijian-car-parking.vercel.app';
+            const gameUrl = 'https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=';
 
             // 構建分享文本
             const shareText = window.i18n?.t('share.text') ||

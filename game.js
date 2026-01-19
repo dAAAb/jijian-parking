@@ -840,10 +840,21 @@ class MinimalParking {
         const highscoreValue = document.getElementById('highscore-value');
         const rankValue = document.getElementById('rank-value');
         const rankChange = document.getElementById('rank-change');
+        const gameoverVerifySection = document.getElementById('gameover-verify-section');
 
         // 重置顯示
         highscoreSection?.classList.add('hidden');
         rankSection?.classList.add('hidden');
+
+        // 根據驗證狀態顯示/隱藏驗證提示區塊
+        const isVerified = window.worldMiniKit?.isVerified;
+        if (gameoverVerifySection) {
+            if (isVerified) {
+                gameoverVerifySection.classList.add('hidden');
+            } else {
+                gameoverVerifySection.classList.remove('hidden');
+            }
+        }
 
         // 顯示 Game Over 畫面
         document.getElementById('game-over-screen').classList.remove('hidden');
