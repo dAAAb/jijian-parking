@@ -605,3 +605,41 @@ const isNewHighScore = currentScore > backendHighScore && currentScore > 0;
 | v2.1.8 | 修復 API URL（使用 apiBase） |
 | v2.1.9 | 修復高分顯示（從後端取得真實紀錄比較） |
 | v2.1.10 | 修復 CSS hidden 規則 |
+| v2.1.18 | support.html 排版優化 + 分享連結更新 + Game Over 驗證功能 |
+
+---
+
+### 2026-01-19：support.html 優化 + Game Over 驗證功能
+
+#### 1. support.html 排版優化
+- 修正「立即遊玩」按鈕置中（加入 `.cta-wrapper` flex 容器）
+- 移除「全球排行」特色卡片（避免單獨一排）
+- 修復 iOS Safari 橡皮筋滑動露出白色背景（加入 `html { background-color: #0f0f1a; }`）
+
+#### 2. 分享連結更新
+- `minikit-integration.js` 的 `shareScore()` 函數
+- 分享連結從 `https://jijian-car-parking.vercel.app` 改為 `https://world.org/mini-app?app_id=app_8759766ce92173ee6e1ce6568a9bc9e6&path=`
+- 僅影響分享到社群的連結，不影響其他功能
+
+#### 3. Game Over 驗證功能（未驗證玩家引導）
+
+**需求**：讓未驗證玩家在 Game Over 時也能看到驗證入口
+
+**修改檔案**：
+
+| 檔案 | 修改內容 |
+|------|----------|
+| `index.html` | 在 game-over-screen 加入 `#gameover-verify-section` |
+| `game.js` | `showGameOverScreen()` 根據 `isVerified` 顯示/隱藏驗證區塊 |
+| `minikit-integration.js` | 綁定 `#gameover-verify-btn` 點擊事件 + `onVerificationSuccess()` 隱藏區塊 |
+| `style.css` | 加入 `.gameover-verify-section` 和 `.gameover-verify-btn` 樣式 |
+| `i18n.js` | 加入 `gameover.verifyHint` 和 `btn.verifyWorldId` 四語翻譯 |
+
+**運作邏輯**：
+1. 未驗證玩家 Game Over → 顯示「登入後可以領取 $CPK 獎勵！」+ Verify 按鈕
+2. 點擊按鈕 → 觸發 `verifyWorldID()`（與初始頁按鈕相同）
+3. 驗證成功 → 隱藏驗證區塊 + 顯示左上角徽章和右上角狀態
+4. 已驗證玩家 Game Over → 不顯示驗證區塊
+
+**CSS hidden 規則**（新增）：
+- `.gameover-verify-section.hidden`
